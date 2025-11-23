@@ -1,0 +1,210 @@
+/* [project]/styles/Footer.css [app-client] (css) */
+.site-footer {
+  background-color: var(--lochinvar);
+  color: #fff;
+  border-top: none;
+  padding-top: 4rem;
+  padding-bottom: 2rem;
+}
+
+.footer-grid {
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  display: grid;
+}
+
+@media (min-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr;
+  }
+}
+
+.footer-brand-col {
+  text-align: center;
+  flex-direction: column;
+  grid-column: span 1;
+  align-items: center;
+  display: flex;
+}
+
+@media (min-width: 1024px) {
+  .footer-brand-col {
+    text-align: left;
+    align-items: flex-start;
+  }
+}
+
+.footer-brand-link {
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  width: fit-content;
+  margin-bottom: 1rem;
+  text-decoration: none;
+  display: flex;
+}
+
+.footer-logo-image {
+  filter: brightness(0) invert();
+  width: auto;
+  height: 7rem;
+}
+
+.footer-brand-text {
+  flex-direction: row;
+  gap: .5rem;
+  line-height: 1.1;
+  display: flex;
+}
+
+.footer-brand-text .brand-ayubowan, .footer-brand-text .brand-connect {
+  font-family: var(--font-arima), serif;
+  font-weight: 700;
+}
+
+.footer-brand-text .brand-ayubowan {
+  color: #fff;
+  font-size: 1.5rem;
+}
+
+.footer-brand-text .brand-connect {
+  color: #ffffffe6;
+  font-size: 1.75rem;
+}
+
+.footer-copyright {
+  color: #ffffffb3;
+  max-width: 250px;
+  margin-top: 1rem;
+  font-size: .75rem;
+}
+
+.footer-socials {
+  color: #fffc;
+  gap: 1rem;
+  margin-top: 1rem;
+  display: flex;
+}
+
+.footer-socials a {
+  transition: transform .2s, color .2s;
+}
+
+.footer-socials a:hover {
+  color: #fff;
+  transform: scale(1.2);
+}
+
+.footer-heading {
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 1rem;
+  font-size: .875rem;
+  font-weight: 600;
+}
+
+.footer-links {
+  flex-direction: column;
+  gap: .75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+}
+
+.footer-links a {
+  color: #fffc;
+  font-size: .875rem;
+  text-decoration: none;
+  transition: all .2s;
+  display: inline-block;
+}
+
+.footer-links a:hover {
+  color: #fff;
+  text-shadow: 0 0 10px #ffffff80;
+  transform: translateX(5px);
+}
+
+.footer-newsletter {
+  grid-column: span 1;
+}
+
+.newsletter-text {
+  color: #fffc;
+  margin-bottom: 1rem;
+  font-size: .875rem;
+}
+
+.newsletter-form {
+  flex-direction: column;
+  gap: .5rem;
+  display: flex;
+}
+
+.newsletter-input {
+  color: #fff;
+  background-color: #ffffff1a;
+  border: 1px solid #ffffff4d;
+  border-radius: .125rem;
+  width: 100%;
+  padding: .625rem;
+  font-size: .875rem;
+}
+
+.newsletter-input::placeholder {
+  color: #ffffff80;
+}
+
+.newsletter-input:focus {
+  border-color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 1px #ffffff80;
+}
+
+.newsletter-btn {
+  color: var(--lochinvar);
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #fff;
+  border-radius: .125rem;
+  padding: .625rem 1.25rem;
+  font-size: .875rem;
+  font-weight: 500;
+  transition: all .2s;
+}
+
+.newsletter-btn:hover {
+  color: var(--lochinvar-dark);
+  background-color: #f3f4f6;
+}
+
+.newsletter-disclaimer {
+  color: #fff9;
+  margin-top: 1rem;
+  font-size: .75rem;
+}
+
+.footer-bottom {
+  color: #ffffffb3;
+  border-top: 1px solid #fff3;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 3rem;
+  padding-top: 2rem;
+  font-size: .75rem;
+  display: flex;
+}
+
+.footer-bottom a {
+  transition: color .2s;
+}
+
+.footer-bottom a:hover {
+  color: #fff;
+  text-shadow: 0 0 8px #fff6;
+  text-decoration: underline;
+}
+
+/*# sourceMappingURL=styles_Footer_css_bad6b30c._.single.css.map*/
