@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/MATHEESHA/Desktop/ayubowan-connect-%20next%20js/app/login/page.tsx"],"sourcesContent":["import React from 'react';\r\n\r\nconst LoginPage = () => {\r\n  return (\r\n    <div className=\"flex min-h-screen flex-col items-center justify-center p-24\">\r\n      <h1 className=\"text-4xl font-bold mb-8\">Login</h1>\r\n      <p>Login page content coming soon...</p>\r\n    </div>\r\n  );\r\n};\r\n\r\nexport default LoginPage;\r\n"],"names":[],"mappings":";;;;;;AAEA,MAAM,YAAY;IAChB,qBACE,8OAAC;QAAI,WAAU;;0BACb,8OAAC;gBAAG,WAAU;0BAA0B;;;;;;0BACxC,8OAAC;0BAAE;;;;;;;;;;;;AAGT;uCAEe"}}]
-}
