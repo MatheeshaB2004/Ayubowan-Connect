@@ -43,8 +43,4 @@ const ScrollToTopButton: React.FC = () => {
   );
 };
 
-<<<<<<< HEAD
 export default ScrollToTopButton;
-=======
-export default ScrollToTopButton;
->>>>>>> 31227e5ac574d10df55821b73b061969636b8157

@@ -1,0 +1,3 @@
+module.exports=[30831,a=>{a.n(a.i(71050))},3500,a=>{a.n(a.i(44629))},50113,a=>{a.n(a.i(53536))},26625,a=>{a.n(a.i(53337))},99012,a=>{a.n(a.i(81831))},38350,a=>{"use strict";var b=a.i(94976);a.s(["default",0,()=>(0,b.jsxs)("div",{className:"flex min-h-screen flex-col items-center justify-center p-24",children:[(0,b.jsx)("h1",{className:"text-4xl font-bold mb-8",children:"Login"}),(0,b.jsx)("p",{children:"Login page content coming soon..."})]})])}];
+
+//# sourceMappingURL=ayubowan-connect-%20next%20js_8cc757bf._.js.map
