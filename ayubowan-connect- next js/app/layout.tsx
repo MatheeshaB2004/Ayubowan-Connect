@@ -3,7 +3,6 @@ import { Inter, Playfair_Display, Arima, Nunito } from "next/font/google";
 import "../styles/globals.css";
 import "../styles/components/Header.css";
 import "../styles/components/Footer.css";
-import "../styles/pages/Landing.css";
 import { AuthProvider } from "../context/AuthContext";
 import GlobalHeader from "../components/header_footer/GlobalHeader";
 import Footer from "../components/header_footer/Footer";

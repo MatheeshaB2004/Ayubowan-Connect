@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import "../../styles/pages/Landing.css";
 import { ChevronRight, Linkedin, Twitter, Globe, Package, Users, Palette } from 'lucide-react';
 
 const heroImages = [
