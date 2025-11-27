@@ -7,6 +7,7 @@ import {
   Search, FileText, Phone, CalendarCheck,
   Star
 } from 'lucide-react';
+import '../../styles/pages/Landing.css';
 
 const heroImages = [
   "/assets/hero/1.jpg",
