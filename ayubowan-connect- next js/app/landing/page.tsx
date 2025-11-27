@@ -1,8 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import "../../styles/pages/Landing.css";
-import { ChevronRight, Linkedin, Twitter, Globe, Package, Users, Palette } from 'lucide-react';
+import { 
+  ChevronRight, Linkedin, Twitter, Globe, 
+  Calendar, Map, ShoppingBag, MessageCircle, 
+  Search, FileText, Phone, CalendarCheck,
+  Star
+} from 'lucide-react';
 
 const heroImages = [
   "/assets/hero/1.jpg",
@@ -16,33 +20,52 @@ const heroImages = [
   "/assets/hero/10.jpg"
 ];
 
-const storyImages = [
-  "/assets/stories/s1.webp",
-  "/assets/stories/s2.jpg",
-];
-
 const LandingPage: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+  const [activeProTab, setActiveProTab] = useState<'planning' | 'translation' | 'insights'>('planning');
+
+  const proFeatures = {
+    planning: {
+      tag: 'Plan',
+      title: 'AI itinerary planner builds your journey',
+      desc: 'Tell the system your interests and days available. Get a personalized itinerary that flows like a story, not a checklist.',
+      image: '/assets/pro/planner.jpg',
+      ctaPrimary: 'Start',
+      ctaSecondary: 'Explore'
+    },
+    translation: {
+      tag: 'Connect',
+      title: 'Chat like a local, instantly',
+      desc: 'Real-time translation for chat. Ask questions, bargain respectfully, and make friends without the language barrier.',
+      image: '/assets/photos/B4.webp',
+      ctaPrimary: 'Translate',
+      ctaSecondary: 'Learn how'
+    },
+    insights: {
+      tag: 'Grow',
+      title: 'Insights that power your business',
+      desc: 'For vendors: track views, understand traveler trends, and optimize your listings to reach the right audience.',
+      image: '/assets/photos/B6.jpg',
+      ctaPrimary: 'Dashboard',
+      ctaSecondary: 'View demo'
+    }
+  };
+
+
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
     }, 5000);
 
-    const storyInterval = setInterval(() => {
-      setCurrentStoryIndex((prevIndex) => (prevIndex + 1) % storyImages.length);
-    }, 4000);
-
     return () => {
       clearInterval(interval);
-      clearInterval(storyInterval);
     };
   }, []);
 
   return (
-    <div className="bg-white w-full overflow-hidden">
-      {/* HERO SECTION */}
+    <div className="bg-white w-full overflow-hidden font-sans text-gray-900">
+      {/* HERO SECTION - KEPT AS IS */}
       <section className="landing-hero">
         {heroImages.map((img, index) => (
           <img
@@ -56,10 +79,10 @@ const LandingPage: React.FC = () => {
 
         <div className="hero-content">
           <h1 className="hero-title">
-            Discover the heart of <br /> Sri Lanka
+            Discover authentic Sri Lankan <br /> culture and treasures
           </h1>
           <p className="hero-text">
-            Connect with authentic local experiences that transform travel into a deep cultural journey. Explore hidden stories, traditions, and connections that go beyond typical tourism.
+            Connect with real people, real stories, and real crafts from the island. Experience the warmth of Sri Lankan hospitality through cultural activities and handmade goods that tell generations of tradition.
           </p>
           <div className="hero-actions">
             <button className="btn-hero-primary">Explore</button>
@@ -68,141 +91,214 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* INTRO TEXT */}
-      <section className="section-intro">
-        <span className="section-tag tag-lochinvar">Connect</span>
-        <h2 className="section-title">
-          Authentic experiences at <br /> your fingertips
-        </h2>
-        <p className="intro-text">Discover unique cultural journeys across Sri Lanka</p>
-      </section>
-
-      {/* THREE CARDS SECTION */}
-      <section className="container mx-auto cards-section">
-        <div className="cards-grid">
-          {/* Card 1 - Lochinvar (Main Green) */}
-          <div className="feature-card bg-lochinvar">
-            <img src="/assets/hero/5.jpg" className="card-img" alt="Explore" />
-            <div className="card-gradient"></div>
-            <div className="card-content">
-              <span className="card-tag">Explore</span>
-              <h3 className="card-title">Connecting travelers with local traditions</h3>
-              <p className="card-desc">Immerse yourself in genuine Sri Lankan experiences through personal connections</p>
-              <a href="#" className="card-link">
-                Discover <ChevronRight size={14} className="ml-1" />
-              </a>
-            </div>
-          </div>
-
-          {/* Card 2 - Waikawa (Blue-ish Gray) */}
-          <div className="feature-card bg-waikawa">
-            <img src="/assets/hero/6.jpeg" className="card-img" alt="Engage" />
-            <div className="card-gradient"></div>
-            <div className="card-content">
-              <span className="card-tag">Engage</span>
-              <h3 className="card-title">Empowering local communities through cultural exchange</h3>
-              <p className="card-desc">Support small vendors and artisans while creating meaningful travel memories</p>
-              <a href="#" className="card-link">
-                Connect <ChevronRight size={14} className="ml-1" />
-              </a>
-            </div>
-          </div>
-
-          {/* Card 3 - Trendy (Purple/Pink) */}
-          <div className="feature-card bg-trendy">
-            <img src="/assets/hero/7.jpeg" className="card-img" alt="Transform" />
-            <div className="card-gradient"></div>
-            <div className="card-content">
-              <span className="card-tag">Transform</span>
-              <h3 className="card-title">Technology bridging cultural understanding</h3>
-              <p className="card-desc">Seamless platform connecting travelers with authentic local experiences and stories</p>
-              <a href="#" className="card-link">
-                Learn <ChevronRight size={14} className="ml-1" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* MISSION SECTION */}
-      <section className="section-intro section-intro-mission">
-        <div className="mission-icon-wrapper">
-          <Users size={48} strokeWidth={1} />
-        </div>
-        <span className="section-tag tag-waikawa">Mission</span>
-        <h2 className="section-title">Our journey of cultural connection</h2>
-        <p className="mission-text">
-          Ayubowan Connect was born from a deep passion to preserve and share Sri Lanka's rich cultural heritage. We believe authentic experiences create lasting memories and meaningful connections.
-        </p>
-        <div className="mission-actions">
-          <button className="mission-btn-story">Our story</button>
-          <button className="mission-btn-learn">
-            Learn more <ChevronRight size={16} className="ml-1" />
-          </button>
-        </div>
-      </section>
-
-      {/* LARGE IMAGE PLACEHOLDER 1 */}
-      <section className="container mx-auto large-image-section">
-        <div className="large-image-container ratio-16-7">
-          <img src="/assets/hero/8.jpg" className="large-image-bg" alt="Traditional Craftsmanship" />
-          <div className="large-image-overlay">
-            <div className="large-image-icon-box">
-              <Palette className="large-image-icon" />
-            </div>
-            <div className="large-image-text">
-              <h3>Preserving Heritage</h3>
-              <p>Witness the intricate art of traditional craftsmanship passed down through generations.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* BENEFITS SECTION */}
-      <section className="benefits-section">
+      {/* WHAT WE OFFER SECTION */}
+      <section className="offer-section" id="offer">
         <div className="section-intro">
-          <span className="section-tag tag-lochinvar">Benefits</span>
-          <h2 className="section-title">Why choose Ayubowan Connect</h2>
-          <p className="intro-text">Transform your travel experience with genuine cultural interactions</p>
+          <span className="section-tag tag-lochinvar">Explore</span>
+          <h2 className="section-title">What we offer</h2>
+          <p className="intro-text">Browse curated experiences and marketplace items</p>
         </div>
 
-        <div className="benefits-grid">
-          {/* Box 1 - Waikawa */}
-          <div className="benefit-box bg-waikawa">
-            <img src="/assets/hero/9.jpg" className="benefit-img-overlay" alt="Travelers" />
-            <div className="benefit-content">
-              <Package size={32} className="benefit-icon" />
-              <h3>For travelers</h3>
-              <p>Discover unique experiences curated by local experts that go beyond traditional tourism</p>
-              <div className="benefit-actions">
-                <button className="btn-hero-secondary">Explore</button>
-                <button className="benefit-btn-dive">
-                  Dive deeper <ChevronRight size={14} className="ml-1" />
+        <div className="offer-grid">
+          {/* Left Column - 2x2 Grid */}
+          <div className="offer-grid-left">
+            {/* Card 1 */}
+            <div className="offer-card" id="events">
+              <div className="offer-icon-wrapper">
+                <Calendar size={24} />
+              </div>
+              <span className="section-tag tag-waikawa" style={{marginBottom: '0.5rem'}}>Calendar</span>
+              <h3 className="offer-card-title">Cultural event calendar</h3>
+              <p className="offer-card-desc">Find festivals, workshops and gatherings</p>
+              <a href="#" className="offer-link">
+                View <ChevronRight size={14} className="ml-1" />
+              </a>
+            </div>
+
+            {/* Card 2 */}
+            <div className="offer-card" id="experiences">
+              <div className="offer-icon-wrapper">
+                <Map size={24} />
+              </div>
+              <span className="section-tag tag-waikawa" style={{marginBottom: '0.5rem'}}>Experiences</span>
+              <h3 className="offer-card-title">Village tours, cooking classes and traditions</h3>
+              <p className="offer-card-desc">Browse</p>
+              <a href="#" className="offer-link">
+                Marketplace <ChevronRight size={14} className="ml-1" />
+              </a>
+            </div>
+
+            {/* Card 3 */}
+            <div className="offer-card" id="marketplace">
+              <div className="offer-icon-wrapper">
+                <ShoppingBag size={24} />
+              </div>
+              <span className="section-tag tag-waikawa" style={{marginBottom: '0.5rem'}}>Shop</span>
+              <h3 className="offer-card-title">Handmade crafts and authentic local goods</h3>
+              <p className="offer-card-desc">Assistant</p>
+              <a href="#" className="offer-link">
+                Get personalized recommendations <ChevronRight size={14} className="ml-1" />
+              </a>
+            </div>
+
+            {/* Card 4 */}
+            <div className="offer-card">
+              <div className="offer-icon-wrapper">
+                <MessageCircle size={24} />
+              </div>
+              <span className="section-tag tag-waikawa" style={{marginBottom: '0.5rem'}}>Chat</span>
+              <h3 className="offer-card-title">Community</h3>
+              <p className="offer-card-desc">Read reviews and share your own stories</p>
+              <a href="#" className="offer-link">
+                Rate <ChevronRight size={14} className="ml-1" />
+              </a>
+            </div>
+          </div>
+
+          {/* Right Column - Large Card */}
+          <div className="offer-card-large">
+            <div className="offer-large-img">
+              <img src="/assets/pro/pro.jpg" alt="Pro Features" />
+            </div>
+            <div className="text-left">
+              <span className="section-tag tag-lochinvar">Pro</span>
+              <h3 className="section-title" style={{fontSize: '1.75rem', marginBottom: '1rem'}}>Unlock premium features for deeper discovery</h3>
+              <p className="intro-text" style={{marginBottom: '2rem', textAlign: 'left'}}>Upgrade your journey with AI planning and translation</p>
+              <div className="flex gap-4">
+                <button className="btn-hero-primary">Upgrade</button>
+                <button className="mission-btn-learn">
+                  Learn <ChevronRight size={14} className="ml-1" />
                 </button>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Box 2 - Lochinvar */}
-          <div className="benefit-box bg-lochinvar">
-            <img src="/assets/hero/10.jpg" className="benefit-img-overlay" alt="Vendors" />
-            <div className="benefit-content">
-              <Users size={32} className="benefit-icon" />
-              <h3>For local vendors</h3>
-              <p>Expand your reach and share your craft with a global audience of curious travelers</p>
-              <div className="benefit-actions">
-                <button className="btn-hero-secondary">Join now</button>
-                <button className="benefit-btn-dive">
-                  Connect <ChevronRight size={14} className="ml-1" />
+
+
+      {/* GO DEEPER WITH PRO SECTION */}
+      <section className="pro-section" id="pro">
+        <div className="pro-container">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="section-tag tag-trendy">Premium</span>
+            <h2 className="section-title">Go deeper with Pro</h2>
+            <p className="intro-text mb-8">
+              Unlock tools built for serious travelers and vendors. Plan smarter, translate freely, and track what matters.
+            </p>
+            <div className="flex justify-center items-center gap-4">
+              <button className="btn-hero-primary">Upgrade</button>
+              <button className="mission-btn-learn">
+                Learn <ChevronRight size={14} className="ml-1" />
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="pro-tabs">
+            <button 
+              className={`pro-tab-btn ${activeProTab === 'planning' ? 'active' : ''}`}
+              onClick={() => setActiveProTab('planning')}
+            >
+              AI planning
+            </button>
+            <button 
+              className={`pro-tab-btn ${activeProTab === 'translation' ? 'active' : ''}`}
+              onClick={() => setActiveProTab('translation')}
+            >
+              Smart translation
+            </button>
+            <button 
+              className={`pro-tab-btn ${activeProTab === 'insights' ? 'active' : ''}`}
+              onClick={() => setActiveProTab('insights')}
+            >
+              Vendor insights
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="pro-content-box">
+            <div className="pro-image-wrapper">
+              <img src={proFeatures[activeProTab].image} alt={proFeatures[activeProTab].title} />
+            </div>
+            <div className="pro-text-content">
+              <span className="section-tag tag-lochinvar">{proFeatures[activeProTab].tag}</span>
+              <h3 className="section-title" style={{fontSize: '2rem', marginBottom: '1rem'}}>{proFeatures[activeProTab].title}</h3>
+              <p className="intro-text" style={{textAlign: 'left', marginBottom: '2rem'}}>
+                {proFeatures[activeProTab].desc}
+              </p>
+              <div className="flex gap-4">
+                <button className="btn-hero-primary">{proFeatures[activeProTab].ctaPrimary}</button>
+                <button className="mission-btn-learn">
+                  {proFeatures[activeProTab].ctaSecondary} <ChevronRight size={14} className="ml-1" />
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS SECTION */}
+      <section className="steps-section">
+        <div className="section-intro">
+          <span className="section-tag tag-waikawa">Simple</span>
+          <h2 className="section-title">How it works</h2>
+          <p className="intro-text">Four steps from discovery to connection</p>
+        </div>
+
+        <div className="steps-grid">
+          {/* Step 1 */}
+          <div className="step-card">
+            <div>
+              <Search className="step-icon" size={32} />
+              <h3 className="step-title">Browse authentic listings and real stories</h3>
+              <p className="step-desc">Scroll through experiences and crafts that matter</p>
+            </div>
+            <a href="#" className="step-link">
+              Browse <ChevronRight size={14} className="ml-1" />
+            </a>
+          </div>
+
+          {/* Step 2 */}
+          <div className="step-card">
+            <div>
+              <FileText className="step-icon" size={32} />
+              <h3 className="step-title">Read details, see photos and cultural background</h3>
+              <p className="step-desc">Every listing tells you what to expect</p>
+            </div>
+            <a href="#" className="step-link">
+              Discover <ChevronRight size={14} className="ml-1" />
+            </a>
+          </div>
+
+          {/* Step 3 */}
+          <div className="step-card">
+            <div>
+              <Phone className="step-icon" size={32} />
+              <h3 className="step-title">Contact the vendor directly by phone</h3>
+              <p className="step-desc">Speak with them, ask questions, build trust</p>
+            </div>
+            <a href="#" className="step-link">
+              Connect <ChevronRight size={14} className="ml-1" />
+            </a>
+          </div>
+
+          {/* Step 4 */}
+          <div className="step-card">
+            <div>
+              <CalendarCheck className="step-icon" size={32} />
+              <h3 className="step-title">Request a booking through the platform</h3>
+              <p className="step-desc">Confirm dates and details with confidence</p>
+            </div>
+            <a href="#" className="step-link">
+              Book <ChevronRight size={14} className="ml-1" />
+            </a>
           </div>
         </div>
       </section>
 
       {/* TEAM SECTION */}
-      <section className="team-section">
+      <section className="team-section" id="team">
         <div className="section-intro">
           <span className="section-tag tag-lochinvar">Team</span>
           <h2 className="section-title">Our passionate team</h2>
@@ -211,12 +307,12 @@ const LandingPage: React.FC = () => {
 
         <div className="team-grid">
           {[
-            { name: 'Niveka', role: 'Team Lead / Backend Developer', desc: 'Leads the team, manages project structure, and oversees API integration.', image: 'niveka.jpg' },
-            { name: 'Dulasini', role: 'Backend Developer', desc: 'Develops authentication APIs, manages user data, and handles security logic.', image: 'dulasini.jpg' },
-            { name: 'Yenulka', role: 'Backend Developer', desc: 'Creates CRUD APIs, manages database schemas, and handles server-side validation.', image: 'yenulka.jpg' },
-            { name: 'Priyan', role: 'Frontend Developer', desc: 'Focuses on styling, responsiveness, and improving overall visual design.', image: 'priyan.jpg' },
-            { name: 'Yeran', role: 'Frontend Developer', desc: 'Handles form pages, user input validation, and connecting UI forms to APIs.', image: 'yeran.jpg' },
-            { name: 'Matheesha', role: 'Frontend Developer', desc: 'Responsible for building main page layouts and core UI components.', image: 'matheesha.jpg' },
+            { name: 'Niveka Wijeratne', role: 'Team Lead / Backend Developer', desc: 'Leads the team, manages project structure, and oversees API integration.', image: 'niveka.jpg' },
+            { name: 'Dulasini Jayathilaka', role: 'Backend Developer', desc: 'Develops authentication APIs, manages user data, and handles security logic.', image: 'dulasini.jpg' },
+            { name: 'Yenulka De Silva', role: 'Backend Developer', desc: 'Creates CRUD APIs, manages database schemas, and handles server-side validation.', image: 'yenulka.jpg' },
+            { name: 'Keerjanapirian Rasakumaran', role: 'Frontend Developer', desc: 'Focuses on styling, responsiveness, and improving overall visual design.', image: 'priyan.jpg' },
+            { name: 'Yeran Srinayaka', role: 'Frontend Developer', desc: 'Handles form pages, user input validation, and connecting UI forms to APIs.', image: 'yeran.jpg' },
+            { name: 'Matheesha Talagune', role: 'Frontend Developer', desc: 'Responsible for building main page layouts and core UI components.', image: 'matheesha.jpg' },
           ].map((member, i) => (
             <div key={i} className="team-member">
               <div className="team-img-wrapper">
@@ -249,123 +345,95 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* STORIES SPLIT SECTION */}
-      <section className="stories-section">
-        <div className="container mx-auto stories-split">
-          <div className="stories-content">
-            <span className="section-tag tag-white">Stories</span>
-            <h2 className="section-title text-white">Real experiences from travelers and local vendors</h2>
-            <p className="mission-text text-white-opacity">Our platform connects people through authentic cultural journeys</p>
+      {/* WHAT PEOPLE SAY SECTION */}
+      <section className="testimonials-section" id="testimonials">
+        <div className="section-intro">
+          <h2 className="section-title">What people say</h2>
+          <p className="intro-text">Real stories from travelers and vendors</p>
+        </div>
 
-            <div className="stories-grid">
-              <div>
-                <h4 className="story-header text-white">Traveler insights</h4>
-                <p className="story-desc text-white-opacity">Transformative moments that go beyond typical tourism</p>
-              </div>
-              <div>
-                <h4 className="story-header text-white">Vendor perspectives</h4>
-                <p className="story-desc text-white-opacity">Local artisans sharing their craft and traditions with the world</p>
-              </div>
+        <div className="testimonials-grid">
+          {/* Testimonial 1 */}
+          <div className="testimonial-card">
+            <div className="testimonial-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} size={14} fill="#111827" />
+              ))}
             </div>
-
-            <div className="stories-actions">
-              <button className="btn-hero-secondary">Explore</button>
-              <button className="btn-read-more text-white">
-                Read more <ChevronRight size={16} className="ml-1" />
-              </button>
+            <p className="testimonial-text">
+              "I found a cooking class in a family home outside Galle. The vendor answered my call within minutes. That's when I knew this was different."
+            </p>
+            <div className="testimonial-author">
+              <div className="author-avatar">
+                <img src="/assets/stories/s1.webp" alt="Keiko Tanaka" onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=Keiko+Tanaka&background=random'; }} />
+              </div>
+              <div className="author-info">
+                <h4>Keiko Tanaka</h4>
+                <span>Traveler, Japan</span>
+              </div>
             </div>
           </div>
 
-          <div className="stories-image-container">
-            {storyImages.map((img, index) => (
-              <img 
-                key={index}
-                src={img} 
-                className={`stories-img ${index === currentStoryIndex ? 'active' : ''}`} 
-                alt="Stories" 
-                onError={(e) => {
-                  // Fallback if image is missing
-                  (e.target as HTMLImageElement).src = `https://picsum.photos/800/800?random=${30 + index}&grayscale`;
-                }}
-              />
-            ))}
+          {/* Testimonial 2 */}
+          <div className="testimonial-card">
+            <div className="testimonial-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} size={14} fill="#111827" />
+              ))}
+            </div>
+            <p className="testimonial-text">
+              "As a weaver, I was skeptical about online platforms. Ayubowan Connect treated my work with respect and brought me customers who actually care about the craft."
+            </p>
+            <div className="testimonial-author">
+              <div className="author-avatar">
+                <img src="/assets/stories/s2.jpg" alt="Chaminda Herath" onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=Chaminda+Herath&background=random'; }} />
+              </div>
+              <div className="author-info">
+                <h4>Chaminda Herath</h4>
+                <span>Vendor, Matara</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Testimonial 3 */}
+          <div className="testimonial-card">
+            <div className="testimonial-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} size={14} fill="#111827" />
+              ))}
+            </div>
+            <p className="testimonial-text">
+              "The AI planner saved me days of research. It understood what I wanted and built an itinerary that felt like it was made just for me."
+            </p>
+            <div className="testimonial-author">
+              <div className="author-avatar">
+                <img src="/assets/hero/5.jpg" alt="Marcus Chan" onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=Marcus+Chan&background=random'; }} />
+              </div>
+              <div className="author-info">
+                <h4>Marcus Chan</h4>
+                <span>Traveler, Singapore</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CALL TO ACTION */}
-      <section className="cta-section">
-        <div className="container mx-auto cta-content">
-          <h2 className="section-title">Start your cultural journey today</h2>
-          <p className="mission-text" style={{ marginBottom: '2rem' }}>
-            Connect with authentic experiences and support local communities across Sri Lanka
-          </p>
-          <div className="cta-actions">
-            <button className="cta-btn-signup">Sign up</button>
-            <button className="cta-btn-learn">Learn more</button>
-          </div>
-        </div>
-      </section>
-
-      {/* GALLERY SECTION */}
-      <section className="gallery-section">
-        <div className="container mx-auto">
-          <div className="gallery-grid-top">
-            <div className="gallery-large-left">
-              <img 
-                src="/assets/photos/B1.jpeg" 
-                alt="Gallery 1" 
-                className="gallery-img" 
-                onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/600x800/236356/FFF?text=Gallery+1'; }}
-              />
-            </div>
-            <div className="gallery-grid-right">
-              <img 
-                src="/assets/photos/B2.webp" 
-                alt="Gallery 2" 
-                className="gallery-img" 
-                onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/3C5578/FFF?text=Gallery+2'; }}
-              />
-              <img 
-                src="/assets/photos/B3.jpg" 
-                alt="Gallery 3" 
-                className="gallery-img" 
-                onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/6E3C78/FFF?text=Gallery+3'; }}
-              />
-              <img 
-                src="/assets/photos/B4.webp" 
-                alt="Gallery 4" 
-                className="gallery-img" 
-                onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/1A2E29/FFF?text=Gallery+4'; }}
-              />
-              <img 
-                src="/assets/photos/b5.jpg" 
-                alt="Gallery 5" 
-                className="gallery-img" 
-                onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/1E293B/FFF?text=Gallery+5'; }}
-              />
-            </div>
-          </div>
-          <div className="gallery-grid-bottom">
-            <img 
-              src="/assets/photos/B6.jpg" 
-              alt="Gallery 6" 
-              className="gallery-img" 
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/3B1E3B/FFF?text=Gallery+6'; }}
-            />
-            <img 
-              src="/assets/photos/B7.jpg" 
-              alt="Gallery 7" 
-              className="gallery-img" 
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/236356/FFF?text=Gallery+7'; }}
-            />
-            <img 
-              src="/assets/photos/B8.jpg" 
-              alt="Gallery 8" 
-              className="gallery-img" 
-              onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/3C5578/FFF?text=Gallery+8'; }}
-            />
-          </div>
+      {/* READY TO BEGIN SECTION */}
+      <section className="ready-section">
+        <h2 className="ready-title">
+          Ready to begin <br />
+          Your journey starts now
+        </h2>
+        <p className="ready-text">
+          Step into stories that matter. Support real people. Own something with soul.
+        </p>
+        <div className="ready-actions">
+          <button className="btn-ready-primary">
+            Explore
+          </button>
+          <button className="btn-ready-secondary">
+            Become a vendor
+          </button>
         </div>
       </section>
     </div>
@@ -373,3 +441,4 @@ const LandingPage: React.FC = () => {
 };
 
 export default LandingPage;
+
