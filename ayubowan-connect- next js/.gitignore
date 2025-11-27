@@ -18,17 +18,19 @@ dist-ssr
 .idea
 .DS_Store
 *.suo
-*.ntvs*
+.ntvs
 *.njsproj
 *.sln
 *.sw?
 
 # Next.js
-/.next/
-/out/
+.next/
+out/
 
 # Production
-/build
+build
+
 
 # TypeScript
 *.tsbuildinfo
+

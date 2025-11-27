@@ -1,3 +1,0 @@
-module.exports=[30831,a=>{a.n(a.i(71050))},3500,a=>{a.n(a.i(44629))},50113,a=>{a.n(a.i(53536))},26625,a=>{a.n(a.i(53337))},99012,a=>{a.n(a.i(81831))},29885,a=>{"use strict";var b=a.i(94976);function c(){return(0,b.jsx)("div",{className:"min-h-screen pt-24 flex justify-center items-center bg-gray-50",children:(0,b.jsxs)("div",{className:"text-center",children:[(0,b.jsx)("h1",{className:"text-4xl font-serif text-gray-900 mb-4",children:"Vendor Dashboard"}),(0,b.jsx)("p",{className:"text-gray-600",children:"This is a placeholder page for Vendor Dashboard."})]})})}a.s(["default",()=>c])}];
-
-//# sourceMappingURL=ayubowan-connect-%20next%20js_7048dc53._.js.map
