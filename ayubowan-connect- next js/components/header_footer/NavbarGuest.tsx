@@ -44,8 +44,8 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '' }) => {
 
       {/* Action Buttons */}
       <div className="auth-buttons -mr-2">
-        <Link href="/login" className={`btn-login ${buttonBorderClass} inline-block text-center pt-1.5`}>Log in</Link>
-        <Link href="/login" className="btn-signup inline-block text-center pt-1.5">Sign up</Link>
+        <a href="#" onClick={(e) => e.preventDefault()} className={`btn-login ${buttonBorderClass} inline-block text-center pt-1.5`}>Log in</a>
+        <a href="#" onClick={(e) => e.preventDefault()} className="btn-signup inline-block text-center pt-1.5">Sign up</a>
       </div>
     </div>
   );

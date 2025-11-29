@@ -4,7 +4,7 @@
   top: 0;
   width: 100%;
   z-index: 50;
-  transition: transform 0.3s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+  transition: transform 0.3s ease-in-out, background-color 0.3s ease, color 0.3s ease, backdrop-filter 0.3s ease;
   height: 5rem; /* h-20 */
   display: flex;
   align-items: center;
@@ -21,9 +21,12 @@
 
 /* State: Transparent (Home Top) */
 .global-header.header-transparent {
-  background-color: transparent;
+  background-color: rgba(0, 0, 0, 0.2); /* Slight dark tint for better text readability */
+  backdrop-filter: blur(8px); /* The blur effect you requested */
+  -webkit-backdrop-filter: blur(8px); /* Safari support */
   color: white;
   box-shadow: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
 }
 
 /* State: Solid (Scrolled or other pages) */

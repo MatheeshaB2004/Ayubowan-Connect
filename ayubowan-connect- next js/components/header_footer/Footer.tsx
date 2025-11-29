@@ -35,11 +35,11 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="footer-heading">Explore</h3>
             <ul className="footer-links">
-              <li><Link href="/about">About us</Link></li>
-              <li><Link href="/experiences">Experiences</Link></li>
-              <li><Link href="/events">Events</Link></li>
-              <li><Link href="/blog">Blog</Link></li>
-              <li><Link href="/support">Support</Link></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>About us</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Experiences</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Events</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Blog</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Support</a></li>
             </ul>
           </div>
 
@@ -47,11 +47,11 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="footer-heading">Connect</h3>
             <ul className="footer-links">
-              <li><Link href="/vendors">Vendors</Link></li>
-              <li><Link href="/community">Community</Link></li>
-              <li><Link href="/partners">Partners</Link></li>
-              <li><Link href="/support">Support</Link></li>
-              <li><Link href="/help">Help</Link></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Vendors</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Community</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Partners</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Support</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Help</a></li>
             </ul>
           </div>
 
@@ -59,11 +59,11 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="footer-heading">Legal</h3>
             <ul className="footer-links">
-              <li><Link href="/privacy">Privacy</Link></li>
-              <li><Link href="/terms">Terms</Link></li>
-              <li><Link href="/cookies">Cookies</Link></li>
-              <li><Link href="/compliance">Compliance</Link></li>
-              <li><Link href="/contact">Contact</Link></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Privacy</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Terms</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Cookies</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Compliance</a></li>
+              <li><a href="#" onClick={(e) => e.preventDefault()}>Contact</a></li>
             </ul>
           </div>
 
@@ -90,9 +90,9 @@ const Footer: React.FC = () => {
 
         </div>
         <div className="footer-bottom">
-             <Link href="/privacy">Privacy policy</Link>
-             <Link href="/terms">Terms of service</Link>
-             <Link href="/cookies">Cookie settings</Link>
+             <a href="#" onClick={(e) => e.preventDefault()}>Privacy policy</a>
+             <a href="#" onClick={(e) => e.preventDefault()}>Terms of service</a>
+             <a href="#" onClick={(e) => e.preventDefault()}>Cookie settings</a>
         </div>
       </div>
     </footer>

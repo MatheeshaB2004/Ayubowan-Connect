@@ -1,7 +1,7 @@
 /* Hero Section */
 .landing-hero {
   position: relative;
-  height: 85vh;
+  height: 92vh;
   width: 100%;
   display: flex;
   align-items: center;
@@ -38,6 +38,7 @@
   text-align: center;
   max-width: 56rem;
   padding: 0 1rem;
+  margin-top: 5rem;
 }
 
 .hero-title {
@@ -109,12 +110,23 @@
   background-color: #e5e7eb;
 }
 
+/* Offer Section */
+.offer-section {
+  background-color: #f9fafb;
+  padding-bottom: 4rem;
+}
+
 /* Section Intro */
 .section-intro {
   padding: 5rem 1rem;
   text-align: center;
   max-width: 48rem;
   margin: 0 auto;
+}
+
+/* Specific adjustment for How It Works intro to reduce top space */
+.steps-section .section-intro {
+  padding-top: 0;
 }
 
 .section-intro-mission {
@@ -137,7 +149,21 @@
   font-family: var(--font-serif);
   font-size: 2.25rem;
   color: #111827;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.section-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background-color: var(--lochinvar);
+  border-radius: 2px;
 }
 
 @media (min-width: 768px) {
@@ -532,11 +558,21 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+/* How It Works Section */
+.steps-section {
+  padding-top: 2rem; /* Reduced from default section padding */
+  padding-bottom: 5rem;
+}
+
 /* Team Section */
 .team-section {
-  padding: 5rem 0;
+  padding: 3rem 0 5rem 0; /* Reduced top padding from 5rem to 3rem */
   background-color: var(--lochinvar);
   color: white;
+}
+
+.team-section .section-intro {
+  padding-top: 0; /* Remove extra padding from the intro container */
 }
 
 .team-section .section-title,
@@ -545,8 +581,8 @@
   color: white;
 }
 
-.team-section .section-tag {
-  opacity: 0.9;
+.team-section .section-title::after {
+  background-color: white; /* Change underline to white for visibility on green bg */
 }
 
 .team-grid {
@@ -992,22 +1028,45 @@
 }
 
 .offer-card-large {
-  background-color: rgba(55, 150, 131, 0.08);
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
   padding: 2rem;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 530px;
   transition: all 0.3s ease;
-  border: 1px solid transparent;
+  border: 2px solid rgba(141, 90, 151, 0.15); /* Thicker, subtle purple border */
+  box-shadow: 0 10px 25px -5px rgba(141, 90, 151, 0.08); /* Soft purple glow */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Pro Accent Line */
+.offer-card-large::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--lochinvar), var(--trendy));
 }
 
 .offer-card-large:hover {
   transform: translateY(-5px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  border-color: var(--trendy);
-  background-color: white;
+  box-shadow: 0 25px 35px -5px rgba(141, 90, 151, 0.15); /* Stronger purple glow on hover */
+  border-color: rgba(141, 90, 151, 0.5); /* Distinct purple border on hover */
+}
+
+/* Remove the underline from the title inside the large card */
+.offer-card-large .section-title {
+  padding-bottom: 0;
+  margin-bottom: 1rem;
+}
+
+.offer-card-large .section-title::after {
+  display: none;
 }
 
 .offer-large-img {
