@@ -5,7 +5,7 @@ import {
   ChevronRight, Linkedin, Twitter, Globe, 
   Calendar, Map, ShoppingBag, MessageCircle, 
   Search, FileText, Phone, CalendarCheck,
-  Star
+  Star, Bot
 } from 'lucide-react';
 import '../../styles/pages/Landing.css';
 
@@ -145,13 +145,13 @@ const LandingPage: React.FC = () => {
             {/* Card 4 */}
             <div className="offer-card">
               <div className="offer-icon-wrapper">
-                <MessageCircle size={24} />
+                <Bot size={24} />
               </div>
-              <span className="section-tag tag-waikawa" style={{marginBottom: '0.5rem'}}>Chat</span>
-              <h3 className="offer-card-title">Community</h3>
-              <p className="offer-card-desc">Read reviews and share your own stories</p>
+              <span className="section-tag tag-waikawa" style={{marginBottom: '0.5rem'}}>Assistant</span>
+              <h3 className="offer-card-title">NLP Chatbot</h3>
+              <p className="offer-card-desc">Smart travel assistance powered by natural language processing</p>
               <a href="#" className="offer-link">
-                Rate <ChevronRight size={14} className="ml-1" />
+                Chat now <ChevronRight size={14} className="ml-1" />
               </a>
             </div>
           </div>
