@@ -1165,6 +1165,14 @@
   transition: all 0.3s ease;
 }
 
+.pro-content-box .section-title::after {
+  display: none;
+}
+
+.pro-content-box .section-title {
+  padding-bottom: 0;
+}
+
 @media (min-width: 768px) {
   .pro-content-box {
     flex-direction: row;
