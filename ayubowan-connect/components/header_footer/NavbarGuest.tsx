@@ -14,11 +14,11 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '' }) => {
     <div className="nav-guest-container">
       {/* Navigation Links - Centered Absolutely */}
       <div className="nav-links-center">
-        <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>experiences</Link>
-        <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>events</Link>
-        <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>marketplace</Link>
-        <Link href="/landing#pro" className={`nav-link ${textColorClass}`}>pro</Link>
-        <Link href="/landing#team" className={`nav-link ${textColorClass}`}>team</Link>
+        <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>Experiences</Link>
+        <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>Events</Link>
+        <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>Marketplace</Link>
+        <Link href="/landing#pro" className={`nav-link ${textColorClass}`}>Pro</Link>
+        <Link href="/landing#team" className={`nav-link ${textColorClass}`}>Team</Link>
         
         <div className="relative group">
           <button className={`nav-link more-dropdown-btn ${textColorClass}`} suppressHydrationWarning>
