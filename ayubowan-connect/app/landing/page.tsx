@@ -309,7 +309,7 @@ const LandingPage: React.FC = () => {
         <div className="team-grid">
           {[
             { name: 'Niveka Wijeratne', role: 'Team Lead / Backend Developer', desc: 'Leads the team, manages project structure, and oversees API integration.', image: 'niveka.jpg' },
-            { name: 'Dulasini Jayathilaka', role: 'Backend Developer', desc: 'Develops authentication APIs, manages user data, and handles security logic.', image: 'dulasini.jpg' },
+            { name: 'Dulesini Jayathilaka', role: 'Backend Developer', desc: 'Develops authentication APIs, manages user data, and handles security logic.', image: 'Dulesini.jpg' },
             { name: 'Yenulka De Silva', role: 'Backend Developer', desc: 'Creates CRUD APIs, manages database schemas, and handles server-side validation.', image: 'yenulka.jpg' },
             { name: 'Keerjanapirian Rasakumaran', role: 'Frontend Developer', desc: 'Focuses on styling, responsiveness, and improving overall visual design.', image: 'priyan.jpg' },
             { name: 'Yeran Srinayaka', role: 'Frontend Developer', desc: 'Handles form pages, user input validation, and connecting UI forms to APIs.', image: 'yeran.jpg' },
