@@ -200,6 +200,22 @@
   z-index: 101;
 }
 
+/* Underline Effect */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -4px;
+  left: 0;
+  background-color: var(--lochinvar);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
 /* Hover States */
 .header-transparent .nav-link:hover {
   color: var(--lochinvar) !important; 
@@ -216,6 +232,10 @@
   background: none;
   border: none;
   padding: 0.5rem 0;
+}
+
+.nav-link.more-dropdown-btn::after {
+  display: none;
 }
 
 .dropdown-menu {
