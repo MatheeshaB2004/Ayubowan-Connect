@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   ChevronRight, Linkedin, Twitter, Globe, 
   Calendar, Map, ShoppingBag, MessageCircle, 
@@ -166,7 +167,9 @@ const LandingPage: React.FC = () => {
               <h3 className="section-title" style={{fontSize: '1.75rem', marginBottom: '1rem'}}>Unlock premium features for deeper discovery</h3>
               <p className="intro-text" style={{marginBottom: '2rem', textAlign: 'left'}}>Upgrade your journey with AI planning and translation</p>
               <div className="flex gap-4">
-                <button className="btn-hero-primary">Upgrade</button>
+                <Link href="/pro" className="btn-hero-primary no-underline flex items-center justify-center">
+                  Upgrade
+                </Link>
                 <button className="mission-btn-learn">
                   Learn <ChevronRight size={14} className="ml-1" />
                 </button>
@@ -188,7 +191,9 @@ const LandingPage: React.FC = () => {
               Unlock tools built for serious travelers and vendors. Plan smarter, translate freely, and track what matters.
             </p>
             <div className="flex justify-center items-center gap-4">
-              <button className="btn-hero-primary">Upgrade</button>
+              <Link href="/pro" className="btn-hero-primary no-underline flex items-center justify-center">
+                Upgrade
+              </Link>
               <button className="mission-btn-learn">
                 Learn <ChevronRight size={14} className="ml-1" />
               </button>
