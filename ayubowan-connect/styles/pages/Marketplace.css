@@ -1,0 +1,39 @@
+.marketplace-container {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.sidebar-section {
+  width: 25%;
+  min-width: 280px;
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+}
+
+.grid-section {
+  width: 75%;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+  align-content: start;
+}
+
+@media (max-width: 768px) {
+  .marketplace-container {
+    flex-direction: column;
+  }
+
+  .sidebar-section {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .grid-section {
+    width: 100%;
+    padding: 16px;
+  }
+}
