@@ -1,0 +1,72 @@
+.sidebar-container {
+  padding: 24px;
+  border-right: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  height: 100%;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.custom-input,
+.custom-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #374151;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.custom-input:focus,
+.custom-select:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+}
+
+.checkbox-group,
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-label,
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #4b5563;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"],
+.radio-label input[type="radio"] {
+  accent-color: #0d9488;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-label:hover,
+.radio-label:hover {
+  color: #111827;
+}
