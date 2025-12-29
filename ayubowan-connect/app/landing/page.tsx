@@ -125,9 +125,9 @@ const LandingPage: React.FC = () => {
               <span className="section-tag tag-waikawa" style={{marginBottom: '0.5rem'}}>Experiences</span>
               <h3 className="offer-card-title">Village tours, cooking classes and traditions</h3>
               <p className="offer-card-desc">Browse</p>
-              <a href="#" className="offer-link">
+              <Link href="/marketplace" className="offer-link">
                 Marketplace <ChevronRight size={14} className="ml-1" />
-              </a>
+              </Link>
             </div>
 
             {/* Card 3 */}
