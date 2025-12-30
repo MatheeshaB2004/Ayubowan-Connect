@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model LocalTourist
+ * 
+ */
+export type LocalTourist = $Result.DefaultSelection<Prisma.$LocalTouristPayload>
+/**
  * Model Vendor
  * 
  */
@@ -61,6 +66,14 @@ export namespace $Enums {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
+export const LocalUserType: {
+  LOCAL: 'LOCAL',
+  TOURIST: 'TOURIST'
+};
+
+export type LocalUserType = (typeof LocalUserType)[keyof typeof LocalUserType]
+
+
 export const VerifiedStatus: {
   PENDING: 'PENDING',
   VERIFIED: 'VERIFIED',
@@ -92,6 +105,10 @@ export type MediaType = (typeof MediaType)[keyof typeof MediaType]
 export type UserRole = $Enums.UserRole
 
 export const UserRole: typeof $Enums.UserRole
+
+export type LocalUserType = $Enums.LocalUserType
+
+export const LocalUserType: typeof $Enums.LocalUserType
 
 export type VerifiedStatus = $Enums.VerifiedStatus
 
@@ -237,6 +254,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs>;
+
+  /**
+   * `prisma.localTourist`: Exposes CRUD operations for the **LocalTourist** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LocalTourists
+    * const localTourists = await prisma.localTourist.findMany()
+    * ```
+    */
+  get localTourist(): Prisma.LocalTouristDelegate<ExtArgs>;
 
   /**
    * `prisma.vendor`: Exposes CRUD operations for the **Vendor** model.
@@ -739,6 +766,7 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    LocalTourist: 'LocalTourist',
     Vendor: 'Vendor',
     VendorLocation: 'VendorLocation',
     ListingCategory: 'ListingCategory',
@@ -760,7 +788,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "vendor" | "vendorLocation" | "listingCategory" | "listing" | "listingMedia" | "listingSearchIndex"
+      modelProps: "user" | "localTourist" | "vendor" | "vendorLocation" | "listingCategory" | "listing" | "listingMedia" | "listingSearchIndex"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -831,6 +859,76 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      LocalTourist: {
+        payload: Prisma.$LocalTouristPayload<ExtArgs>
+        fields: Prisma.LocalTouristFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LocalTouristFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LocalTouristFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload>
+          }
+          findFirst: {
+            args: Prisma.LocalTouristFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LocalTouristFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload>
+          }
+          findMany: {
+            args: Prisma.LocalTouristFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload>[]
+          }
+          create: {
+            args: Prisma.LocalTouristCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload>
+          }
+          createMany: {
+            args: Prisma.LocalTouristCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LocalTouristCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload>[]
+          }
+          delete: {
+            args: Prisma.LocalTouristDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload>
+          }
+          update: {
+            args: Prisma.LocalTouristUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload>
+          }
+          deleteMany: {
+            args: Prisma.LocalTouristDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LocalTouristUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.LocalTouristUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LocalTouristPayload>
+          }
+          aggregate: {
+            args: Prisma.LocalTouristAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLocalTourist>
+          }
+          groupBy: {
+            args: Prisma.LocalTouristGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LocalTouristGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LocalTouristCountArgs<ExtArgs>
+            result: $Utils.Optional<LocalTouristCountAggregateOutputType> | number
           }
         }
       }
@@ -1770,6 +1868,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: boolean
     vendor?: boolean | User$vendorArgs<ExtArgs>
+    localTourist?: boolean | User$localTouristArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1796,6 +1895,7 @@ export namespace Prisma {
 
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     vendor?: boolean | User$vendorArgs<ExtArgs>
+    localTourist?: boolean | User$localTouristArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
@@ -1803,6 +1903,7 @@ export namespace Prisma {
     name: "User"
     objects: {
       vendor: Prisma.$VendorPayload<ExtArgs> | null
+      localTourist: Prisma.$LocalTouristPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: number
@@ -2178,6 +2279,7 @@ export namespace Prisma {
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     vendor<T extends User$vendorArgs<ExtArgs> = {}>(args?: Subset<T, User$vendorArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    localTourist<T extends User$localTouristArgs<ExtArgs> = {}>(args?: Subset<T, User$localTouristArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2544,6 +2646,21 @@ export namespace Prisma {
   }
 
   /**
+   * User.localTourist
+   */
+  export type User$localTouristArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    where?: LocalTouristWhereInput
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2555,6 +2672,1053 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LocalTourist
+   */
+
+  export type AggregateLocalTourist = {
+    _count: LocalTouristCountAggregateOutputType | null
+    _avg: LocalTouristAvgAggregateOutputType | null
+    _sum: LocalTouristSumAggregateOutputType | null
+    _min: LocalTouristMinAggregateOutputType | null
+    _max: LocalTouristMaxAggregateOutputType | null
+  }
+
+  export type LocalTouristAvgAggregateOutputType = {
+    userId: number | null
+  }
+
+  export type LocalTouristSumAggregateOutputType = {
+    userId: number | null
+  }
+
+  export type LocalTouristMinAggregateOutputType = {
+    userId: number | null
+    fullName: string | null
+    profilePhotoUrl: string | null
+    userType: $Enums.LocalUserType | null
+    nationality: string | null
+    dateOfBirth: Date | null
+    preferredLanguage: string | null
+    isProUser: boolean | null
+    proSubscriptionExpiry: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type LocalTouristMaxAggregateOutputType = {
+    userId: number | null
+    fullName: string | null
+    profilePhotoUrl: string | null
+    userType: $Enums.LocalUserType | null
+    nationality: string | null
+    dateOfBirth: Date | null
+    preferredLanguage: string | null
+    isProUser: boolean | null
+    proSubscriptionExpiry: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type LocalTouristCountAggregateOutputType = {
+    userId: number
+    fullName: number
+    profilePhotoUrl: number
+    userType: number
+    nationality: number
+    dateOfBirth: number
+    preferredLanguage: number
+    interests: number
+    isProUser: number
+    proSubscriptionExpiry: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type LocalTouristAvgAggregateInputType = {
+    userId?: true
+  }
+
+  export type LocalTouristSumAggregateInputType = {
+    userId?: true
+  }
+
+  export type LocalTouristMinAggregateInputType = {
+    userId?: true
+    fullName?: true
+    profilePhotoUrl?: true
+    userType?: true
+    nationality?: true
+    dateOfBirth?: true
+    preferredLanguage?: true
+    isProUser?: true
+    proSubscriptionExpiry?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type LocalTouristMaxAggregateInputType = {
+    userId?: true
+    fullName?: true
+    profilePhotoUrl?: true
+    userType?: true
+    nationality?: true
+    dateOfBirth?: true
+    preferredLanguage?: true
+    isProUser?: true
+    proSubscriptionExpiry?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type LocalTouristCountAggregateInputType = {
+    userId?: true
+    fullName?: true
+    profilePhotoUrl?: true
+    userType?: true
+    nationality?: true
+    dateOfBirth?: true
+    preferredLanguage?: true
+    interests?: true
+    isProUser?: true
+    proSubscriptionExpiry?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type LocalTouristAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LocalTourist to aggregate.
+     */
+    where?: LocalTouristWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LocalTourists to fetch.
+     */
+    orderBy?: LocalTouristOrderByWithRelationInput | LocalTouristOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LocalTouristWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LocalTourists from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LocalTourists.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LocalTourists
+    **/
+    _count?: true | LocalTouristCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: LocalTouristAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: LocalTouristSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LocalTouristMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LocalTouristMaxAggregateInputType
+  }
+
+  export type GetLocalTouristAggregateType<T extends LocalTouristAggregateArgs> = {
+        [P in keyof T & keyof AggregateLocalTourist]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLocalTourist[P]>
+      : GetScalarType<T[P], AggregateLocalTourist[P]>
+  }
+
+
+
+
+  export type LocalTouristGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LocalTouristWhereInput
+    orderBy?: LocalTouristOrderByWithAggregationInput | LocalTouristOrderByWithAggregationInput[]
+    by: LocalTouristScalarFieldEnum[] | LocalTouristScalarFieldEnum
+    having?: LocalTouristScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LocalTouristCountAggregateInputType | true
+    _avg?: LocalTouristAvgAggregateInputType
+    _sum?: LocalTouristSumAggregateInputType
+    _min?: LocalTouristMinAggregateInputType
+    _max?: LocalTouristMaxAggregateInputType
+  }
+
+  export type LocalTouristGroupByOutputType = {
+    userId: number
+    fullName: string
+    profilePhotoUrl: string | null
+    userType: $Enums.LocalUserType
+    nationality: string | null
+    dateOfBirth: Date | null
+    preferredLanguage: string
+    interests: JsonValue | null
+    isProUser: boolean
+    proSubscriptionExpiry: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: LocalTouristCountAggregateOutputType | null
+    _avg: LocalTouristAvgAggregateOutputType | null
+    _sum: LocalTouristSumAggregateOutputType | null
+    _min: LocalTouristMinAggregateOutputType | null
+    _max: LocalTouristMaxAggregateOutputType | null
+  }
+
+  type GetLocalTouristGroupByPayload<T extends LocalTouristGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LocalTouristGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LocalTouristGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LocalTouristGroupByOutputType[P]>
+            : GetScalarType<T[P], LocalTouristGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LocalTouristSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userId?: boolean
+    fullName?: boolean
+    profilePhotoUrl?: boolean
+    userType?: boolean
+    nationality?: boolean
+    dateOfBirth?: boolean
+    preferredLanguage?: boolean
+    interests?: boolean
+    isProUser?: boolean
+    proSubscriptionExpiry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["localTourist"]>
+
+  export type LocalTouristSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userId?: boolean
+    fullName?: boolean
+    profilePhotoUrl?: boolean
+    userType?: boolean
+    nationality?: boolean
+    dateOfBirth?: boolean
+    preferredLanguage?: boolean
+    interests?: boolean
+    isProUser?: boolean
+    proSubscriptionExpiry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["localTourist"]>
+
+  export type LocalTouristSelectScalar = {
+    userId?: boolean
+    fullName?: boolean
+    profilePhotoUrl?: boolean
+    userType?: boolean
+    nationality?: boolean
+    dateOfBirth?: boolean
+    preferredLanguage?: boolean
+    interests?: boolean
+    isProUser?: boolean
+    proSubscriptionExpiry?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type LocalTouristInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type LocalTouristIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $LocalTouristPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LocalTourist"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      userId: number
+      fullName: string
+      profilePhotoUrl: string | null
+      userType: $Enums.LocalUserType
+      nationality: string | null
+      dateOfBirth: Date | null
+      preferredLanguage: string
+      interests: Prisma.JsonValue | null
+      isProUser: boolean
+      proSubscriptionExpiry: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["localTourist"]>
+    composites: {}
+  }
+
+  type LocalTouristGetPayload<S extends boolean | null | undefined | LocalTouristDefaultArgs> = $Result.GetResult<Prisma.$LocalTouristPayload, S>
+
+  type LocalTouristCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<LocalTouristFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: LocalTouristCountAggregateInputType | true
+    }
+
+  export interface LocalTouristDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LocalTourist'], meta: { name: 'LocalTourist' } }
+    /**
+     * Find zero or one LocalTourist that matches the filter.
+     * @param {LocalTouristFindUniqueArgs} args - Arguments to find a LocalTourist
+     * @example
+     * // Get one LocalTourist
+     * const localTourist = await prisma.localTourist.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LocalTouristFindUniqueArgs>(args: SelectSubset<T, LocalTouristFindUniqueArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one LocalTourist that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {LocalTouristFindUniqueOrThrowArgs} args - Arguments to find a LocalTourist
+     * @example
+     * // Get one LocalTourist
+     * const localTourist = await prisma.localTourist.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LocalTouristFindUniqueOrThrowArgs>(args: SelectSubset<T, LocalTouristFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first LocalTourist that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LocalTouristFindFirstArgs} args - Arguments to find a LocalTourist
+     * @example
+     * // Get one LocalTourist
+     * const localTourist = await prisma.localTourist.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LocalTouristFindFirstArgs>(args?: SelectSubset<T, LocalTouristFindFirstArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first LocalTourist that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LocalTouristFindFirstOrThrowArgs} args - Arguments to find a LocalTourist
+     * @example
+     * // Get one LocalTourist
+     * const localTourist = await prisma.localTourist.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LocalTouristFindFirstOrThrowArgs>(args?: SelectSubset<T, LocalTouristFindFirstOrThrowArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more LocalTourists that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LocalTouristFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LocalTourists
+     * const localTourists = await prisma.localTourist.findMany()
+     * 
+     * // Get first 10 LocalTourists
+     * const localTourists = await prisma.localTourist.findMany({ take: 10 })
+     * 
+     * // Only select the `userId`
+     * const localTouristWithUserIdOnly = await prisma.localTourist.findMany({ select: { userId: true } })
+     * 
+     */
+    findMany<T extends LocalTouristFindManyArgs>(args?: SelectSubset<T, LocalTouristFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a LocalTourist.
+     * @param {LocalTouristCreateArgs} args - Arguments to create a LocalTourist.
+     * @example
+     * // Create one LocalTourist
+     * const LocalTourist = await prisma.localTourist.create({
+     *   data: {
+     *     // ... data to create a LocalTourist
+     *   }
+     * })
+     * 
+     */
+    create<T extends LocalTouristCreateArgs>(args: SelectSubset<T, LocalTouristCreateArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many LocalTourists.
+     * @param {LocalTouristCreateManyArgs} args - Arguments to create many LocalTourists.
+     * @example
+     * // Create many LocalTourists
+     * const localTourist = await prisma.localTourist.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LocalTouristCreateManyArgs>(args?: SelectSubset<T, LocalTouristCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LocalTourists and returns the data saved in the database.
+     * @param {LocalTouristCreateManyAndReturnArgs} args - Arguments to create many LocalTourists.
+     * @example
+     * // Create many LocalTourists
+     * const localTourist = await prisma.localTourist.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LocalTourists and only return the `userId`
+     * const localTouristWithUserIdOnly = await prisma.localTourist.createManyAndReturn({ 
+     *   select: { userId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LocalTouristCreateManyAndReturnArgs>(args?: SelectSubset<T, LocalTouristCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a LocalTourist.
+     * @param {LocalTouristDeleteArgs} args - Arguments to delete one LocalTourist.
+     * @example
+     * // Delete one LocalTourist
+     * const LocalTourist = await prisma.localTourist.delete({
+     *   where: {
+     *     // ... filter to delete one LocalTourist
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LocalTouristDeleteArgs>(args: SelectSubset<T, LocalTouristDeleteArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one LocalTourist.
+     * @param {LocalTouristUpdateArgs} args - Arguments to update one LocalTourist.
+     * @example
+     * // Update one LocalTourist
+     * const localTourist = await prisma.localTourist.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LocalTouristUpdateArgs>(args: SelectSubset<T, LocalTouristUpdateArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more LocalTourists.
+     * @param {LocalTouristDeleteManyArgs} args - Arguments to filter LocalTourists to delete.
+     * @example
+     * // Delete a few LocalTourists
+     * const { count } = await prisma.localTourist.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LocalTouristDeleteManyArgs>(args?: SelectSubset<T, LocalTouristDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LocalTourists.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LocalTouristUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LocalTourists
+     * const localTourist = await prisma.localTourist.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LocalTouristUpdateManyArgs>(args: SelectSubset<T, LocalTouristUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one LocalTourist.
+     * @param {LocalTouristUpsertArgs} args - Arguments to update or create a LocalTourist.
+     * @example
+     * // Update or create a LocalTourist
+     * const localTourist = await prisma.localTourist.upsert({
+     *   create: {
+     *     // ... data to create a LocalTourist
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LocalTourist we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LocalTouristUpsertArgs>(args: SelectSubset<T, LocalTouristUpsertArgs<ExtArgs>>): Prisma__LocalTouristClient<$Result.GetResult<Prisma.$LocalTouristPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of LocalTourists.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LocalTouristCountArgs} args - Arguments to filter LocalTourists to count.
+     * @example
+     * // Count the number of LocalTourists
+     * const count = await prisma.localTourist.count({
+     *   where: {
+     *     // ... the filter for the LocalTourists we want to count
+     *   }
+     * })
+    **/
+    count<T extends LocalTouristCountArgs>(
+      args?: Subset<T, LocalTouristCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LocalTouristCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LocalTourist.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LocalTouristAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LocalTouristAggregateArgs>(args: Subset<T, LocalTouristAggregateArgs>): Prisma.PrismaPromise<GetLocalTouristAggregateType<T>>
+
+    /**
+     * Group by LocalTourist.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LocalTouristGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LocalTouristGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LocalTouristGroupByArgs['orderBy'] }
+        : { orderBy?: LocalTouristGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LocalTouristGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLocalTouristGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LocalTourist model
+   */
+  readonly fields: LocalTouristFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LocalTourist.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LocalTouristClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LocalTourist model
+   */ 
+  interface LocalTouristFieldRefs {
+    readonly userId: FieldRef<"LocalTourist", 'Int'>
+    readonly fullName: FieldRef<"LocalTourist", 'String'>
+    readonly profilePhotoUrl: FieldRef<"LocalTourist", 'String'>
+    readonly userType: FieldRef<"LocalTourist", 'LocalUserType'>
+    readonly nationality: FieldRef<"LocalTourist", 'String'>
+    readonly dateOfBirth: FieldRef<"LocalTourist", 'DateTime'>
+    readonly preferredLanguage: FieldRef<"LocalTourist", 'String'>
+    readonly interests: FieldRef<"LocalTourist", 'Json'>
+    readonly isProUser: FieldRef<"LocalTourist", 'Boolean'>
+    readonly proSubscriptionExpiry: FieldRef<"LocalTourist", 'DateTime'>
+    readonly createdAt: FieldRef<"LocalTourist", 'DateTime'>
+    readonly updatedAt: FieldRef<"LocalTourist", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LocalTourist findUnique
+   */
+  export type LocalTouristFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * Filter, which LocalTourist to fetch.
+     */
+    where: LocalTouristWhereUniqueInput
+  }
+
+  /**
+   * LocalTourist findUniqueOrThrow
+   */
+  export type LocalTouristFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * Filter, which LocalTourist to fetch.
+     */
+    where: LocalTouristWhereUniqueInput
+  }
+
+  /**
+   * LocalTourist findFirst
+   */
+  export type LocalTouristFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * Filter, which LocalTourist to fetch.
+     */
+    where?: LocalTouristWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LocalTourists to fetch.
+     */
+    orderBy?: LocalTouristOrderByWithRelationInput | LocalTouristOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LocalTourists.
+     */
+    cursor?: LocalTouristWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LocalTourists from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LocalTourists.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LocalTourists.
+     */
+    distinct?: LocalTouristScalarFieldEnum | LocalTouristScalarFieldEnum[]
+  }
+
+  /**
+   * LocalTourist findFirstOrThrow
+   */
+  export type LocalTouristFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * Filter, which LocalTourist to fetch.
+     */
+    where?: LocalTouristWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LocalTourists to fetch.
+     */
+    orderBy?: LocalTouristOrderByWithRelationInput | LocalTouristOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LocalTourists.
+     */
+    cursor?: LocalTouristWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LocalTourists from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LocalTourists.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LocalTourists.
+     */
+    distinct?: LocalTouristScalarFieldEnum | LocalTouristScalarFieldEnum[]
+  }
+
+  /**
+   * LocalTourist findMany
+   */
+  export type LocalTouristFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * Filter, which LocalTourists to fetch.
+     */
+    where?: LocalTouristWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LocalTourists to fetch.
+     */
+    orderBy?: LocalTouristOrderByWithRelationInput | LocalTouristOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LocalTourists.
+     */
+    cursor?: LocalTouristWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LocalTourists from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LocalTourists.
+     */
+    skip?: number
+    distinct?: LocalTouristScalarFieldEnum | LocalTouristScalarFieldEnum[]
+  }
+
+  /**
+   * LocalTourist create
+   */
+  export type LocalTouristCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LocalTourist.
+     */
+    data: XOR<LocalTouristCreateInput, LocalTouristUncheckedCreateInput>
+  }
+
+  /**
+   * LocalTourist createMany
+   */
+  export type LocalTouristCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LocalTourists.
+     */
+    data: LocalTouristCreateManyInput | LocalTouristCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LocalTourist createManyAndReturn
+   */
+  export type LocalTouristCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many LocalTourists.
+     */
+    data: LocalTouristCreateManyInput | LocalTouristCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LocalTourist update
+   */
+  export type LocalTouristUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LocalTourist.
+     */
+    data: XOR<LocalTouristUpdateInput, LocalTouristUncheckedUpdateInput>
+    /**
+     * Choose, which LocalTourist to update.
+     */
+    where: LocalTouristWhereUniqueInput
+  }
+
+  /**
+   * LocalTourist updateMany
+   */
+  export type LocalTouristUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LocalTourists.
+     */
+    data: XOR<LocalTouristUpdateManyMutationInput, LocalTouristUncheckedUpdateManyInput>
+    /**
+     * Filter which LocalTourists to update
+     */
+    where?: LocalTouristWhereInput
+  }
+
+  /**
+   * LocalTourist upsert
+   */
+  export type LocalTouristUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LocalTourist to update in case it exists.
+     */
+    where: LocalTouristWhereUniqueInput
+    /**
+     * In case the LocalTourist found by the `where` argument doesn't exist, create a new LocalTourist with this data.
+     */
+    create: XOR<LocalTouristCreateInput, LocalTouristUncheckedCreateInput>
+    /**
+     * In case the LocalTourist was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LocalTouristUpdateInput, LocalTouristUncheckedUpdateInput>
+  }
+
+  /**
+   * LocalTourist delete
+   */
+  export type LocalTouristDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
+    /**
+     * Filter which LocalTourist to delete.
+     */
+    where: LocalTouristWhereUniqueInput
+  }
+
+  /**
+   * LocalTourist deleteMany
+   */
+  export type LocalTouristDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LocalTourists to delete
+     */
+    where?: LocalTouristWhereInput
+  }
+
+  /**
+   * LocalTourist without action
+   */
+  export type LocalTouristDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LocalTourist
+     */
+    select?: LocalTouristSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LocalTouristInclude<ExtArgs> | null
   }
 
 
@@ -9020,6 +10184,24 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+  export const LocalTouristScalarFieldEnum: {
+    userId: 'userId',
+    fullName: 'fullName',
+    profilePhotoUrl: 'profilePhotoUrl',
+    userType: 'userType',
+    nationality: 'nationality',
+    dateOfBirth: 'dateOfBirth',
+    preferredLanguage: 'preferredLanguage',
+    interests: 'interests',
+    isProUser: 'isProUser',
+    proSubscriptionExpiry: 'proSubscriptionExpiry',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type LocalTouristScalarFieldEnum = (typeof LocalTouristScalarFieldEnum)[keyof typeof LocalTouristScalarFieldEnum]
+
+
   export const VendorScalarFieldEnum: {
     id: 'id',
     userId: 'userId',
@@ -9127,6 +10309,14 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
   export const QueryMode: {
     default: 'default',
     insensitive: 'insensitive'
@@ -9141,6 +10331,15 @@ export namespace Prisma {
   };
 
   export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
   /**
@@ -9208,6 +10407,27 @@ export namespace Prisma {
    * Reference to a field of type 'Boolean'
    */
   export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'LocalUserType'
+   */
+  export type EnumLocalUserTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocalUserType'>
+    
+
+
+  /**
+   * Reference to a field of type 'LocalUserType[]'
+   */
+  export type ListEnumLocalUserTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'LocalUserType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Json'
+   */
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
     
 
 
@@ -9283,6 +10503,7 @@ export namespace Prisma {
     isActive?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     vendor?: XOR<VendorNullableRelationFilter, VendorWhereInput> | null
+    localTourist?: XOR<LocalTouristNullableRelationFilter, LocalTouristWhereInput> | null
   }
 
   export type UserOrderByWithRelationInput = {
@@ -9295,6 +10516,7 @@ export namespace Prisma {
     isActive?: SortOrder
     createdAt?: SortOrder
     vendor?: VendorOrderByWithRelationInput
+    localTourist?: LocalTouristOrderByWithRelationInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -9310,6 +10532,7 @@ export namespace Prisma {
     isActive?: BoolFilter<"User"> | boolean
     createdAt?: DateTimeFilter<"User"> | Date | string
     vendor?: XOR<VendorNullableRelationFilter, VendorWhereInput> | null
+    localTourist?: XOR<LocalTouristNullableRelationFilter, LocalTouristWhereInput> | null
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -9340,6 +10563,98 @@ export namespace Prisma {
     lastLoginAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     isActive?: BoolWithAggregatesFilter<"User"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type LocalTouristWhereInput = {
+    AND?: LocalTouristWhereInput | LocalTouristWhereInput[]
+    OR?: LocalTouristWhereInput[]
+    NOT?: LocalTouristWhereInput | LocalTouristWhereInput[]
+    userId?: IntFilter<"LocalTourist"> | number
+    fullName?: StringFilter<"LocalTourist"> | string
+    profilePhotoUrl?: StringNullableFilter<"LocalTourist"> | string | null
+    userType?: EnumLocalUserTypeFilter<"LocalTourist"> | $Enums.LocalUserType
+    nationality?: StringNullableFilter<"LocalTourist"> | string | null
+    dateOfBirth?: DateTimeNullableFilter<"LocalTourist"> | Date | string | null
+    preferredLanguage?: StringFilter<"LocalTourist"> | string
+    interests?: JsonNullableFilter<"LocalTourist">
+    isProUser?: BoolFilter<"LocalTourist"> | boolean
+    proSubscriptionExpiry?: DateTimeNullableFilter<"LocalTourist"> | Date | string | null
+    createdAt?: DateTimeFilter<"LocalTourist"> | Date | string
+    updatedAt?: DateTimeFilter<"LocalTourist"> | Date | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type LocalTouristOrderByWithRelationInput = {
+    userId?: SortOrder
+    fullName?: SortOrder
+    profilePhotoUrl?: SortOrderInput | SortOrder
+    userType?: SortOrder
+    nationality?: SortOrderInput | SortOrder
+    dateOfBirth?: SortOrderInput | SortOrder
+    preferredLanguage?: SortOrder
+    interests?: SortOrderInput | SortOrder
+    isProUser?: SortOrder
+    proSubscriptionExpiry?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type LocalTouristWhereUniqueInput = Prisma.AtLeast<{
+    userId?: number
+    AND?: LocalTouristWhereInput | LocalTouristWhereInput[]
+    OR?: LocalTouristWhereInput[]
+    NOT?: LocalTouristWhereInput | LocalTouristWhereInput[]
+    fullName?: StringFilter<"LocalTourist"> | string
+    profilePhotoUrl?: StringNullableFilter<"LocalTourist"> | string | null
+    userType?: EnumLocalUserTypeFilter<"LocalTourist"> | $Enums.LocalUserType
+    nationality?: StringNullableFilter<"LocalTourist"> | string | null
+    dateOfBirth?: DateTimeNullableFilter<"LocalTourist"> | Date | string | null
+    preferredLanguage?: StringFilter<"LocalTourist"> | string
+    interests?: JsonNullableFilter<"LocalTourist">
+    isProUser?: BoolFilter<"LocalTourist"> | boolean
+    proSubscriptionExpiry?: DateTimeNullableFilter<"LocalTourist"> | Date | string | null
+    createdAt?: DateTimeFilter<"LocalTourist"> | Date | string
+    updatedAt?: DateTimeFilter<"LocalTourist"> | Date | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }, "userId">
+
+  export type LocalTouristOrderByWithAggregationInput = {
+    userId?: SortOrder
+    fullName?: SortOrder
+    profilePhotoUrl?: SortOrderInput | SortOrder
+    userType?: SortOrder
+    nationality?: SortOrderInput | SortOrder
+    dateOfBirth?: SortOrderInput | SortOrder
+    preferredLanguage?: SortOrder
+    interests?: SortOrderInput | SortOrder
+    isProUser?: SortOrder
+    proSubscriptionExpiry?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: LocalTouristCountOrderByAggregateInput
+    _avg?: LocalTouristAvgOrderByAggregateInput
+    _max?: LocalTouristMaxOrderByAggregateInput
+    _min?: LocalTouristMinOrderByAggregateInput
+    _sum?: LocalTouristSumOrderByAggregateInput
+  }
+
+  export type LocalTouristScalarWhereWithAggregatesInput = {
+    AND?: LocalTouristScalarWhereWithAggregatesInput | LocalTouristScalarWhereWithAggregatesInput[]
+    OR?: LocalTouristScalarWhereWithAggregatesInput[]
+    NOT?: LocalTouristScalarWhereWithAggregatesInput | LocalTouristScalarWhereWithAggregatesInput[]
+    userId?: IntWithAggregatesFilter<"LocalTourist"> | number
+    fullName?: StringWithAggregatesFilter<"LocalTourist"> | string
+    profilePhotoUrl?: StringNullableWithAggregatesFilter<"LocalTourist"> | string | null
+    userType?: EnumLocalUserTypeWithAggregatesFilter<"LocalTourist"> | $Enums.LocalUserType
+    nationality?: StringNullableWithAggregatesFilter<"LocalTourist"> | string | null
+    dateOfBirth?: DateTimeNullableWithAggregatesFilter<"LocalTourist"> | Date | string | null
+    preferredLanguage?: StringWithAggregatesFilter<"LocalTourist"> | string
+    interests?: JsonNullableWithAggregatesFilter<"LocalTourist">
+    isProUser?: BoolWithAggregatesFilter<"LocalTourist"> | boolean
+    proSubscriptionExpiry?: DateTimeNullableWithAggregatesFilter<"LocalTourist"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"LocalTourist"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"LocalTourist"> | Date | string
   }
 
   export type VendorWhereInput = {
@@ -9879,6 +11194,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     vendor?: VendorCreateNestedOneWithoutUserInput
+    localTourist?: LocalTouristCreateNestedOneWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -9891,6 +11207,7 @@ export namespace Prisma {
     isActive?: boolean
     createdAt?: Date | string
     vendor?: VendorUncheckedCreateNestedOneWithoutUserInput
+    localTourist?: LocalTouristUncheckedCreateNestedOneWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -9902,6 +11219,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     vendor?: VendorUpdateOneWithoutUserNestedInput
+    localTourist?: LocalTouristUpdateOneWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -9914,6 +11232,7 @@ export namespace Prisma {
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     vendor?: VendorUncheckedUpdateOneWithoutUserNestedInput
+    localTourist?: LocalTouristUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -9946,6 +11265,110 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LocalTouristCreateInput = {
+    fullName: string
+    profilePhotoUrl?: string | null
+    userType: $Enums.LocalUserType
+    nationality?: string | null
+    dateOfBirth?: Date | string | null
+    preferredLanguage?: string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: boolean
+    proSubscriptionExpiry?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutLocalTouristInput
+  }
+
+  export type LocalTouristUncheckedCreateInput = {
+    userId: number
+    fullName: string
+    profilePhotoUrl?: string | null
+    userType: $Enums.LocalUserType
+    nationality?: string | null
+    dateOfBirth?: Date | string | null
+    preferredLanguage?: string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: boolean
+    proSubscriptionExpiry?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LocalTouristUpdateInput = {
+    fullName?: StringFieldUpdateOperationsInput | string
+    profilePhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    userType?: EnumLocalUserTypeFieldUpdateOperationsInput | $Enums.LocalUserType
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    preferredLanguage?: StringFieldUpdateOperationsInput | string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: BoolFieldUpdateOperationsInput | boolean
+    proSubscriptionExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutLocalTouristNestedInput
+  }
+
+  export type LocalTouristUncheckedUpdateInput = {
+    userId?: IntFieldUpdateOperationsInput | number
+    fullName?: StringFieldUpdateOperationsInput | string
+    profilePhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    userType?: EnumLocalUserTypeFieldUpdateOperationsInput | $Enums.LocalUserType
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    preferredLanguage?: StringFieldUpdateOperationsInput | string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: BoolFieldUpdateOperationsInput | boolean
+    proSubscriptionExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LocalTouristCreateManyInput = {
+    userId: number
+    fullName: string
+    profilePhotoUrl?: string | null
+    userType: $Enums.LocalUserType
+    nationality?: string | null
+    dateOfBirth?: Date | string | null
+    preferredLanguage?: string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: boolean
+    proSubscriptionExpiry?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LocalTouristUpdateManyMutationInput = {
+    fullName?: StringFieldUpdateOperationsInput | string
+    profilePhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    userType?: EnumLocalUserTypeFieldUpdateOperationsInput | $Enums.LocalUserType
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    preferredLanguage?: StringFieldUpdateOperationsInput | string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: BoolFieldUpdateOperationsInput | boolean
+    proSubscriptionExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LocalTouristUncheckedUpdateManyInput = {
+    userId?: IntFieldUpdateOperationsInput | number
+    fullName?: StringFieldUpdateOperationsInput | string
+    profilePhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    userType?: EnumLocalUserTypeFieldUpdateOperationsInput | $Enums.LocalUserType
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    preferredLanguage?: StringFieldUpdateOperationsInput | string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: BoolFieldUpdateOperationsInput | boolean
+    proSubscriptionExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type VendorCreateInput = {
@@ -10582,6 +12005,11 @@ export namespace Prisma {
     isNot?: VendorWhereInput | null
   }
 
+  export type LocalTouristNullableRelationFilter = {
+    is?: LocalTouristWhereInput | null
+    isNot?: LocalTouristWhereInput | null
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -10723,6 +12151,144 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type EnumLocalUserTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocalUserType | EnumLocalUserTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.LocalUserType[] | ListEnumLocalUserTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocalUserType[] | ListEnumLocalUserTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocalUserTypeFilter<$PrismaModel> | $Enums.LocalUserType
+  }
+  export type JsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type UserRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type LocalTouristCountOrderByAggregateInput = {
+    userId?: SortOrder
+    fullName?: SortOrder
+    profilePhotoUrl?: SortOrder
+    userType?: SortOrder
+    nationality?: SortOrder
+    dateOfBirth?: SortOrder
+    preferredLanguage?: SortOrder
+    interests?: SortOrder
+    isProUser?: SortOrder
+    proSubscriptionExpiry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LocalTouristAvgOrderByAggregateInput = {
+    userId?: SortOrder
+  }
+
+  export type LocalTouristMaxOrderByAggregateInput = {
+    userId?: SortOrder
+    fullName?: SortOrder
+    profilePhotoUrl?: SortOrder
+    userType?: SortOrder
+    nationality?: SortOrder
+    dateOfBirth?: SortOrder
+    preferredLanguage?: SortOrder
+    isProUser?: SortOrder
+    proSubscriptionExpiry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LocalTouristMinOrderByAggregateInput = {
+    userId?: SortOrder
+    fullName?: SortOrder
+    profilePhotoUrl?: SortOrder
+    userType?: SortOrder
+    nationality?: SortOrder
+    dateOfBirth?: SortOrder
+    preferredLanguage?: SortOrder
+    isProUser?: SortOrder
+    proSubscriptionExpiry?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type LocalTouristSumOrderByAggregateInput = {
+    userId?: SortOrder
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type EnumLocalUserTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocalUserType | EnumLocalUserTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.LocalUserType[] | ListEnumLocalUserTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocalUserType[] | ListEnumLocalUserTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocalUserTypeWithAggregatesFilter<$PrismaModel> | $Enums.LocalUserType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLocalUserTypeFilter<$PrismaModel>
+    _max?: NestedEnumLocalUserTypeFilter<$PrismaModel>
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
   export type IntNullableFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel> | null
     in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
@@ -10750,11 +12316,6 @@ export namespace Prisma {
     in?: $Enums.VerifiedStatus[] | ListEnumVerifiedStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.VerifiedStatus[] | ListEnumVerifiedStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumVerifiedStatusFilter<$PrismaModel> | $Enums.VerifiedStatus
-  }
-
-  export type UserRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
   }
 
   export type VendorLocationListRelationFilter = {
@@ -10839,24 +12400,6 @@ export namespace Prisma {
     establishedYear?: SortOrder
     ratingAverage?: SortOrder
     ratingCount?: SortOrder
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -11274,10 +12817,22 @@ export namespace Prisma {
     connect?: VendorWhereUniqueInput
   }
 
+  export type LocalTouristCreateNestedOneWithoutUserInput = {
+    create?: XOR<LocalTouristCreateWithoutUserInput, LocalTouristUncheckedCreateWithoutUserInput>
+    connectOrCreate?: LocalTouristCreateOrConnectWithoutUserInput
+    connect?: LocalTouristWhereUniqueInput
+  }
+
   export type VendorUncheckedCreateNestedOneWithoutUserInput = {
     create?: XOR<VendorCreateWithoutUserInput, VendorUncheckedCreateWithoutUserInput>
     connectOrCreate?: VendorCreateOrConnectWithoutUserInput
     connect?: VendorWhereUniqueInput
+  }
+
+  export type LocalTouristUncheckedCreateNestedOneWithoutUserInput = {
+    create?: XOR<LocalTouristCreateWithoutUserInput, LocalTouristUncheckedCreateWithoutUserInput>
+    connectOrCreate?: LocalTouristCreateOrConnectWithoutUserInput
+    connect?: LocalTouristWhereUniqueInput
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -11310,6 +12865,16 @@ export namespace Prisma {
     update?: XOR<XOR<VendorUpdateToOneWithWhereWithoutUserInput, VendorUpdateWithoutUserInput>, VendorUncheckedUpdateWithoutUserInput>
   }
 
+  export type LocalTouristUpdateOneWithoutUserNestedInput = {
+    create?: XOR<LocalTouristCreateWithoutUserInput, LocalTouristUncheckedCreateWithoutUserInput>
+    connectOrCreate?: LocalTouristCreateOrConnectWithoutUserInput
+    upsert?: LocalTouristUpsertWithoutUserInput
+    disconnect?: LocalTouristWhereInput | boolean
+    delete?: LocalTouristWhereInput | boolean
+    connect?: LocalTouristWhereUniqueInput
+    update?: XOR<XOR<LocalTouristUpdateToOneWithWhereWithoutUserInput, LocalTouristUpdateWithoutUserInput>, LocalTouristUncheckedUpdateWithoutUserInput>
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -11326,6 +12891,38 @@ export namespace Prisma {
     delete?: VendorWhereInput | boolean
     connect?: VendorWhereUniqueInput
     update?: XOR<XOR<VendorUpdateToOneWithWhereWithoutUserInput, VendorUpdateWithoutUserInput>, VendorUncheckedUpdateWithoutUserInput>
+  }
+
+  export type LocalTouristUncheckedUpdateOneWithoutUserNestedInput = {
+    create?: XOR<LocalTouristCreateWithoutUserInput, LocalTouristUncheckedCreateWithoutUserInput>
+    connectOrCreate?: LocalTouristCreateOrConnectWithoutUserInput
+    upsert?: LocalTouristUpsertWithoutUserInput
+    disconnect?: LocalTouristWhereInput | boolean
+    delete?: LocalTouristWhereInput | boolean
+    connect?: LocalTouristWhereUniqueInput
+    update?: XOR<XOR<LocalTouristUpdateToOneWithWhereWithoutUserInput, LocalTouristUpdateWithoutUserInput>, LocalTouristUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserCreateNestedOneWithoutLocalTouristInput = {
+    create?: XOR<UserCreateWithoutLocalTouristInput, UserUncheckedCreateWithoutLocalTouristInput>
+    connectOrCreate?: UserCreateOrConnectWithoutLocalTouristInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type EnumLocalUserTypeFieldUpdateOperationsInput = {
+    set?: $Enums.LocalUserType
+  }
+
+  export type UserUpdateOneRequiredWithoutLocalTouristNestedInput = {
+    create?: XOR<UserCreateWithoutLocalTouristInput, UserUncheckedCreateWithoutLocalTouristInput>
+    connectOrCreate?: UserCreateOrConnectWithoutLocalTouristInput
+    upsert?: UserUpsertWithoutLocalTouristInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutLocalTouristInput, UserUpdateWithoutLocalTouristInput>, UserUncheckedUpdateWithoutLocalTouristInput>
   }
 
   export type UserCreateNestedOneWithoutVendorInput = {
@@ -11360,10 +12957,6 @@ export namespace Prisma {
     connectOrCreate?: ListingCreateOrConnectWithoutVendorInput | ListingCreateOrConnectWithoutVendorInput[]
     createMany?: ListingCreateManyVendorInputEnvelope
     connect?: ListingWhereUniqueInput | ListingWhereUniqueInput[]
-  }
-
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -11882,11 +13475,11 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
-  export type NestedEnumVerifiedStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.VerifiedStatus | EnumVerifiedStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.VerifiedStatus[] | ListEnumVerifiedStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.VerifiedStatus[] | ListEnumVerifiedStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumVerifiedStatusFilter<$PrismaModel> | $Enums.VerifiedStatus
+  export type NestedEnumLocalUserTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocalUserType | EnumLocalUserTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.LocalUserType[] | ListEnumLocalUserTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocalUserType[] | ListEnumLocalUserTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocalUserTypeFilter<$PrismaModel> | $Enums.LocalUserType
   }
 
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -11904,6 +13497,45 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedStringNullableFilter<$PrismaModel>
     _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumLocalUserTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.LocalUserType | EnumLocalUserTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.LocalUserType[] | ListEnumLocalUserTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.LocalUserType[] | ListEnumLocalUserTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumLocalUserTypeWithAggregatesFilter<$PrismaModel> | $Enums.LocalUserType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumLocalUserTypeFilter<$PrismaModel>
+    _max?: NestedEnumLocalUserTypeFilter<$PrismaModel>
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedEnumVerifiedStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.VerifiedStatus | EnumVerifiedStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.VerifiedStatus[] | ListEnumVerifiedStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.VerifiedStatus[] | ListEnumVerifiedStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumVerifiedStatusFilter<$PrismaModel> | $Enums.VerifiedStatus
   }
 
   export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -12047,6 +13679,39 @@ export namespace Prisma {
     create: XOR<VendorCreateWithoutUserInput, VendorUncheckedCreateWithoutUserInput>
   }
 
+  export type LocalTouristCreateWithoutUserInput = {
+    fullName: string
+    profilePhotoUrl?: string | null
+    userType: $Enums.LocalUserType
+    nationality?: string | null
+    dateOfBirth?: Date | string | null
+    preferredLanguage?: string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: boolean
+    proSubscriptionExpiry?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LocalTouristUncheckedCreateWithoutUserInput = {
+    fullName: string
+    profilePhotoUrl?: string | null
+    userType: $Enums.LocalUserType
+    nationality?: string | null
+    dateOfBirth?: Date | string | null
+    preferredLanguage?: string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: boolean
+    proSubscriptionExpiry?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LocalTouristCreateOrConnectWithoutUserInput = {
+    where: LocalTouristWhereUniqueInput
+    create: XOR<LocalTouristCreateWithoutUserInput, LocalTouristUncheckedCreateWithoutUserInput>
+  }
+
   export type VendorUpsertWithoutUserInput = {
     update: XOR<VendorUpdateWithoutUserInput, VendorUncheckedUpdateWithoutUserInput>
     create: XOR<VendorCreateWithoutUserInput, VendorUncheckedCreateWithoutUserInput>
@@ -12091,6 +13756,107 @@ export namespace Prisma {
     listings?: ListingUncheckedUpdateManyWithoutVendorNestedInput
   }
 
+  export type LocalTouristUpsertWithoutUserInput = {
+    update: XOR<LocalTouristUpdateWithoutUserInput, LocalTouristUncheckedUpdateWithoutUserInput>
+    create: XOR<LocalTouristCreateWithoutUserInput, LocalTouristUncheckedCreateWithoutUserInput>
+    where?: LocalTouristWhereInput
+  }
+
+  export type LocalTouristUpdateToOneWithWhereWithoutUserInput = {
+    where?: LocalTouristWhereInput
+    data: XOR<LocalTouristUpdateWithoutUserInput, LocalTouristUncheckedUpdateWithoutUserInput>
+  }
+
+  export type LocalTouristUpdateWithoutUserInput = {
+    fullName?: StringFieldUpdateOperationsInput | string
+    profilePhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    userType?: EnumLocalUserTypeFieldUpdateOperationsInput | $Enums.LocalUserType
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    preferredLanguage?: StringFieldUpdateOperationsInput | string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: BoolFieldUpdateOperationsInput | boolean
+    proSubscriptionExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LocalTouristUncheckedUpdateWithoutUserInput = {
+    fullName?: StringFieldUpdateOperationsInput | string
+    profilePhotoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    userType?: EnumLocalUserTypeFieldUpdateOperationsInput | $Enums.LocalUserType
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    dateOfBirth?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    preferredLanguage?: StringFieldUpdateOperationsInput | string
+    interests?: NullableJsonNullValueInput | InputJsonValue
+    isProUser?: BoolFieldUpdateOperationsInput | boolean
+    proSubscriptionExpiry?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserCreateWithoutLocalTouristInput = {
+    fullName: string
+    email: string
+    passwordHash: string
+    role?: $Enums.UserRole
+    lastLoginAt?: Date | string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    vendor?: VendorCreateNestedOneWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutLocalTouristInput = {
+    id?: number
+    fullName: string
+    email: string
+    passwordHash: string
+    role?: $Enums.UserRole
+    lastLoginAt?: Date | string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    vendor?: VendorUncheckedCreateNestedOneWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutLocalTouristInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutLocalTouristInput, UserUncheckedCreateWithoutLocalTouristInput>
+  }
+
+  export type UserUpsertWithoutLocalTouristInput = {
+    update: XOR<UserUpdateWithoutLocalTouristInput, UserUncheckedUpdateWithoutLocalTouristInput>
+    create: XOR<UserCreateWithoutLocalTouristInput, UserUncheckedCreateWithoutLocalTouristInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutLocalTouristInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutLocalTouristInput, UserUncheckedUpdateWithoutLocalTouristInput>
+  }
+
+  export type UserUpdateWithoutLocalTouristInput = {
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    vendor?: VendorUpdateOneWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutLocalTouristInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    fullName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    vendor?: VendorUncheckedUpdateOneWithoutUserNestedInput
+  }
+
   export type UserCreateWithoutVendorInput = {
     fullName: string
     email: string
@@ -12099,6 +13865,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     isActive?: boolean
     createdAt?: Date | string
+    localTourist?: LocalTouristCreateNestedOneWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutVendorInput = {
@@ -12110,6 +13877,7 @@ export namespace Prisma {
     lastLoginAt?: Date | string | null
     isActive?: boolean
     createdAt?: Date | string
+    localTourist?: LocalTouristUncheckedCreateNestedOneWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutVendorInput = {
@@ -12232,6 +14000,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    localTourist?: LocalTouristUpdateOneWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutVendorInput = {
@@ -12243,6 +14012,7 @@ export namespace Prisma {
     lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isActive?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    localTourist?: LocalTouristUncheckedUpdateOneWithoutUserNestedInput
   }
 
   export type VendorLocationUpsertWithWhereUniqueWithoutVendorInput = {
@@ -13484,6 +15254,10 @@ export namespace Prisma {
      * @deprecated Use UserDefaultArgs instead
      */
     export type UserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UserDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use LocalTouristDefaultArgs instead
+     */
+    export type LocalTouristArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = LocalTouristDefaultArgs<ExtArgs>
     /**
      * @deprecated Use VendorDefaultArgs instead
      */

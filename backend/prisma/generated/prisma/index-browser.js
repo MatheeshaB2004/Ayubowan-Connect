@@ -133,6 +133,21 @@ exports.Prisma.UserScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.LocalTouristScalarFieldEnum = {
+  userId: 'userId',
+  fullName: 'fullName',
+  profilePhotoUrl: 'profilePhotoUrl',
+  userType: 'userType',
+  nationality: 'nationality',
+  dateOfBirth: 'dateOfBirth',
+  preferredLanguage: 'preferredLanguage',
+  interests: 'interests',
+  isProUser: 'isProUser',
+  proSubscriptionExpiry: 'proSubscriptionExpiry',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.VendorScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -219,6 +234,11 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
 exports.Prisma.QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
@@ -228,9 +248,20 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
 exports.UserRole = exports.$Enums.UserRole = {
   USER: 'USER',
   ADMIN: 'ADMIN'
+};
+
+exports.LocalUserType = exports.$Enums.LocalUserType = {
+  LOCAL: 'LOCAL',
+  TOURIST: 'TOURIST'
 };
 
 exports.VerifiedStatus = exports.$Enums.VerifiedStatus = {
@@ -253,6 +284,7 @@ exports.MediaType = exports.$Enums.MediaType = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  LocalTourist: 'LocalTourist',
   Vendor: 'Vendor',
   VendorLocation: 'VendorLocation',
   ListingCategory: 'ListingCategory',

@@ -21,6 +21,11 @@ enum UserRole {
   ADMIN
 }
 
+enum LocalUserType {
+  LOCAL
+  TOURIST
+}
+
 enum VerifiedStatus {
   PENDING
   VERIFIED
@@ -55,9 +60,37 @@ model User {
   createdAt      DateTime  @default(now()) @map("created_at")
 
   vendor         Vendor?
+  localTourist   LocalTourist?
 
   @@map("users")
 }
+
+// LOCAL/TOURIST
+
+model LocalTourist {
+  userId                 Int             @id @map("user_id")
+
+  fullName               String          @map("full_name")
+  profilePhotoUrl        String?         @map("profile_photo_url")
+
+  userType               LocalUserType   @map("user_type")
+  nationality            String?
+  dateOfBirth            DateTime?       @map("date_of_birth")
+
+  preferredLanguage      String          @default("en") @map("preferred_language")
+  interests              Json?
+
+  isProUser              Boolean         @default(false) @map("is_pro_user")
+  proSubscriptionExpiry  DateTime?       @map("pro_subscription_expiry")
+
+  createdAt              DateTime        @default(now()) @map("created_at")
+  updatedAt              DateTime        @updatedAt @map("updated_at")
+
+  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("local_tourist")
+}
+
 
 // VENDOR
 
