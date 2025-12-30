@@ -164,7 +164,7 @@ model Listing {
   vendor           Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   category         ListingCategory  @relation(fields: [categoryId], references: [id])
   location         VendorLocation   @relation(fields: [addressId], references: [id])
-  //media            ListingMedia[]
+  media            ListingMedia[]
   //search           ListingSearchIndex?
 
   @@index([vendorId])
@@ -175,6 +175,27 @@ model Listing {
 
   @@map("listings")
 }
+
+// LISTING MEDIA
+
+model ListingMedia {
+  id           Int       @id @default(autoincrement()) @map("media_id")
+  listingId    Int       @map("listing_id")
+
+  mediaType    MediaType @map("media_type")
+  mediaUrl     String    @map("media_url")
+  caption      String?
+  displayOrder Int       @default(0) @map("display_order")
+  isPrimary    Boolean   @default(false) @map("is_primary")
+
+  uploadedAt   DateTime  @default(now()) @map("uploaded_at")
+
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@map("listing_media")
+}
+
+
 
 
 
