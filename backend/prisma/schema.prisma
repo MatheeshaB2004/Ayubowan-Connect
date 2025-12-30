@@ -83,7 +83,7 @@ model Vendor {
 
   user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   locations        VendorLocation[]
-  //listings         Listing[]
+  listings         Listing[]
 
   @@map("vendors")
 }
@@ -107,7 +107,7 @@ model VendorLocation {
   isMainLocation Boolean  @default(false) @map("is_main_location")
 
   vendor         Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  //listings       Listing[]
+  listings       Listing[]
 
   @@index([vendorId])
   @@index([city])
@@ -116,6 +116,66 @@ model VendorLocation {
 
   @@map("vendor_locations")
 }
+
+// LISTING CATEGORY
+
+model ListingCategory {
+  id           Int       @id @default(autoincrement()) @map("category_id")
+  categoryName String    @unique @map("category_name")
+  isActive     Boolean   @default(true) @map("is_active")
+
+  listings     Listing[]
+
+  @@map("listing_categories")
+}
+
+
+// LISTING
+
+model Listing {
+  id               Int              @id @default(autoincrement()) @map("listing_id")
+  vendorId         Int              @map("vendor_id")
+  categoryId       Int              @map("category_id")
+  addressId        Int              @map("address_id")
+
+  title            String
+  shortDescription String           @map("short_description")
+  longDescription  String?          @db.Text @map("long_description")
+
+  priceMin         Float            @map("price_min")
+  priceMax         Float?           @map("price_max")
+  priceNote        String?           @map("price_note")
+
+  duration         String?
+  capacity         Int?
+  availability     String?
+
+  ratingAverage    Float            @default(0) @map("rating_average")
+  ratingCount      Int              @default(0) @map("rating_count")
+  viewsCount       Int              @default(0) @map("views_count")
+
+  visibilityStatus VisibilityStatus @default(DRAFT) @map("visibility_status")
+  isFeatured       Boolean          @default(false) @map("is_featured")
+  displayPriority  Int              @default(0) @map("display_priority")
+
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  vendor           Vendor           @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  category         ListingCategory  @relation(fields: [categoryId], references: [id])
+  location         VendorLocation   @relation(fields: [addressId], references: [id])
+  //media            ListingMedia[]
+  //search           ListingSearchIndex?
+
+  @@index([vendorId])
+  @@index([categoryId])
+  @@index([visibilityStatus])
+  @@index([priceMin])
+  @@index([priceMax])
+
+  @@map("listings")
+}
+
 
 
 
