@@ -59,4 +59,31 @@ model User {
   @@map("users")
 }
 
+// VENDOR
 
+model Vendor {
+  id               Int            @id @default(autoincrement()) @map("vendor_id")
+  userId           Int            @unique @map("user_id")
+
+  businessName     String         @map("business_name")
+  shortTagline     String?        @map("short_tagline")
+  establishedYear  Int?           @map("established_year")
+
+  ratingAverage    Float          @default(0) @map("rating_average")
+  ratingCount      Int            @default(0) @map("rating_count")
+
+  verifiedStatus   VerifiedStatus @default(PENDING) @map("verified_status")
+  profileComplete  Boolean        @default(false) @map("profile_complete")
+
+  lastActiveAt     DateTime?      @map("last_active_at")
+  isActive         Boolean        @default(true) @map("is_active")
+
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  //locations        VendorLocation[]
+  //listings         Listing[]
+
+  @@map("vendors")
+}
