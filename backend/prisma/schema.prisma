@@ -5,7 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "./generated/prisma"
 }
 
@@ -13,3 +13,50 @@ datasource db {
   provider = "postgresql"
   url = env("DATABASE_URL")
 }
+
+// ENUMS
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum VerifiedStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum VisibilityStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+
+// USER
+
+model User {
+  id             Int       @id @default(autoincrement()) @map("user_id")
+  fullName       String    @map("full_name")
+  email          String    @unique
+  passwordHash   String    @map("password_hash")
+
+  role           UserRole  @default(USER)
+  lastLoginAt    DateTime? @map("last_login_at")
+
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  vendor         Vendor?
+
+  @@map("users")
+}
+
+
