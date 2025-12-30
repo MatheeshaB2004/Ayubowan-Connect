@@ -82,8 +82,40 @@ model Vendor {
   updatedAt        DateTime       @updatedAt @map("updated_at")
 
   user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  //locations        VendorLocation[]
+  locations        VendorLocation[]
   //listings         Listing[]
 
   @@map("vendors")
 }
+
+// VENDOR LOCATION
+
+model VendorLocation {
+  id             Int      @id @default(autoincrement()) @map("location_id")
+  vendorId       Int      @map("vendor_id")
+
+  addressLine1   String   @map("address_line1")
+  addressLine2   String?  @map("address_line2")
+  city           String
+  district       String
+  province       String
+  postalCode     String?  @map("postal_code")
+
+  latitude       Float?
+  longitude      Float?
+
+  isMainLocation Boolean  @default(false) @map("is_main_location")
+
+  vendor         Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  //listings       Listing[]
+
+  @@index([vendorId])
+  @@index([city])
+  @@index([district])
+  @@index([province])
+
+  @@map("vendor_locations")
+}
+
+
+
