@@ -165,7 +165,7 @@ model Listing {
   category         ListingCategory  @relation(fields: [categoryId], references: [id])
   location         VendorLocation   @relation(fields: [addressId], references: [id])
   media            ListingMedia[]
-  //search           ListingSearchIndex?
+  search           ListingSearchIndex?
 
   @@index([vendorId])
   @@index([categoryId])
@@ -194,6 +194,33 @@ model ListingMedia {
 
   @@map("listing_media")
 }
+
+// LISTING SEARCH INDEX 
+
+model ListingSearchIndex {
+  listingId Int    @id @map("listing_id")
+
+  categoryId Int   @map("category_id")
+  priceMin   Float @map("price_min")
+  priceMax   Float? @map("price_max")
+
+  city       String
+  district   String
+  province   String
+
+  listing    Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([priceMin])
+  @@index([priceMax])
+  @@index([city])
+  @@index([district])
+  @@index([province])
+
+  @@map("listing_search_index")
+}
+
+
 
 
 
