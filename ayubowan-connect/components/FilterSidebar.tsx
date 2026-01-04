@@ -24,13 +24,21 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   setPriceRange,
 }) => {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [locationSearch, setLocationSearch] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const locations = [
-    "All", "Kandy", "Colombo", "Galle", "Sigiriya", "Ella", 
-    "Nuwara Eliya", "Jaffna", "Mirissa", "Yala", 
-    "Ambalangoda", "Arugam Bay", "Bentota"
+    "All",
+    "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo", 
+    "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara", 
+    "Kandy", "Kegalle", "Kilinochchi", "Kurunegala", "Mannar", 
+    "Matale", "Matara", "Monaragala", "Mullaitivu", "Nuwara Eliya", 
+    "Polonnaruwa", "Puttalam", "Ratnapura", "Trincomalee", "Vavuniya"
   ];
+
+  const filteredLocations = locations.filter(loc => 
+    loc.toLowerCase().includes(locationSearch.toLowerCase())
+  );
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -80,18 +88,35 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </div>
           {isLocationOpen && (
             <div className="dropdown-list">
-              {locations.map((loc) => (
+              <div style={{ padding: '8px', position: 'sticky', top: 0, backgroundColor: 'white', borderBottom: '1px solid #e5e7eb' }}>
+                <input
+                  type="text"
+                  placeholder="Search locations..."
+                  className="custom-input"
+                  style={{ width: '100%', padding: '8px', fontSize: '0.875rem' }}
+                  value={locationSearch}
+                  onChange={(e) => setLocationSearch(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              {filteredLocations.map((loc) => (
                 <div 
                   key={loc} 
                   className={`dropdown-item ${selectedLocation === loc ? 'selected' : ''}`}
                   onClick={() => {
                     setSelectedLocation(loc);
                     setIsLocationOpen(false);
+                    setLocationSearch("");
                   }}
                 >
                   {loc === 'All' ? 'All Locations' : loc}
                 </div>
               ))}
+              {filteredLocations.length === 0 && (
+                <div className="dropdown-item" style={{ cursor: 'default', color: '#9ca3af', textAlign: 'center' }}>
+                  No locations found
+                </div>
+              )}
             </div>
           )}
         </div>

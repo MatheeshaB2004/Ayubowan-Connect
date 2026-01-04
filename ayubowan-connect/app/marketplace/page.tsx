@@ -11,6 +11,7 @@ const mockListings = [
     title: "Traditional Kandyan Dance",
     price: 2500,
     location: "Kandy",
+    district: "Kandy",
     rating: 4.8,
     imageUrl: "/assets/photos/B4.webp",
     category: "Culture"
@@ -20,6 +21,7 @@ const mockListings = [
     title: "Sigiriya Rock Fortress Tour",
     price: 4500,
     location: "Sigiriya",
+    district: "Matale",
     rating: 4.9,
     imageUrl: "/assets/photos/B6.jpg",
     category: "Culture"
@@ -29,6 +31,7 @@ const mockListings = [
     title: "Ella Train Journey",
     price: 1200,
     location: "Ella",
+    district: "Badulla",
     rating: 4.7,
     imageUrl: "/assets/photos/B7.jpg",
     category: "Nature"
@@ -38,6 +41,7 @@ const mockListings = [
     title: "Galle Fort Walk",
     price: 0,
     location: "Galle",
+    district: "Galle",
     rating: 4.6,
     imageUrl: "/assets/photos/B8.jpg",
     category: "Culture"
@@ -47,6 +51,7 @@ const mockListings = [
     title: "Spicy Street Food Tour",
     price: 3000,
     location: "Colombo",
+    district: "Colombo",
     rating: 4.5,
     imageUrl: "/assets/photos/B4.webp",
     category: "Food"
@@ -56,6 +61,7 @@ const mockListings = [
     title: "Tea Plantation Visit",
     price: 2000,
     location: "Nuwara Eliya",
+    district: "Nuwara Eliya",
     rating: 4.9,
     imageUrl: "/assets/photos/B6.jpg",
     category: "Nature"
@@ -65,6 +71,7 @@ const mockListings = [
     title: "Whale Watching in Mirissa",
     price: 6000,
     location: "Mirissa",
+    district: "Matara",
     rating: 4.8,
     imageUrl: "/assets/photos/B7.jpg",
     category: "Nature"
@@ -74,6 +81,7 @@ const mockListings = [
     title: "Yala National Park Safari",
     price: 8500,
     location: "Yala",
+    district: "Hambantota",
     rating: 4.9,
     imageUrl: "/assets/photos/B4.webp",
     category: "Nature"
@@ -83,6 +91,7 @@ const mockListings = [
     title: "Traditional Mask Carving",
     price: 1500,
     location: "Ambalangoda",
+    district: "Galle",
     rating: 4.7,
     imageUrl: "/assets/photos/B8.jpg",
     category: "Culture"
@@ -92,6 +101,7 @@ const mockListings = [
     title: "Colombo City Tour by Tuk Tuk",
     price: 2500,
     location: "Colombo",
+    district: "Colombo",
     rating: 4.6,
     imageUrl: "/assets/photos/B6.jpg",
     category: "Culture"
@@ -101,6 +111,7 @@ const mockListings = [
     title: "Surfing Lesson in Arugam Bay",
     price: 3500,
     location: "Arugam Bay",
+    district: "Ampara",
     rating: 4.8,
     imageUrl: "/assets/photos/B7.jpg",
     category: "Nature"
@@ -110,6 +121,7 @@ const mockListings = [
     title: "Cooking Class with Local Family",
     price: 2800,
     location: "Kandy",
+    district: "Kandy",
     rating: 4.9,
     imageUrl: "/assets/photos/B4.webp",
     category: "Food"
@@ -119,6 +131,7 @@ const mockListings = [
     title: "Horton Plains Trek",
     price: 4000,
     location: "Nuwara Eliya",
+    district: "Nuwara Eliya",
     rating: 4.7,
     imageUrl: "/assets/photos/B8.jpg",
     category: "Nature"
@@ -128,6 +141,7 @@ const mockListings = [
     title: "Temple of the Tooth Visit",
     price: 1000,
     location: "Kandy",
+    district: "Kandy",
     rating: 4.8,
     imageUrl: "/assets/photos/B6.jpg",
     category: "Culture"
@@ -137,6 +151,7 @@ const mockListings = [
     title: "River Safari in Bentota",
     price: 3000,
     location: "Bentota",
+    district: "Galle",
     rating: 4.5,
     imageUrl: "/assets/photos/B7.jpg",
     category: "Nature"
@@ -146,6 +161,7 @@ const mockListings = [
     title: "Jaffna Food & Culture Tour",
     price: 4500,
     location: "Jaffna",
+    district: "Jaffna",
     rating: 4.8,
     imageUrl: "/assets/photos/B4.webp",
     category: "Food"
@@ -164,7 +180,7 @@ export default function MarketplacePage() {
     const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase());
 
     // Location Filter
-    const matchesLocation = selectedLocation === 'All' || listing.location === selectedLocation;
+    const matchesLocation = selectedLocation === 'All' || listing.district === selectedLocation;
 
     // Category Filter
     const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(listing.category);
