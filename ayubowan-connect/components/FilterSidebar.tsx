@@ -158,6 +158,22 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             />
             Nature
           </label>
+          <label className="checkbox-label">
+            <input 
+              type="checkbox" 
+              checked={selectedCategories.includes('Adventure')}
+              onChange={() => handleCategoryChange('Adventure')}
+            />
+            Adventure
+          </label>
+          <label className="checkbox-label">
+            <input 
+              type="checkbox" 
+              checked={selectedCategories.includes('Wildlife')}
+              onChange={() => handleCategoryChange('Wildlife')}
+            />
+            Wildlife
+          </label>
         </div>
       </div>
 

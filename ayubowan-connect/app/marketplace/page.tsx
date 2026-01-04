@@ -74,7 +74,7 @@ const mockListings = [
     district: "Matara",
     rating: 4.8,
     imageUrl: "/assets/photos/B7.jpg",
-    category: "Nature"
+    category: "Wildlife"
   },
   {
     id: 8,
@@ -84,7 +84,7 @@ const mockListings = [
     district: "Hambantota",
     rating: 4.9,
     imageUrl: "/assets/photos/B4.webp",
-    category: "Nature"
+    category: "Wildlife"
   },
   {
     id: 9,
@@ -114,7 +114,7 @@ const mockListings = [
     district: "Ampara",
     rating: 4.8,
     imageUrl: "/assets/photos/B7.jpg",
-    category: "Nature"
+    category: "Adventure"
   },
   {
     id: 12,
@@ -134,7 +134,7 @@ const mockListings = [
     district: "Nuwara Eliya",
     rating: 4.7,
     imageUrl: "/assets/photos/B8.jpg",
-    category: "Nature"
+    category: "Adventure"
   },
   {
     id: 14,
@@ -154,7 +154,7 @@ const mockListings = [
     district: "Galle",
     rating: 4.5,
     imageUrl: "/assets/photos/B7.jpg",
-    category: "Nature"
+    category: "Wildlife"
   },
   {
     id: 16,
