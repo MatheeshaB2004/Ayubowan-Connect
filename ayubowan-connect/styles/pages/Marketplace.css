@@ -1,9 +1,10 @@
 .marketplace-container {
   display: flex;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #f9fafb;
   padding-top: 6rem;
+  overflow: hidden;
 }
 
 .sidebar-section {
@@ -11,6 +12,8 @@
   min-width: 280px;
   background-color: white;
   border-right: 1px solid #e5e7eb;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .grid-section {
@@ -19,6 +22,8 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .listings-grid {
@@ -54,16 +59,22 @@
 @media (max-width: 768px) {
   .marketplace-container {
     flex-direction: column;
+    height: auto;
+    overflow: visible;
   }
 
   .sidebar-section {
     width: 100%;
     border-right: none;
     border-bottom: 1px solid #e5e7eb;
+    height: auto;
+    overflow-y: visible;
   }
 
   .grid-section {
     width: 100%;
     padding: 16px;
+    height: auto;
+    overflow-y: visible;
   }
 }
