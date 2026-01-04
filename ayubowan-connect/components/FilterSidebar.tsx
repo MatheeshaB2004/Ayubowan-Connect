@@ -11,6 +11,10 @@ interface FilterSidebarProps {
   setSelectedCategories: (categories: string[]) => void;
   priceRange: string;
   setPriceRange: (range: string) => void;
+  minPrice: string;
+  setMinPrice: (price: string) => void;
+  maxPrice: string;
+  setMaxPrice: (price: string) => void;
 }
 
 const FilterSidebar: React.FC<FilterSidebarProps> = ({
@@ -22,6 +26,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   setSelectedCategories,
   priceRange,
   setPriceRange,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
 }) => {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [locationSearch, setLocationSearch] = useState("");
@@ -197,6 +205,25 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             />
             5000+
           </label>
+        </div>
+        
+        <div className="price-inputs" style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+          <input
+            type="number"
+            placeholder="Min"
+            className="custom-input"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            style={{ width: '100%' }}
+          />
+          <input
+            type="number"
+            placeholder="Max"
+            className="custom-input"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            style={{ width: '100%' }}
+          />
         </div>
       </div>
     </aside>

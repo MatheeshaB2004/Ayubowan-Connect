@@ -142,3 +142,14 @@
   background-color: #379683;
   color: white;
 }
+
+/* Hide spin buttons for number inputs */
+.custom-input[type=number]::-webkit-inner-spin-button, 
+.custom-input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+
+.custom-input[type=number] {
+  -moz-appearance: textfield;
+}

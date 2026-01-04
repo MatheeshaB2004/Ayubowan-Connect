@@ -173,7 +173,25 @@ export default function MarketplacePage() {
   const [selectedLocation, setSelectedLocation] = useState('All');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState('all');
+  const [minPrice, setMinPrice] = useState<string>('');
+  const [maxPrice, setMaxPrice] = useState<string>('');
   const [visibleCount, setVisibleCount] = useState(6);
+
+  const handlePriceRangeChange = (range: string) => {
+    setPriceRange(range);
+    setMinPrice('');
+    setMaxPrice('');
+  };
+
+  const handleMinPriceChange = (value: string) => {
+    setMinPrice(value);
+    setPriceRange('custom');
+  };
+
+  const handleMaxPriceChange = (value: string) => {
+    setMaxPrice(value);
+    setPriceRange('custom');
+  };
 
   const filteredListings = mockListings.filter((listing) => {
     // Search Filter
@@ -187,7 +205,11 @@ export default function MarketplacePage() {
 
     // Price Filter
     let matchesPrice = true;
-    if (priceRange === 'under-2000') {
+    if (priceRange === 'custom') {
+      const min = minPrice === '' ? 0 : Number(minPrice);
+      const max = maxPrice === '' ? Infinity : Number(maxPrice);
+      matchesPrice = listing.price >= min && listing.price <= max;
+    } else if (priceRange === 'under-2000') {
       matchesPrice = listing.price < 2000;
     } else if (priceRange === '2000-5000') {
       matchesPrice = listing.price >= 2000 && listing.price <= 5000;
@@ -213,7 +235,11 @@ export default function MarketplacePage() {
           selectedCategories={selectedCategories}
           setSelectedCategories={setSelectedCategories}
           priceRange={priceRange}
-          setPriceRange={setPriceRange}
+          setPriceRange={handlePriceRangeChange}
+          minPrice={minPrice}
+          setMinPrice={handleMinPriceChange}
+          maxPrice={maxPrice}
+          setMaxPrice={handleMaxPriceChange}
         />
       </div>
       <div className="grid-section">
