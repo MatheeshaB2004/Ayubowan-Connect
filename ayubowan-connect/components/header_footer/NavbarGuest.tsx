@@ -14,7 +14,7 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '' }) => {
     <div className="nav-guest-container">
       {/* Navigation Links - Centered Absolutely */}
       <div className="nav-links-center">
-        <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>Experiences</Link>
+        <Link href="/experiences" className={`nav-link ${textColorClass}`}>Experiences</Link>
         <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>Events</Link>
         <Link href="/landing#offer" className={`nav-link ${textColorClass}`}>Marketplace</Link>
         <Link href="/landing#pro" className={`nav-link ${textColorClass}`}>Pro</Link>

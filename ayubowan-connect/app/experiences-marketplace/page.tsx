@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import ExperienceCard from '@/components/ExperienceCard';
 import FilterSidebar from '@/components/FilterSidebar';
-import '@/styles/pages/Experiences.css';
+import '@/styles/pages/ExperiencesMarketplace.css';
 
 const mockListings = [
   {
@@ -225,7 +225,7 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="experiences-container">
+    <div className="marketplace-container">
       <div className="sidebar-section">
         <FilterSidebar 
           searchQuery={searchQuery}

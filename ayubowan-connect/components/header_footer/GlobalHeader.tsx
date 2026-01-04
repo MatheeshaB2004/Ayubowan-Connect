@@ -115,7 +115,7 @@ const GlobalHeader: React.FC = () => {
                  <>
                     <Link href="/experiences" className="mobile-link">Experiences</Link>
                     <Link href="/events" className="mobile-link">Events</Link>
-                    <Link href="/marketplace" className="mobile-link">Marketplace</Link>
+                    <Link href="/landing#offer" className="mobile-link">Marketplace</Link>
                     <div className="mobile-menu-divider">
                       <button className="btn-login" style={{ color: '#374151', borderColor: '#d1d5db' }}>Log in</button>
                       <button className="btn-signup">Sign up</button>
