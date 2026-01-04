@@ -139,7 +139,7 @@ const LandingPage: React.FC = () => {
               <h3 className="offer-card-title">Handmade crafts and authentic local goods</h3>
               <p className="offer-card-desc">Assistant</p>
               <a href="#" className="offer-link">
-                Get personalized recommendations <ChevronRight size={14} className="ml-1" />
+                Shop now <ChevronRight size={14} className="ml-1" />
               </a>
             </div>
 
