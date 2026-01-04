@@ -45,7 +45,7 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({
 
         <div className="card-footer">
           <div className="card-price">
-            ${price} <span>/ person</span>
+            LKR {price} <span>/ person</span>
           </div>
           <button className="view-details-btn">View Details</button>
         </div>
