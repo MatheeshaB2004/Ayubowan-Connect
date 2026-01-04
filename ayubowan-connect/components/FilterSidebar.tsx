@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import '@/styles/components/FilterSidebar.css';
+import { ChevronDown } from 'lucide-react';
 
 interface FilterSidebarProps {
   searchQuery: string;
@@ -22,6 +23,28 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   priceRange,
   setPriceRange,
 }) => {
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const locations = [
+    "All", "Kandy", "Colombo", "Galle", "Sigiriya", "Ella", 
+    "Nuwara Eliya", "Jaffna", "Mirissa", "Yala", 
+    "Ambalangoda", "Arugam Bay", "Bentota"
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsLocationOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const handleCategoryChange = (category: string) => {
     if (selectedCategories.includes(category)) {
       setSelectedCategories(selectedCategories.filter((c) => c !== category));
@@ -47,19 +70,31 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
       {/* Location */}
       <div className="filter-group">
         <h3 className="filter-title">Location</h3>
-        <select 
-          className="custom-select" 
-          value={selectedLocation} 
-          onChange={(e) => setSelectedLocation(e.target.value)}
-        >
-          <option value="All">All Locations</option>
-          <option value="Kandy">Kandy</option>
-          <option value="Colombo">Colombo</option>
-          <option value="Galle">Galle</option>
-          <option value="Sigiriya">Sigiriya</option>
-          <option value="Ella">Ella</option>
-          <option value="Nuwara Eliya">Nuwara Eliya</option>
-        </select>
+        <div className="custom-dropdown" ref={dropdownRef}>
+          <div 
+            className="dropdown-header" 
+            onClick={() => setIsLocationOpen(!isLocationOpen)}
+          >
+            <span>{selectedLocation === 'All' ? 'All Locations' : selectedLocation}</span>
+            <ChevronDown size={16} className={`dropdown-arrow ${isLocationOpen ? 'open' : ''}`} />
+          </div>
+          {isLocationOpen && (
+            <div className="dropdown-list">
+              {locations.map((loc) => (
+                <div 
+                  key={loc} 
+                  className={`dropdown-item ${selectedLocation === loc ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedLocation(loc);
+                    setIsLocationOpen(false);
+                  }}
+                >
+                  {loc === 'All' ? 'All Locations' : loc}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Category */}
