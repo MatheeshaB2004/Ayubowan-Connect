@@ -1,0 +1,1 @@
+export default function Page() { return <h1>admin feature</h1>; }

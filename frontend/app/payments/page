@@ -1,0 +1,1 @@
+export default function Page() { return <h1>payments feature</h1>; }
