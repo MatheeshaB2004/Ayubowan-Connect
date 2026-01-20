@@ -47,14 +47,46 @@ Follow these steps to set up the project locally:
 ## 📂 Project Structure
 
 ```
-ayubowan-connect/
-├── app/                # Next.js App Router pages
-├── components/         # Reusable UI components
-│   ├── common/         # Shared components
-│   └── header_footer/  # Navigation and Footer
-├── context/            # Global state (Auth, etc.)
-├── public/             # Static assets (images, icons)
-└── styles/             # Global and component-specific CSS
+Ayubowan-Connect/
+│
+├── ayubowan-connect/        ← Landing page (DO NOT make any changes here)
+│
+├── frontend/                ← Feature Frontend (Main Application)
+│   ├── app/
+│   │   ├── auth/            ← Authentication UI
+│   │   ├── marketplace/     ← Marketplace UI
+│   │   ├── booking/         ← Booking UI
+│   │   ├── events/          ← Events UI
+│   │   ├── vendor/          ← Vendor management UI
+│   │   ├── payments/        ← Payments UI
+│   │   ├── ai/              ← AI features UI
+│   │   └── admin/           ← Admin UI
+│   │
+│   ├── components/          ← Shared UI components
+│   ├── public/              ← Static assets
+│   ├── styles/              ← Global & component styles
+│   ├── package.json
+│   └── next.config.mjs
+│
+├── backend/                 ← Backend (NestJS + Prisma)
+│   ├── prisma/              ← Database schema & ORM
+│   │   └── schema.prisma
+│   │
+│   ├── src/
+│   │   └── modules/
+│   │       ├── authentication/      ← Auth APIs
+│   │       ├── marketplace/          ← Marketplace APIs
+│   │       ├── booking/               ← Booking APIs
+│   │       ├── events/                ← Events APIs
+│   │       ├── vendor-management/     ← Vendor APIs
+│   │       ├── payments/              ← Payment APIs
+│   │       ├── ai-services/            ← AI APIs
+│   │       └── admin/                  ← Admin APIs
+│   │
+│   ├── package.json
+│   └── nest-cli.json
+│
+└── .gitignore
 ```
 
 ## 🤝 Contributing
