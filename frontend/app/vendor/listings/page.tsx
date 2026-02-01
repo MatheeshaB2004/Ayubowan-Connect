@@ -120,13 +120,14 @@ export default function CreateListingsPage() {
 
               <div className="location-tags">
                 <i className="fa-solid fa-location-dot"></i>
-                <span>Kandy </span>
+                <span>Kandy</span>
                 <span>Central Province</span>
                 <span>Sri Lanka</span>
               </div>
             </div>
           </div>
         </div>
+
 
         <div className="offer-card">
           <div className="offer">
@@ -154,7 +155,7 @@ export default function CreateListingsPage() {
 
               <div className="location-tags">
                 <i className="fa-solid fa-location-dot"></i>
-                <span>Galle </span>
+                <span>Galle</span>
                 <span>Southern Province</span>
                 <span>Sri Lanka</span>
               </div>
