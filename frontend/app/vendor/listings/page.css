@@ -132,3 +132,268 @@
     margin-top: 40px;
   }
 }
+
+/* CREATE FIRST LISTING SECTION */
+.create-listing {
+  max-width: 1100px;
+  margin: 120px auto;
+  padding: 0 24px;
+
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+/* LEFT CONTENT */
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  color: #4b6b56;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-family: "Playfair Display", serif;
+  font-size: 44px;
+  margin-bottom: 20px;
+}
+
+.section-description {
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: #6b7280;
+  margin-bottom: 28px;
+  max-width: 420px;
+}
+
+/* FEATURE LIST */
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 32px;
+}
+
+.feature-list li {
+  font-size: 14px;
+  margin-bottom: 12px;
+  padding-left: 20px;
+  position: relative;
+}
+
+.feature-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #2d4b37;
+  font-weight: 600;
+}
+
+/* ACTION ROW */
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* PRIMARY BUTTON */
+.primary-button {
+  background: #2d4b37;
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* TEXT LINK */
+.text-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d4b37;
+  text-decoration: none;
+}
+
+.text-link:hover {
+  text-decoration: underline;
+}
+
+/* IMAGE */
+.create-listing-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .create-listing {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
+/* OFFERINGS */
+.offerings {
+  max-width: 1100px;
+  margin: 140px auto;
+  padding: 0 24px;
+}
+
+/* HEADER */
+.offerings-head {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  color: #4b6b56;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-family: "Playfair Display", serif;
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.desc {
+  font-size: 15px;
+  color: #6b7280;
+}
+
+/* OFFER CARD */
+.offer-card {
+  margin-bottom: 64px;
+}
+
+.offer {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr; /* big image left */
+  gap: 48px;
+  align-items: stretch;
+
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+}
+
+.offer img {
+  width: 100%;
+  height: 100%;
+  min-height: 360px;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+
+
+.offer-text h3 {
+  font-family: "Playfair Display", serif;
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+.offer-text p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #6b7280;
+  max-width: 420px;
+}
+
+/* TAGS */
+.tags {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tags span {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(45, 75, 55, 0.08);
+  color: #2d4b37;
+  font-weight: 600;
+}
+
+/* VIEW ALL */
+.view-all-wrap {
+  margin-top: 72px;
+  text-align: center;
+}
+
+.view-all {
+  padding: 14px 36px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+/* OFFER BUTTONS */
+.offer-buttons {
+  display: flex;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  border: none;
+}
+
+/* EDIT */
+.edit-btn {
+  background: #2d4b37;
+  color: white;
+}
+
+/* DELETE */
+.delete-btn {
+  background: rgba(185, 28, 28, 0.1);
+  color: #b91c1c;
+}
+
+/* HOVER */
+.edit-btn:hover {
+  opacity: 0.9;
+}
+
+.delete-btn:hover {
+  background: rgba(185, 28, 28, 0.18);
+}
+
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .offer {
+    grid-template-columns: 1fr;
+  }
+}

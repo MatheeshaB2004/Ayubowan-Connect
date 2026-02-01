@@ -22,6 +22,7 @@ export default function CreateListingsPage() {
           </p>
         </div>
       </section>
+
       {/* CARDS SECTION */}
       <section className="actions">
         <div className="action-card">
@@ -58,6 +59,100 @@ export default function CreateListingsPage() {
 
         </div>
       </section>
+
+      {/* CREATE FIRST LISTING SECTION */}
+      <section className="create-listing">
+        <div className="create-listing-content">
+          <h2 className="section-title">Create your first listing</h2>
+          <p className="section-description">
+          Fill in the details below and share what you offer. Your listing appears
+          in the marketplace once submitted for review.
+          </p>
+
+          <ul className="feature-list">
+            <li>Captivating title</li>
+            <li>High-quality imagery</li>
+            <li>Accurate location tags</li>
+          </ul>
+
+          <div className="action-row">
+            <button className="primary-button">Create Listing</button>
+            <a href="#" className="text-link">View Listing →</a>
+          </div>
+        </div>
+
+        <div className="create-listing-image">
+          <img src="/vendor_management/card-1.jpeg" alt="Artisan creating a listing"/>
+        </div>
+      </section>
+
+      {/* CURRENT OFFERINGS */}
+      <section className="offerings">
+        <div className="offerings-head">
+          <span className="label">PORTFOLIO</span>
+          <h2 className="title">Your current offerings</h2>
+          <p className="desc">Manage what travelers can discover and book</p>
+        </div>
+
+        <div className="offer-card">
+          <div className="offer">
+            <img src="/vendor_management/listing-1.jpeg" alt="Village cooking class"/>
+
+            <div className="offer-text">
+              <h3>Village cooking class</h3>
+
+              <div className="tags">
+                <span>Cultural</span>
+                <span>Authentic</span>
+                <span>Hands-on</span>
+              </div>
+
+              <p>
+              Learn traditional recipes in a family kitchen. Includes ingredients
+              and a communal meal together.</p>
+
+              <div className="offer-buttons">
+                <button className="edit-btn">Edit listing</button>
+                <button className="delete-btn">Delete listing</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="offer-card">
+          <div className="offer">
+            <img src="/vendor_management/listing-2.jpeg" alt="Temple art workshop"/>
+
+            <div className="offer-text">
+              <h3>Temple art workshop</h3>
+
+              <div className="tags">
+                <span>Workshop</span>
+                <span>Authentic</span>
+                <span>Art</span>
+              </div>
+
+              <p>
+              Learn traditional recipes in a family kitchen. Includes ingredients
+              and a communal meal together.</p>
+
+              <div className="offer-buttons">
+                <button className="edit-btn">Edit listing</button>
+                <button className="delete-btn">Delete listing</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+
+        <div className="view-all-wrap">
+          <button className="view-all">
+            View all listings 
+          </button>
+        </div>
+      </section>
+
     </main>
   );
 }
