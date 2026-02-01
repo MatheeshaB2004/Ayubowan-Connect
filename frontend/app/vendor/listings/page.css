@@ -209,6 +209,8 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  position: relative;
+  z-index: 9999;
 }
 
 /* TEXT LINK */

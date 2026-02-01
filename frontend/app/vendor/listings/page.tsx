@@ -1,5 +1,14 @@
-import "./page.css"
+"use client";
+
+import { useState } from "react";
+import "./page.css";
+
 export default function CreateListingsPage() {
+  console.log("PAGE RENDERED");
+
+  const [showModal, setShowModal] = useState(false);
+  const [editingListing, setEditingListing] = useState(null);
+
   return (
     <main>
       {/* Google Fonts */}
@@ -76,7 +85,17 @@ export default function CreateListingsPage() {
           </ul>
 
           <div className="action-row">
-            <button className="primary-button">Create Listing</button>
+            <button
+               className="primary-button"
+               onClick={() => {
+                console.log("OPEN MODAL");
+                setEditingListing(null);
+                setShowModal(true);
+               }}
+            >
+              Create Listing
+            </button>
+
             <a href="#" className="text-link">View Listing →</a>
           </div>
         </div>
@@ -163,14 +182,45 @@ export default function CreateListingsPage() {
           </div>
         </div>
 
-        
-
         <div className="view-all-wrap">
           <button className="view-all">
             View all listings 
           </button>
         </div>
       </section>
+
+      {showModal ? (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 100000,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "40px",
+              borderRadius: "12px",
+              width: "400px",
+              textAlign: "center",
+            }}
+          >
+            <h2>POPUP</h2>
+
+            <button onClick={() => setShowModal(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      ) : null}
 
     </main>
   );
