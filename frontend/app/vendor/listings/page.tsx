@@ -96,7 +96,14 @@ export default function CreateListingsPage() {
 
         <div className="offer-card">
           <div className="offer">
-            <img src="/vendor_management/listing-1.jpeg" alt="Village cooking class"/>
+            <div className="offer-image">
+              <img src="/vendor_management/listing-1.jpeg" alt="Village cooking class"/>
+
+              <div className="offer-button">
+                <button className="edit-btn" title="Edit">✎</button>
+                <button className="delete-btn" title="Delete">🗑</button>
+              </div>
+            </div>
 
             <div className="offer-text">
               <h3>Village cooking class</h3>
@@ -109,11 +116,13 @@ export default function CreateListingsPage() {
 
               <p>
               Learn traditional recipes in a family kitchen. Includes ingredients
-              and a communal meal together.</p>
+              and a communal meal together.Cook alongside locals and enjoy an authentic cultural exchange beyond recipes.</p>
 
-              <div className="offer-buttons">
-                <button className="edit-btn">Edit listing</button>
-                <button className="delete-btn">Delete listing</button>
+              <div className="location-tags">
+                <i className="fa-solid fa-location-dot"></i>
+                <span>Kandy </span>
+                <span>Central Province</span>
+                <span>Sri Lanka</span>
               </div>
             </div>
           </div>
@@ -121,7 +130,14 @@ export default function CreateListingsPage() {
 
         <div className="offer-card">
           <div className="offer">
-            <img src="/vendor_management/listing-2.jpeg" alt="Temple art workshop"/>
+            <div className="offer-image">
+              <img src="/vendor_management/listing-2.jpeg" alt="Temple Art Workshop"/>
+
+              <div className="offer-button">
+                <button className="edit-btn" title="Edit">✎</button>
+                <button className="delete-btn" title="Delete">🗑</button>
+              </div>
+            </div>
 
             <div className="offer-text">
               <h3>Temple art workshop</h3>
@@ -134,11 +150,13 @@ export default function CreateListingsPage() {
 
               <p>
               Learn traditional recipes in a family kitchen. Includes ingredients
-              and a communal meal together.</p>
+              and a communal meal together.Understand symbolism, history, and cultural meaning behind each artistic style.</p>
 
-              <div className="offer-buttons">
-                <button className="edit-btn">Edit listing</button>
-                <button className="delete-btn">Delete listing</button>
+              <div className="location-tags">
+                <i className="fa-solid fa-location-dot"></i>
+                <span>Galle </span>
+                <span>Southern Province</span>
+                <span>Sri Lanka</span>
               </div>
             </div>
           </div>
