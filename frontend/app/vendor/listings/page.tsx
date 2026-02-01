@@ -22,6 +22,42 @@ export default function CreateListingsPage() {
           </p>
         </div>
       </section>
+      {/* CARDS SECTION */}
+      <section className="actions">
+        <div className="action-card">
+
+          <div className="action-image">
+            <img src="/vendor_management/card-1.jpeg" alt="Listings preview" />
+          </div>
+
+          <div className="action-content">
+            <span className="action-label">LISTINGS</span>
+            <h3 className="action-title">Add and manage your experiences</h3>
+            <p className="action-text">
+              Create new offerings or edit existing ones for your storefront.
+            </p>
+            <span className="action-link">Go to listings →</span>
+          </div>
+
+        </div>
+
+        <div className="action-card">
+
+          <div className="action-image">
+            <img src="/vendor_management/card-2.jpeg" alt="Events preview" />
+          </div>
+
+          <div className="action-content">
+            <span className="action-label">EVENTS</span>
+            <h3 className="action-title">Schedule cultural events and gatherings</h3>
+            <p className="action-text">
+              Build your calendar of upcoming activities and workshops.
+            </p>
+            <span className="action-link">Manage events →</span>
+          </div>
+
+        </div>
+      </section>
     </main>
   );
 }
