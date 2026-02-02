@@ -7,7 +7,7 @@ export default function CreateListingsPage() {
   console.log("PAGE RENDERED");
 
   const [showModal, setShowModal] = useState(false);
-  const [editingListing, setEditingListing] = useState(null);
+  const [editingListing, setEditingListing] = useState<any>(null);
 
   return (
     <main>
@@ -147,7 +147,6 @@ export default function CreateListingsPage() {
           </div>
         </div>
 
-
         <div className="offer-card">
           <div className="offer">
             <div className="offer-image">
@@ -189,38 +188,74 @@ export default function CreateListingsPage() {
         </div>
       </section>
 
-      {showModal ? (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100000,
-          }}
-        >
-          <div
-            style={{
-              background: "white",
-              padding: "40px",
-              borderRadius: "12px",
-              width: "400px",
-              textAlign: "center",
-            }}
-          >
-            <h2>POPUP</h2>
+      {showModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            {/* HEADER */}
+            <div className="modal-header">
+              <h2>
+                {editingListing ? "Edit Listing" : "Create Listing"}
+              </h2>
 
-            <button onClick={() => setShowModal(false)}>
-              Close
+              <button 
+                className="modal-close"
+                onClick={() => setShowModal(false)}
+              >
+              ✕
+              </button>
+            </div>
+
+            {/* FORM */}
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Title</label>
+                <input placeholder="Village cooking experience"
+                defaultValue={editingListing?.title || ""}/>
+              </div>
+
+              <div className="form-group">
+                <label>Description</label>
+                <textarea placeholder="Describe what guests will do"
+                defaultValue={editingListing?.description || ""}/>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Location</label>
+                  <input placeholder="Kandy"
+                  defaultValue={editingListing?.location || ""}/>
+                </div>
+
+              <div className="form-group">
+                <label>Price Range</label>
+                <input placeholder="LKR 3000 – 5000"
+                defaultValue={editingListing?.price || ""}/>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Images</label>
+              <input type="file" />
+            </div>
+          </div>
+
+          {/* ACTIONS */}
+          <div className="modal-actions">
+            <button
+              className="btn-secondary"
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </button>
+
+            <button className="btn-primary">
+              {editingListing ? "Update Listing" : "Create Listing"}
             </button>
           </div>
         </div>
-      ) : null}
+      </div>
+)}
+
 
     </main>
   );
