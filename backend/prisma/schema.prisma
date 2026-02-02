@@ -254,6 +254,26 @@ model ListingSearchIndex {
 }
 
 
+// EVENTS
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  location    String
+  city        String
+  district    String
+  province    String
+
+  isPublished Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("events")
+}
 
 
 
