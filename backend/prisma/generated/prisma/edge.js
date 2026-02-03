@@ -271,7 +271,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\HP\\Documents\\GitHub\\Ayubowan-Connect\\backend\\prisma\\generated\\prisma",
+      "value": "C:\\Users\\Sri Lanka\\Documents\\GitHub\\Ayubowan-Connect\\backend\\prisma\\generated\\prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -285,12 +285,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\HP\\Documents\\GitHub\\Ayubowan-Connect\\backend\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\Sri Lanka\\Documents\\GitHub\\Ayubowan-Connect\\backend\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../..",
   "clientVersion": "5.22.0",
@@ -299,7 +298,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
+  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {
