@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url = env("DATABASE_URL")
 }
 
 model User {
@@ -172,10 +173,12 @@ model Event {
   district    String
   province    String
 
-  isPublished Boolean  @default(true)
+  isPublished Boolean     @default(true)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  status      EventStatus @default(PUBLISHED)
 
   @@map("events")
 }
@@ -208,3 +211,10 @@ enum MediaType {
   IMAGE
   VIDEO
 }
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
