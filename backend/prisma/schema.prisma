@@ -5,6 +5,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+
 }
 
 model User {
@@ -17,6 +19,7 @@ model User {
   isActive     Boolean       @default(true) @map("is_active")
   createdAt    DateTime      @default(now()) @map("created_at")
   localTourist LocalTourist?
+  reviews      reviews[]
   vendor       Vendor?
 
   @@map("users")
@@ -97,6 +100,7 @@ model Listing {
   vendorId         Int                 @map("vendor_id")
   categoryId       Int                 @map("category_id")
   addressId        Int                 @map("address_id")
+  listing_type     ListingType         @default(EXPERIENCE)
   title            String
   shortDescription String              @map("short_description")
   longDescription  String?             @map("long_description")
@@ -106,6 +110,9 @@ model Listing {
   duration         String?
   capacity         Int?
   availability     String?
+  tags             String[]            @default([])
+  inclusions       Json?
+  specs            Json?
   ratingAverage    Float               @default(0) @map("rating_average")
   ratingCount      Int                 @default(0) @map("rating_count")
   viewsCount       Int                 @default(0) @map("views_count")
@@ -119,6 +126,7 @@ model Listing {
   location         VendorLocation      @relation(fields: [addressId], references: [id])
   category         ListingCategory     @relation(fields: [categoryId], references: [id])
   vendor           Vendor              @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  reviews          reviews[]
 
   @@index([vendorId])
   @@index([categoryId])
@@ -161,6 +169,35 @@ model ListingSearchIndex {
   @@map("listing_search_index")
 }
 
+model review_media {
+  review_media_id Int       @id @default(autoincrement())
+  review_id       Int
+  media_type      MediaType
+  media_url       String
+  display_order   Int       @default(0)
+  uploaded_at     DateTime  @default(now())
+  reviews         reviews   @relation(fields: [review_id], references: [review_id], onDelete: Cascade)
+
+  @@index([review_id])
+}
+
+model reviews {
+  review_id    Int            @id @default(autoincrement())
+  listing_id   Int
+  user_id      Int
+  rating       Int
+  comment      String
+  created_at   DateTime       @default(now())
+  updated_at   DateTime
+  review_media review_media[]
+  listings     Listing        @relation(fields: [listing_id], references: [id], onDelete: Cascade)
+  users        User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([listing_id])
+  @@index([user_id])
+}
+
+
 enum UserRole {
   USER
   ADMIN
@@ -188,3 +225,10 @@ enum MediaType {
   IMAGE
   VIDEO
 }
+
+
+enum ListingType {
+  EXPERIENCE
+  PRODUCT
+}
+
