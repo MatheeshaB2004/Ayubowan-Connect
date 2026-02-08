@@ -7,8 +7,15 @@ export default function CreateListingsPage() {
   
   const [showModal, setShowModal] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
-
   const [listings, setListings] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({
+  title: "",
+  description: "",
+  location: "",
+  price: "",
+});
+
 
   if (listings.length === 0) {
   setListings([
@@ -114,8 +121,13 @@ export default function CreateListingsPage() {
             <button
                className="primary-button"
                onClick={() => {
-                console.log("OPEN MODAL");
                 setEditingListing(null);
+                setFormData({
+                  title: "",
+                  description: "",
+                  location: "",
+                  price: "",
+                });
                 setShowModal(true);
                }}
             >
@@ -151,12 +163,20 @@ export default function CreateListingsPage() {
                     title="Edit"
                     onClick={() => {
                       setEditingListing(listing);
+                      setFormData({
+                        title: listing.title,
+                        description: listing.description,
+                        location: listing.location,
+                        price: listing.price,
+                      });
                       setShowModal(true);
                     }}
-                  > ✎
+                  > <i className="fa-solid fa-pen"></i>
                   </button>
 
-                  <button className="delete-btn" title="Delete">🗑</button>
+                  <button className="delete-btn" title="Delete"> 
+                    <i className="fa-solid fa-trash"></i>
+                  </button>
                 </div>
               </div>
 
@@ -170,6 +190,12 @@ export default function CreateListingsPage() {
                 </div>
 
                 <p>{listing.description}</p>
+
+                <div className="price-inline">
+                  <span className="price-inline-amount">{listing.price}</span>
+                  <span className="price-inline-meta">· per person</span>
+                </div>
+
 
                 <div className="location-tags">
                   <i className="fa-solid fa-location-dot"></i>
@@ -209,27 +235,48 @@ export default function CreateListingsPage() {
             <div className="modal-body">
               <div className="form-group">
                 <label>Title</label>
-                <input placeholder="Village cooking experience"
-                defaultValue={editingListing?.title || ""}/>
+                <input 
+                  placeholder="Village cooking experience"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                />
               </div>
 
               <div className="form-group">
                 <label>Description</label>
-                <textarea placeholder="Describe what guests will do"
-                defaultValue={editingListing?.description || ""}/>
+                <textarea 
+                  placeholder="Describe what guests will do"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                />
               </div>
 
               <div className="form-row">
                 <div className="form-group">
                   <label>Location</label>
-                  <input placeholder="Kandy"
-                  defaultValue={editingListing?.location || ""}/>
+                  <input 
+                    placeholder="Kandy"
+                    value={formData.location}
+                    onChange={(e) =>
+                      setFormData({ ...formData, location: e.target.value })
+                    }
+                  />
                 </div>
 
               <div className="form-group">
                 <label>Price Range</label>
-                <input placeholder="LKR 3000 – 5000"
-                defaultValue={editingListing?.price || ""}/>
+                <input 
+                  placeholder="LKR 3000 – 5000"
+                  value={formData.price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price: e.target.value })
+                  }
+                />
+
               </div>
             </div>
 
@@ -248,9 +295,24 @@ export default function CreateListingsPage() {
               Cancel
             </button>
 
-            <button className="btn-primary">
+            <button
+              className="btn-primary"
+              onClick={() => {
+                if (editingListing) {
+                  setListings(
+                    listings.map((item) =>
+                      item.id === editingListing.id
+                        ? { ...item, ...formData }
+                        : item
+                    )
+                  );
+                }
+                setShowModal(false);
+              }}
+            >
               {editingListing ? "Update Listing" : "Create Listing"}
             </button>
+
           </div>
         </div>
       </div>
