@@ -3,7 +3,7 @@
   position: fixed;
   top: 0;
   width: 100%;
-  z-index: 50;
+  z-index: 500;
   transition: transform 0.3s ease-in-out, background-color 0.3s ease, color 0.3s ease, backdrop-filter 0.3s ease;
   height: 5rem; /* h-20 */
   display: flex;
