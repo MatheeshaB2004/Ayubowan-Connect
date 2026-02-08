@@ -4,10 +4,36 @@ import { useState } from "react";
 import "./page.css";
 
 export default function CreateListingsPage() {
-  console.log("PAGE RENDERED");
-
+  
   const [showModal, setShowModal] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
+
+  const [listings, setListings] = useState<any[]>([]);
+
+  if (listings.length === 0) {
+  setListings([
+    {
+      id: 1,
+      title: "Village cooking class",
+      description:
+        "Learn traditional recipes in a family kitchen. Includes ingredients and a communal meal together.",
+      location: "Kandy",
+      price: "LKR 3000 – 5000",
+      image: "/vendor_management/listing-1.jpeg",
+      tags: ["Cultural", "Authentic", "Hands-on"],
+    },
+    {
+      id: 2,
+      title: "Temple art workshop",
+      description:
+        "Understand symbolism, history, and cultural meaning behind each artistic style.",
+      location: "Galle",
+      price: "LKR 2500 – 4500",
+      image: "/vendor_management/listing-2.jpeg",
+      tags: ["Workshop", "Authentic", "Art"],
+    },
+  ]);
+}
 
   return (
     <main>
@@ -113,80 +139,54 @@ export default function CreateListingsPage() {
           <p className="desc">Manage what travelers can discover and book</p>
         </div>
 
-        <div className="offer-card">
-          <div className="offer">
-            <div className="offer-image">
-              <img src="/vendor_management/listing-1.jpeg" alt="Village cooking class"/>
+        {listings.map((listing) => (
+          <div className="offer-card" key={listing.id}>
+            <div className="offer">
+              <div className="offer-image">
+                <img src={listing.image} alt={listing.title} />
 
-              <div className="offer-button">
-                <button className="edit-btn" title="Edit">✎</button>
-                <button className="delete-btn" title="Delete">🗑</button>
-              </div>
-            </div>
+                <div className="offer-button">
+                  <button 
+                    className="edit-btn"
+                    title="Edit"
+                    onClick={() => {
+                      setEditingListing(listing);
+                      setShowModal(true);
+                    }}
+                  > ✎
+                  </button>
 
-            <div className="offer-text">
-              <h3>Village cooking class</h3>
-
-              <div className="tags">
-                <span>Cultural</span>
-                <span>Authentic</span>
-                <span>Hands-on</span>
-              </div>
-
-              <p>
-              Learn traditional recipes in a family kitchen. Includes ingredients
-              and a communal meal together.Cook alongside locals and enjoy an authentic cultural exchange beyond recipes.</p>
-
-              <div className="location-tags">
-                <i className="fa-solid fa-location-dot"></i>
-                <span>Kandy</span>
-                <span>Central Province</span>
-                <span>Sri Lanka</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="offer-card">
-          <div className="offer">
-            <div className="offer-image">
-              <img src="/vendor_management/listing-2.jpeg" alt="Temple Art Workshop"/>
-
-              <div className="offer-button">
-                <button className="edit-btn" title="Edit">✎</button>
-                <button className="delete-btn" title="Delete">🗑</button>
-              </div>
-            </div>
-
-            <div className="offer-text">
-              <h3>Temple art workshop</h3>
-
-              <div className="tags">
-                <span>Workshop</span>
-                <span>Authentic</span>
-                <span>Art</span>
+                  <button className="delete-btn" title="Delete">🗑</button>
+                </div>
               </div>
 
-              <p>
-              Learn traditional recipes in a family kitchen. Includes ingredients
-              and a communal meal together.Understand symbolism, history, and cultural meaning behind each artistic style.</p>
+              <div className="offer-text">
+                <h3>{listing.title}</h3>
 
-              <div className="location-tags">
-                <i className="fa-solid fa-location-dot"></i>
-                <span>Galle</span>
-                <span>Southern Province</span>
-                <span>Sri Lanka</span>
+                <div className="tags">
+                  {listing.tags.map((tag: string) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
+                </div>
+
+                <p>{listing.description}</p>
+
+                <div className="location-tags">
+                  <i className="fa-solid fa-location-dot"></i>
+                  <span>{listing.location}</span>
+                  <span>Sri Lanka</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ))}
+
 
         <div className="view-all-wrap">
-          <button className="view-all">
-            View all listings 
-          </button>
+          <button className="view-all">View all listings</button>
         </div>
       </section>
+
 
       {showModal && (
         <div className="modal-backdrop">
