@@ -17,10 +17,11 @@ model User {
   isActive     Boolean       @default(true) @map("is_active")
   createdAt    DateTime      @default(now()) @map("created_at")
   localTourist LocalTourist?
-  reviews      Review[]
-  vendor       Vendor?
-  bookings     Booking[]
-  cart         Cart?
+
+  reviews  Review[]
+  vendor   Vendor?
+  bookings Booking[]
+  cart     Cart?
 
   @@map("users")
 }
@@ -44,12 +45,14 @@ model LocalTourist {
 }
 
 model Vendor {
-  id              Int              @id @default(autoincrement()) @map("vendor_id")
-  userId          Int              @unique @map("user_id")
-  businessName    String           @map("business_name")
-  shortTagline    String?          @map("short_tagline")
-  contactEmail    String?          @map("contact_email")
-  contactPhone    String?          @map("contact_phone")
+  id           Int     @id @default(autoincrement()) @map("vendor_id")
+  userId       Int     @unique @map("user_id")
+  businessName String  @map("business_name")
+  shortTagline String? @map("short_tagline")
+
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+
   establishedYear Int?             @map("established_year")
   ratingAverage   Float            @default(0) @map("rating_average")
   ratingCount     Int              @default(0) @map("rating_count")
@@ -98,11 +101,12 @@ model ListingCategory {
 }
 
 model Listing {
-  id               Int                 @id @default(autoincrement()) @map("listing_id")
-  vendorId         Int                 @map("vendor_id")
-  categoryId       Int                 @map("category_id")
-  addressId        Int                 @map("address_id")
-  listingType      ListingType         @default(EXPERIENCE) @map("listing_type")
+  id          Int         @id @default(autoincrement()) @map("listing_id")
+  vendorId    Int         @map("vendor_id")
+  categoryId  Int         @map("category_id")
+  addressId   Int         @map("address_id")
+  listingType ListingType @default(EXPERIENCE) @map("listing_type")
+
   title            String
   shortDescription String              @map("short_description")
   longDescription  String?             @map("long_description")
@@ -245,19 +249,19 @@ enum BookingStatus {
 }
 
 model Booking {
-  id           Int           @id @default(autoincrement()) @map("booking_id")
-  userId       Int           @map("user_id")
-  listingId    Int           @map("listing_id")
-  bookingDate  DateTime      @map("booking_date")
-  status       BookingStatus @default(PENDING)
-  guests       Int           @default(1)
-  totalPrice   Float         @map("total_price") @default(0)
-  notes        String?
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id          Int           @id @default(autoincrement()) @map("booking_id")
+  userId      Int           @map("user_id")
+  listingId   Int           @map("listing_id")
+  bookingDate DateTime      @map("booking_date")
+  status      BookingStatus @default(PENDING)
+  guests      Int           @default(1)
+  totalPrice  Float         @default(0) @map("total_price")
+  notes       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing      Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([listingId])
@@ -265,27 +269,27 @@ model Booking {
 }
 
 model Cart {
-  id        Int       @id @default(autoincrement()) @map("cart_id")
-  userId    Int?      @unique @map("user_id")
-  sessionId String?   @unique @map("session_id")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id        Int      @id @default(autoincrement()) @map("cart_id")
+  userId    Int?     @unique @map("user_id")
+  sessionId String?  @unique @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  items     CartItem[]
-  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("carts")
 }
 
 model CartItem {
-  id        Int       @id @default(autoincrement()) @map("cart_item_id")
-  cartId    Int       @map("cart_id")
-  listingId Int       @map("listing_id")
-  quantity  Int       @default(1)
-  addedAt   DateTime  @default(now()) @map("added_at")
+  id        Int      @id @default(autoincrement()) @map("cart_item_id")
+  cartId    Int      @map("cart_id")
+  listingId Int      @map("listing_id")
+  quantity  Int      @default(1)
+  addedAt   DateTime @default(now()) @map("added_at")
 
-  cart      Cart      @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, listingId])
   @@map("cart_items")
