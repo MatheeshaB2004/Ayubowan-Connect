@@ -7,40 +7,19 @@ export default function CreateListingsPage() {
   
   const [showModal, setShowModal] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
-  const [listings, setListings] = useState<any[]>([]);
-
+  
   const [formData, setFormData] = useState({
   title: "",
   description: "",
   location: "",
   price: "",
+  imageName: "",
+  imagePreview: "",
 });
 
 
-  if (listings.length === 0) {
-  setListings([
-    {
-      id: 1,
-      title: "Village cooking class",
-      description:
-        "Learn traditional recipes in a family kitchen. Includes ingredients and a communal meal together.",
-      location: "Kandy",
-      price: "LKR 3000 – 5000",
-      image: "/vendor_management/listing-1.jpeg",
-      tags: ["Cultural", "Authentic", "Hands-on"],
-    },
-    {
-      id: 2,
-      title: "Temple art workshop",
-      description:
-        "Understand symbolism, history, and cultural meaning behind each artistic style.",
-      location: "Galle",
-      price: "LKR 2500 – 4500",
-      image: "/vendor_management/listing-2.jpeg",
-      tags: ["Workshop", "Authentic", "Art"],
-    },
-  ]);
-}
+const [listings, setListings] = useState<any[]>([]);
+
 
   return (
     <main>
@@ -127,6 +106,8 @@ export default function CreateListingsPage() {
                   description: "",
                   location: "",
                   price: "",
+                  imageName: "",
+                  imagePreview: "",
                 });
                 setShowModal(true);
                }}
@@ -145,74 +126,105 @@ export default function CreateListingsPage() {
 
       {/* CURRENT OFFERINGS */}
       <section className="offerings">
-        <div className="offerings-head">
-          <span className="label">PORTFOLIO</span>
-          <h2 className="title">Your current offerings</h2>
-          <p className="desc">Manage what travelers can discover and book</p>
-        </div>
+        {listings.length === 0 && (
+          <div className="empty-state">
+            <span className="label">PORTFOLIO</span>
+            <h2 className="title">Your current offerings</h2>
 
-        {listings.map((listing) => (
-          <div className="offer-card" key={listing.id}>
-            <div className="offer">
-              <div className="offer-image">
-                <img src={listing.image} alt={listing.title} />
+            <p className="desc">You haven’t created any listings yet.  
+            Your listings will appear here once you add one.
+            </p>
 
-                <div className="offer-button">
-                  <button 
-                    className="edit-btn"
-                    title="Edit"
-                    onClick={() => {
-                      setEditingListing(listing);
-                      setFormData({
-                        title: listing.title,
-                        description: listing.description,
-                        location: listing.location,
-                        price: listing.price,
-                      });
-                      setShowModal(true);
-                    }}
-                  > <i className="fa-solid fa-pen"></i>
-                  </button>
-
-                  <button className="delete-btn" title="Delete"> 
-                    <i className="fa-solid fa-trash"></i>
-                  </button>
-                </div>
-              </div>
-
-              <div className="offer-text">
-                <h3>{listing.title}</h3>
-
-                <div className="tags">
-                  {listing.tags.map((tag: string) => (
-                    <span key={tag}>{tag}</span>
-                  ))}
-                </div>
-
-                <p>{listing.description}</p>
-
-                <div className="price-inline">
-                  <span className="price-inline-amount">{listing.price}</span>
-                  <span className="price-inline-meta">· per person</span>
-                </div>
-
-
-                <div className="location-tags">
-                  <i className="fa-solid fa-location-dot"></i>
-                  <span>{listing.location}</span>
-                  <span>Sri Lanka</span>
-                </div>
-              </div>
-            </div>
+            <button
+              className="primary-button"
+              onClick={() => {
+                setEditingListing(null);
+                setFormData({
+                  title: "",
+                  description: "",
+                  location: "",
+                  price: "",
+                  imageName: "",
+                  imagePreview: "",
+                });
+                setShowModal(true);
+              }}
+            >
+              Create your first listing
+            </button>
           </div>
-        ))}
+        )}
 
+        {/* LISTINGS VIEW */}
+        {listings.length > 0 && (
+          <>
+            <div className="offerings-head">
+              <span className="label">PORTFOLIO</span>
+              <h2 className="title">Your current offerings</h2>
+              <p className="desc">Manage what travelers can discover and book</p>
+            </div>
 
-        <div className="view-all-wrap">
-          <button className="view-all">View all listings</button>
-        </div>
+            {listings.map((listing) => (
+              <div className="offer-card" key={listing.id}>
+                <div className="offer">
+                  <div className="offer-image">
+                    <img src={listing.image} alt={listing.title} />
+
+                    <div className="offer-button">
+                      <button
+                        className="edit-btn"
+                        onClick={() => {
+                          setEditingListing(listing);
+                          setFormData({
+                            title: listing.title,
+                            description: listing.description,
+                            location: listing.location,
+                            price: listing.price,
+                            imageName: "",
+                            imagePreview: listing.image,
+                          });
+                          setShowModal(true);
+                        }}
+                      >
+                        <i className="fa-solid fa-pen"></i>
+                      </button>
+
+                      <button
+                        className="delete-btn"
+                        onClick={() =>
+                          setListings(listings.filter(i => i.id !== listing.id))
+                        }
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="offer-text">
+                    <h3>{listing.title}</h3>
+                    <p>{listing.description}</p>
+
+                    <div className="price-inline">
+                      <span className="price-inline-amount">{listing.price}</span>
+                      <span className="price-inline-meta">· per person</span>
+                    </div>
+
+                    <div className="location-tags">
+                      <i className="fa-solid fa-location-dot"></i>
+                      <span>{listing.location}</span>
+                      <span>Sri Lanka</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="view-all-wrap">
+              <button className="view-all">View all listings</button>
+            </div>
+          </>
+        )}
       </section>
-
 
       {showModal && (
         <div className="modal-backdrop">
@@ -282,8 +294,33 @@ export default function CreateListingsPage() {
 
             <div className="form-group">
               <label>Images</label>
-              <input type="file" />
+
+              <div className="file-field">
+                <label className="file-btn">
+                  Choose File
+                  <input
+                    type="file"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        setFormData({
+                          ...formData,
+                          imageName: file.name,
+                          imagePreview: URL.createObjectURL(file), 
+                        });
+                      }
+                    }}
+                  />
+                </label>
+
+                <span className="file-name">
+                  {formData.imageName || "No file chosen"}
+                </span>
+              </div>
             </div>
+
+
+
           </div>
 
           {/* ACTIONS */}
@@ -302,10 +339,34 @@ export default function CreateListingsPage() {
                   setListings(
                     listings.map((item) =>
                       item.id === editingListing.id
-                        ? { ...item, ...formData }
+                        ? {
+                            ...item,
+                            title: formData.title,
+                            description: formData.description,
+                            location: formData.location,
+                            price: formData.price,
+                            image: formData.imagePreview || item.image, 
+                          }
                         : item
                     )
                   );
+
+                } else{
+                  
+                  // Create New Listing
+                  const newListing = {
+                    id: Date.now(),
+                    title: formData.title,
+                    description: formData.description,
+                    location: formData.location,
+                    price: formData.price,
+                    image: formData.imagePreview || "/vendor_management/listing-1.jpeg",
+                    tags: ["New"],
+
+                  };
+                  setListings([...listings, newListing]);
+                  setEditingListing(null);
+
                 }
                 setShowModal(false);
               }}
