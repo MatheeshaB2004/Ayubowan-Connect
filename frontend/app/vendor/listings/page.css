@@ -100,7 +100,7 @@
   font-size: 10px;
   letter-spacing: 0.12em;
   font-weight: 600;
-  color: #4b6b56;
+  color: color-mix(in srgb, var(--foreground) 70%, transparent);
   display: block;
   margin-bottom: 8px;
 }
@@ -114,16 +114,28 @@
 .action-text {
   font-family: "Inter", sans-serif;
   font-size: 14px;
-  color: #6b7280;
+  color: color-mix(in srgb, var(--foreground) 60%, transparent);
   margin-bottom: 16px;
   line-height: 1.6;
 }
 
 .action-link {
-  font-size: 14px;
+  display: inline-block;
+  margin-top: 12px;
+  font-size:14px;
   font-weight: 600;
-  color: #2d4b37;
+  color: var(--foreground);           
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
+
+.action-link:hover {
+  opacity: 0.85;
+  transform: translateX(2px); 
+  text-decoration: underline;
+}
+
 
 /* RESPONSIVE */
 @media (max-width: 900px) {
@@ -150,7 +162,7 @@
   font-size: 10px;
   letter-spacing: 0.18em;
   font-weight: 600;
-  color: #4b6b56;
+  color: color-mix(in srgb, var(--foreground) 70%, transparent);
   display: block;
   margin-bottom: 16px;
 }
@@ -165,7 +177,7 @@
   font-family: "Inter", sans-serif;
   font-size: 16px;
   line-height: 1.7;
-  color: #6b7280;
+  color: color-mix(in srgb, var(--foreground) 60%, transparent);
   margin-bottom: 28px;
   max-width: 420px;
 }
@@ -201,8 +213,8 @@
 
 /* PRIMARY BUTTON */
 .primary-button {
-  background: #2d4b37;
-  color: white;
+  background: var(--foreground);
+  color: var(--background);
   border: none;
   padding: 12px 28px;
   border-radius: 999px;
@@ -217,7 +229,7 @@
 .text-link {
   font-size: 14px;
   font-weight: 600;
-  color: #2d4b37;
+  color: var(--foreground);
   text-decoration: none;
 }
 
@@ -301,7 +313,7 @@
 .offer-text p {
   font-size: 15px;
   line-height: 1.7;
-  color: #6b7280;
+  color: color-mix(in srgb, var(--foreground) 60%, transparent);
   max-width: 420px;
 }
 
@@ -425,7 +437,7 @@
 }
 
 
-/* ===== MODAL BACKDROP ===== */
+/*  MODAL BACKDROP */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -436,7 +448,7 @@
   z-index: 9999;
 }
 
-/* ===== MODAL BOX ===== */
+/*  MODAL BOX */
 .modal {
   background: #ffffff;
   width: 540px;
@@ -555,3 +567,62 @@
   font-size: 12px;
   color: #6b8f84;
 }
+
+/* FILE INPUT */
+.file-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-btn {
+  position: relative;
+  padding: 8px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f3f3f3;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.file-btn:hover {
+  background: #e6e6e6;
+}
+
+.file-btn input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.file-name {
+  font-size: 14px;
+  color: #555;
+}
+
+/* EMPTY STATE  */
+.empty-state {
+  max-width: 520px;
+  margin: 80px auto 0;        
+  text-align: center;        
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Paragraph spacing */
+.empty-state p {
+  margin-top: 16px;
+  margin-bottom: 28px;        
+  color: color-mix(in srgb, var(--foreground) 60%, transparent);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Button spacing */
+.empty-state .primary-button {
+  margin-top: 8px;
+}
+
+
