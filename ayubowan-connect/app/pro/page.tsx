@@ -217,7 +217,7 @@ export default function ProPage() {
             </div>
             
             <div className="pro-pricing-price-container">
-              <span className="pro-pricing-price">${billingCycle === 'monthly' ? '9' : '90'}</span>
+              <span className="pro-pricing-price">LKR {billingCycle === 'monthly' ? '900' : '9000'}</span>
               <span className="pro-pricing-period">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
             </div>
 
@@ -245,7 +245,7 @@ export default function ProPage() {
             </div>
             
             <div className="pro-pricing-price-container">
-              <span className="pro-pricing-price">${billingCycle === 'monthly' ? '19' : '190'}</span>
+              <span className="pro-pricing-price">LKR {billingCycle === 'monthly' ? '2500' : '25000'}</span>
               <span className="pro-pricing-period">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
             </div>
 
