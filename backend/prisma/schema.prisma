@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "./generated/prisma"
 }
 
 datasource db {
@@ -18,8 +17,11 @@ model User {
   isActive     Boolean       @default(true) @map("is_active")
   createdAt    DateTime      @default(now()) @map("created_at")
   localTourist LocalTourist?
-  reviews      reviews[]
-  vendor       Vendor?
+
+  reviews  Review[]
+  vendor   Vendor?
+  bookings Booking[]
+  cart     Cart?
 
   @@map("users")
 }
@@ -43,10 +45,14 @@ model LocalTourist {
 }
 
 model Vendor {
-  id              Int              @id @default(autoincrement()) @map("vendor_id")
-  userId          Int              @unique @map("user_id")
-  businessName    String           @map("business_name")
-  shortTagline    String?          @map("short_tagline")
+  id           Int     @id @default(autoincrement()) @map("vendor_id")
+  userId       Int     @unique @map("user_id")
+  businessName String  @map("business_name")
+  shortTagline String? @map("short_tagline")
+
+  contactEmail String? @map("contact_email")
+  contactPhone String? @map("contact_phone")
+
   establishedYear Int?             @map("established_year")
   ratingAverage   Float            @default(0) @map("rating_average")
   ratingCount     Int              @default(0) @map("rating_count")
@@ -95,11 +101,12 @@ model ListingCategory {
 }
 
 model Listing {
-  id               Int                 @id @default(autoincrement()) @map("listing_id")
-  vendorId         Int                 @map("vendor_id")
-  categoryId       Int                 @map("category_id")
-  addressId        Int                 @map("address_id")
-  listing_type     ListingType         @default(EXPERIENCE)
+  id          Int         @id @default(autoincrement()) @map("listing_id")
+  vendorId    Int         @map("vendor_id")
+  categoryId  Int         @map("category_id")
+  addressId   Int         @map("address_id")
+  listingType ListingType @default(EXPERIENCE) @map("listing_type")
+
   title            String
   shortDescription String              @map("short_description")
   longDescription  String?             @map("long_description")
@@ -125,7 +132,9 @@ model Listing {
   location         VendorLocation      @relation(fields: [addressId], references: [id])
   category         ListingCategory     @relation(fields: [categoryId], references: [id])
   vendor           Vendor              @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  reviews          reviews[]
+  reviews          Review[]
+  bookings         Booking[]
+  cartItems        CartItem[]
 
   @@index([vendorId])
   @@index([categoryId])
@@ -168,32 +177,34 @@ model ListingSearchIndex {
   @@map("listing_search_index")
 }
 
-model review_media {
-  review_media_id Int       @id @default(autoincrement())
-  review_id       Int
-  media_type      MediaType
-  media_url       String
-  display_order   Int       @default(0)
-  uploaded_at     DateTime  @default(now())
-  reviews         reviews   @relation(fields: [review_id], references: [review_id], onDelete: Cascade)
+model Review {
+  id        Int           @id @default(autoincrement()) @map("review_id")
+  listingId Int           @map("listing_id")
+  userId    Int           @map("user_id")
+  rating    Int
+  comment   String
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  media     ReviewMedia[]
+  listing   Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([review_id])
+  @@index([listingId])
+  @@index([userId])
+  @@map("reviews")
 }
 
-model reviews {
-  review_id    Int            @id @default(autoincrement())
-  listing_id   Int
-  user_id      Int
-  rating       Int
-  comment      String
-  created_at   DateTime       @default(now())
-  updated_at   DateTime
-  review_media review_media[]
-  listings     Listing        @relation(fields: [listing_id], references: [id], onDelete: Cascade)
-  users        User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model ReviewMedia {
+  id           Int       @id @default(autoincrement()) @map("review_media_id")
+  reviewId     Int       @map("review_id")
+  mediaType    MediaType @map("media_type")
+  mediaUrl     String    @map("media_url")
+  displayOrder Int       @default(0) @map("display_order")
+  uploadedAt   DateTime  @default(now()) @map("uploaded_at")
+  review       Review    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
-  @@index([listing_id])
-  @@index([user_id])
+  @@index([reviewId])
+  @@map("review_media")
 }
 
 enum UserRole {
@@ -227,4 +238,59 @@ enum MediaType {
 enum ListingType {
   EXPERIENCE
   PRODUCT
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  REJECTED
+}
+
+model Booking {
+  id          Int           @id @default(autoincrement()) @map("booking_id")
+  userId      Int           @map("user_id")
+  listingId   Int           @map("listing_id")
+  bookingDate DateTime      @map("booking_date")
+  status      BookingStatus @default(PENDING)
+  guests      Int           @default(1)
+  totalPrice  Float         @default(0) @map("total_price")
+  notes       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([listingId])
+  @@map("bookings")
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement()) @map("cart_id")
+  userId    Int?     @unique @map("user_id")
+  sessionId String?  @unique @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items CartItem[]
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement()) @map("cart_item_id")
+  cartId    Int      @map("cart_id")
+  listingId Int      @map("listing_id")
+  quantity  Int      @default(1)
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, listingId])
+  @@map("cart_items")
 }
