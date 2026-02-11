@@ -2,10 +2,24 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Instagram, Twitter, Linkedin, Youtube } from 'lucide-react';
 import '../../styles/components/Footer.css';
 
 const Footer: React.FC = () => {
+  const pathname = usePathname();
+
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    if (pathname === '/landing' || pathname === '/') {
+      e.preventDefault();
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        window.history.pushState(null, '', `/landing#${id}`);
+      }
+    }
+  };
+
   return (
     <footer className="site-footer">
       <div className="container mx-auto">
@@ -36,8 +50,8 @@ const Footer: React.FC = () => {
             <h3 className="footer-heading">Explore</h3>
             <ul className="footer-links">
               <li><a href="#" onClick={(e) => e.preventDefault()}>About us</a></li>
-              <li><a href="#" onClick={(e) => e.preventDefault()}>Experiences</a></li>
-              <li><a href="#" onClick={(e) => e.preventDefault()}>Events</a></li>
+              <li><Link href="/experiences">Experiences</Link></li>
+              <li><Link href="/landing#offer" onClick={(e) => handleScroll(e, 'offer')}>Events</Link></li>
               <li><a href="#" onClick={(e) => e.preventDefault()}>Blog</a></li>
               <li><a href="#" onClick={(e) => e.preventDefault()}>Support</a></li>
             </ul>

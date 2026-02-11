@@ -18,6 +18,18 @@ const GlobalHeader: React.FC = () => {
   const pathname = usePathname();
   const isHome = pathname === '/' || pathname === '/landing';
 
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
+    setIsMobileMenuOpen(false);
+    if (pathname === '/landing' || pathname === '/') {
+      e.preventDefault();
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+        window.history.pushState(null, '', `/landing#${id}`);
+      }
+    }
+  };
+
   useEffect(() => {
     const controlNavbar = () => {
       if (typeof window !== 'undefined') {
@@ -113,9 +125,9 @@ const GlobalHeader: React.FC = () => {
              
              {role === 'guest' && (
                  <>
-                    <Link href="/experiences" className="mobile-link">Experiences</Link>
-                    <Link href="/events" className="mobile-link">Events</Link>
-                    <Link href="/marketplace" className="mobile-link">Marketplace</Link>
+                    <Link href="/experiences" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Experiences</Link>
+                    <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Events</Link>
+                    <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Marketplace</Link>
                     <div className="mobile-menu-divider">
                       <button className="btn-login" style={{ color: '#374151', borderColor: '#d1d5db' }}>Log in</button>
                       <button className="btn-signup">Sign up</button>
