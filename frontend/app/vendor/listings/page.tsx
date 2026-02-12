@@ -19,9 +19,9 @@ export default function CreateListingsPage() {
     if (!e.target.files || !e.target.files[0]) return;
 
     const file = e.target.files[0];
-
+    // FINAL TEST
     setUploading(true);
-
+    
     setTimeout(() => {
       setFormData((prev) => ({
         ...prev,
