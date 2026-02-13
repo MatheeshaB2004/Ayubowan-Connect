@@ -9,17 +9,19 @@ export default function CreateListingsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
   const listingsRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
 
   const [uploading, setUploading] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // FINAL TEST
+  
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
 
     const file = e.target.files[0];
-    // FINAL TEST
+   
     setUploading(true);
     
     setTimeout(() => {
@@ -30,7 +32,11 @@ export default function CreateListingsPage() {
       }));
 
       setUploading(false);
-    }, 1000);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    },1000);
   };
 
   const [formData, setFormData] = useState({
@@ -74,6 +80,10 @@ const emptyForm = {
   tags: "",     
 };
 
+const wordCount =
+  formData.description.trim() === ""
+    ? 0
+    : formData.description.trim().split(/\s+/).length;
 
 
   return (
@@ -247,7 +257,7 @@ const emptyForm = {
                         {listing.tagline}
                       </p>
                     )}
-                    // test changes
+                    
                     <p>{listing.description}</p>
 
                     <div className="price-inline">
@@ -261,6 +271,19 @@ const emptyForm = {
                       <i className="fa-solid fa-location-dot"></i>
                       <span>{listing.district}</span>
                       <span>Sri Lanka</span>
+                    </div>
+                    <div className="listing-dates">
+                      <small>
+                        Created: {new Date(listing.dateCreated).toLocaleString()}
+                      </small>
+                      {listing.dateModified !== listing.dateCreated && (
+                        <>
+                          <br />
+                          <small>
+                            Modified: {new Date(listing.dateModified).toLocaleString()}
+                          </small>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -320,8 +343,10 @@ const emptyForm = {
                     <input
                       type="file"
                       accept="image/*"
+                      ref={fileInputRef}
                       onChange={handleUpload}
                     />
+
                 </label>
 
                 {formData.imagePreview && (
@@ -330,13 +355,16 @@ const emptyForm = {
                       <img src={formData.imagePreview} />
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={() =>{
                           setFormData({
                             ...formData,
                             imagePreview: "",
                             imageName: "",
                           })
-                        }
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = "";
+                          }
+                        }}
                       >
                         ✕
                       </button>
@@ -421,13 +449,28 @@ const emptyForm = {
                   <div className = "form-title">Full Listing Description *</div>
                     <textarea
                       rows={6}
-                      placeholder="Describe your listing in detail. Include what makes it special, what visitors can expect, and any important information they should know..."
+                      placeholder ="Describe your listing in detail..."
                       value={formData.description}
-                      onChange={(e)=>setFormData({...formData,description:e.target.value})}
+                      onChange={(e) => {
+                        const text = e.target.value;
+                        const words = text.trim() === "" ? [] : text.trim().split(/\s+/);
+
+                        if (words.length <= 2000) {
+                          setFormData({ ...formData, description: text });
+                        }
+                      }}
                     />
-                    <small className="helper-text">
-                      Be descriptive — great listings get more engagement
-                    </small>
+
+                    <div className="description-footer">
+                      <small className="helper-text">
+                        Be descriptive — great listings get more engagement
+                      </small>
+
+                      <small className="char-count">
+                        {wordCount}/2000 words
+                      </small>
+
+                    </div>
                   </div>
                 </div>
               </div>
@@ -474,7 +517,8 @@ const emptyForm = {
                             tagline: formData.tagline,
                             description: formData.description,
                             imageName: formData.imageName,
-                            imagePreview: formData.imagePreview
+                            imagePreview: formData.imagePreview,
+                            dateModified: new Date().toISOString()
                           }
                         : item
                     )
@@ -483,6 +527,8 @@ const emptyForm = {
                 } else{
                   
                   // Create New Listing
+                  const now = new Date().toISOString();
+
                   const newListing = {
                     id: Date.now(),
                     title: formData.title,
@@ -497,6 +543,8 @@ const emptyForm = {
                     tags: formData.tags
                       ? formData.tags.split(",").map(tag => tag.trim())
                       : ["New"],
+                    dateCreated: now,
+                    dateModified: now,
 
 
                   };
