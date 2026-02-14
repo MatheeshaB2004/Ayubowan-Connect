@@ -91,10 +91,8 @@ const wordCount =
       {/* Google Fonts */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap"
-        rel="stylesheet"
-      />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 
       {/* HERO SECTION */}
       <section className="hero">
@@ -198,29 +196,28 @@ const wordCount =
               <p className="desc">Manage what travelers can discover and book</p>
             </div>
 
-            <div ref={listingsRef}>
-              {(showAll ? listings : listings.slice(0, 1)).map((listing) => (
-              <div className="offer-card" key={listing.id}>
-                <div className="offer">
-                  <div className="offer-image">
+            <div className="cards-grid" ref={listingsRef}>
+             {(showAll ? listings : listings.slice(0, 1)).map((listing) => (
+              <div key={listing.id}>
+                <div className="modern-card">
+                  <div className="card-image">
                     <img
                       src={listing.imagePreview || "/placeholder.jpg"}
                       alt={listing.title}
                     />
-
-                    <div className="offer-button">
+                    <div className="card-actions">
                       <button
                         className="edit-btn"
                         onClick={() => {
                           setEditingListing(listing);
                           setFormData({
                             title: listing.title,
-                            category:listing.category,
-                            minPrice:listing.minPrice,
+                            category: listing.category,
+                            minPrice: listing.minPrice,
                             maxPrice: listing.maxPrice,
                             district: listing.district,
                             description: listing.description,
-                            tagline:listing.tagline,
+                            tagline: listing.tagline,
                             imageName: listing.imageName,
                             imagePreview: listing.imagePreview,
                             tags: listing.tags?.join(",") || "",
@@ -242,56 +239,53 @@ const wordCount =
                     </div>
                   </div>
 
-                  <div className="offer-text">
+                  <div className="card-body">
                     {listing.tags?.length > 0 && (
-                      <div className="tags">
+                      <div className="card-tags">
                         {listing.tags.map((tag: string, i: number) => (
                           <span key={i}>{tag}</span>
                         ))}
                       </div>
                     )}
-                    <h3>{listing.title}</h3>
 
-                    {listing.tagline && (
-                      <p style={{ fontWeight: 600, marginBottom: "6px" }}>
-                        {listing.tagline}
-                      </p>
-                    )}
-                    
-                    <p>{listing.description}</p>
+                    <h3 className="card-title">{listing.title}</h3>
+                    <p className="card-description">{listing.description}</p>
 
-                    <div className="price-inline">
-                      <span className="price-inline-amount">
-                        LKR {listing.minPrice} - {listing.maxPrice}
-                      </span>
-                      <span className="price-inline-meta">· per person</span>
-                    </div>
-
-                    <div className="location-tags">
+                    <div className="card-location">
                       <i className="fa-solid fa-location-dot"></i>
-                      <span>{listing.district}</span>
-                      <span>Sri Lanka</span>
+                      <span>{listing.district}, Sri Lanka</span>
                     </div>
-                    <div className="listing-dates">
-                      <small>
-                        Created: {new Date(listing.dateCreated).toLocaleString()}
-                      </small>
+
+                    <div className="meta-row light">
+                      <i className="fa-regular fa-calendar"></i>
+                      <span>Created: {new Date(listing.dateCreated).toLocaleDateString()}</span>
+                    
                       {listing.dateModified !== listing.dateCreated && (
                         <>
-                          <br />
-                          <small>
-                            Modified: {new Date(listing.dateModified).toLocaleString()}
-                          </small>
+                          <span className="meta-row light"></span>
+                          <i className="fa-regular fa-clock"></i>
+                          <span>Updated: {new Date(listing.dateModified).toLocaleDateString()}</span>
                         </>
                       )}
+                    </div>
+
+                    <hr className="card-divider" />
+
+                    <div className="card-footer">
+                      <div className="card-price">
+                        LKR {listing.minPrice} - {listing.maxPrice}
+                        <span>/ person</span>
+                      </div>
+
+                      <button className="view-btn">View Details</button>
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+             ))}
+            </div>
 
-            {listings.length > 1 && (
+          {listings.length > 1 && (
               <div className="view-all-wrap">
                 <button
                   className="view-all"
