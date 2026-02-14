@@ -1,26 +1,66 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+@theme {
+  --color-lochinvar: #379683;
+  --color-lochinvar-dark: #2d7a6a;
+  --color-waikawa: #577399;
+  --color-trendy: #8D5A97;
+  --color-light-gray: #f9fafb;
+  --color-primary: #1f2937;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #ffffff;
+  --foreground: #1f2937;
+  
+  --primary: #1f2937;
+  --lochinvar: #379683;
+  --lochinvar-dark: #2d7a6a;
+  --waikawa: #577399;
+  --trendy: #8D5A97;
+  --light-gray: #f9fafb;
+  --border-color: #e5e7eb;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
+
+/* Animation for Logo */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Hide Next.js DevTools Indicator */
+#panel-route,
+.panel-route,
+[data-nextjs-dev-tools-indicator],
+[data-nextjs-dev-tools-button] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -9999 !important;
+}
+
+/* Container styles from main.css */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) { .container { padding: 0 1.5rem; } }
+@media (min-width: 1024px) { .container { padding: 0 2rem; } }

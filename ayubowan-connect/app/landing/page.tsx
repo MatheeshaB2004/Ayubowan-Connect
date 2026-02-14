@@ -125,9 +125,9 @@ const LandingPage: React.FC = () => {
               <span className="section-tag tag-waikawa" style={{marginBottom: '0.5rem'}}>Experiences</span>
               <h3 className="offer-card-title">Village tours, cooking classes and traditions</h3>
               <p className="offer-card-desc">Browse</p>
-              <a href="#" className="offer-link">
-                Marketplace <ChevronRight size={14} className="ml-1" />
-              </a>
+              <Link href="/experiences" className="offer-link">
+                Experiences <ChevronRight size={14} className="ml-1" />
+              </Link>
             </div>
 
             {/* Card 3 */}
@@ -139,7 +139,7 @@ const LandingPage: React.FC = () => {
               <h3 className="offer-card-title">Handmade crafts and authentic local goods</h3>
               <p className="offer-card-desc">Assistant</p>
               <a href="#" className="offer-link">
-                Get personalized recommendations <ChevronRight size={14} className="ml-1" />
+                Shop now <ChevronRight size={14} className="ml-1" />
               </a>
             </div>
 
