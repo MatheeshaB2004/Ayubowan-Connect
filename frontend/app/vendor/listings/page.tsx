@@ -13,7 +13,6 @@ export default function CreateListingsPage() {
   const [uploading, setUploading] = useState(false);
   const [formError, setFormError] = useState("");
 
-
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
 
@@ -43,7 +42,7 @@ export default function CreateListingsPage() {
     minPrice: "",
     maxPrice: "",
     tagline: "",
-    description: "",
+    longDescription: "",
     imageName: "",
     imagePreview: "",
     tags: "",
@@ -51,11 +50,16 @@ export default function CreateListingsPage() {
 
 
   const [listings, setListings] = useState<any[]>([]);
-  const vendorId = 9999;
+  const vendorId = 2;
+  const [locations, setLocations] = useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+
 
   useEffect(() => {
     fetchListings();
+    fetchLocations();
   }, []);
+
 
   const fetchListings = async () => {
     try {
@@ -69,6 +73,20 @@ export default function CreateListingsPage() {
       console.error("Fetch error:", error);
     }
   };
+
+  const fetchLocations = async () => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/vendor/${vendorId}/locations`
+      );
+
+      const data = await response.json();
+      setLocations(data);
+    } catch (error) {
+      console.error("Location fetch error:", error);
+    }
+  };
+
 
   const [showAll, setShowAll] = useState(false);
 
@@ -90,16 +108,16 @@ export default function CreateListingsPage() {
     minPrice: "",
     maxPrice: "",
     tagline: "",
-    description: "",
+    longDescription: "",
     imageName: "",
     imagePreview: "",
     tags: "",
   };
 
   const wordCount =
-    formData.description.trim() === ""
+    formData.longDescription.trim() === ""
       ? 0
-      : formData.description.trim().split(/\s+/).length;
+      : formData.longDescription.trim().split(/\s+/).length;
 
 
   return (
@@ -218,26 +236,39 @@ export default function CreateListingsPage() {
                   <div className="modern-card">
                     <div className="card-image">
                       <img
-                        src={listing.imagePreview || "/placeholder.jpg"}
+                        src={
+                          listing.media?.length > 0
+                            ? listing.media[0].mediaUrl
+                            : "/vendor_management/card-1.jpeg"
+                        }
                         alt={listing.title}
                       />
                       <div className="card-actions">
                         <button
                           className="edit-btn"
                           onClick={() => {
+                            console.log("MEDIA:", listing.media);
                             setEditingListing(listing);
+
+                            const existingImage =
+                              listing.media?.length > 0
+                                ? listing.media[0].mediaUrl
+                                : "";
+
                             setFormData({
-                              title: listing.title,
-                              category: listing.category,
-                              minPrice: listing.minPrice,
-                              maxPrice: listing.maxPrice,
-                              district: listing.district,
-                              description: listing.description,
-                              tagline: listing.tagline,
-                              imageName: listing.imageName,
-                              imagePreview: listing.imagePreview,
+                              title: listing.title || "",
+                              category: listing.categoryId?.toString() || "",
+                              minPrice: listing.priceMin?.toString() || "",
+                              maxPrice: listing.priceMax?.toString() || "",
+                              district: listing.location?.district || "",
+                              longDescription: listing.longDescription || "",
+                              tagline: listing.shortDescription || "",
+                              imageName: existingImage,
+                              imagePreview: existingImage,
                               tags: listing.tags?.join(",") || "",
                             });
+
+                            setSelectedAddressId(listing.addressId || null);
                             setShowModal(true);
                           }}
                         >
@@ -254,6 +285,8 @@ export default function CreateListingsPage() {
                                 method: "DELETE",
                               }
                             );
+
+                            await fetchListings();
                           }}
 
                         >
@@ -272,22 +305,28 @@ export default function CreateListingsPage() {
                       )}
 
                       <h3 className="card-title">{listing.title}</h3>
-                      <p className="card-description">{listing.description}</p>
+                      <p className="card-description">
+                        {listing.longDescription || listing.shortDescription}
+                      </p>
 
                       <div className="card-location">
                         <i className="fa-solid fa-location-dot"></i>
-                        <span>{listing.district}, Sri Lanka</span>
+                        <span>
+                          {listing.location.city}, {listing.location.district}
+                        </span>
+
                       </div>
 
                       <div className="meta-row light">
                         <i className="fa-regular fa-calendar"></i>
-                        <span>Created: {new Date(listing.dateCreated).toLocaleDateString()}</span>
+                        <span>Created: {new Date(listing.createdAt).toLocaleDateString()}</span>
 
-                        {listing.dateModified !== listing.dateCreated && (
+
+                        {listing.updatedAt !== listing.createdAt && (
                           <>
                             <span className="meta-row light"></span>
                             <i className="fa-regular fa-clock"></i>
-                            <span>Updated: {new Date(listing.dateModified).toLocaleDateString()}</span>
+                            <span>Updated: {new Date(listing.updatedAt).toLocaleDateString()}</span>
                           </>
                         )}
                       </div>
@@ -296,7 +335,7 @@ export default function CreateListingsPage() {
 
                       <div className="card-footer">
                         <div className="card-price">
-                          LKR {listing.minPrice} - {listing.maxPrice}
+                          LKR {listing.priceMin} - {listing.priceMax}
                           <span>/ person</span>
                         </div>
 
@@ -419,12 +458,17 @@ export default function CreateListingsPage() {
                     <label>Location (District)</label>
                     <select
                       required
-                      value={formData.district}
-                      onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                      value={selectedAddressId || ""}
+                      onChange={(e) => setSelectedAddressId(Number(e.target.value))}
                     >
-                      <option value="">Select district</option>
-                      {sriLankaDistricts.map(d => <option key={d}>{d}</option>)}
+                      <option value="">Select location</option>
+                      {locations.map((loc) => (
+                        <option key={loc.id} value={loc.id}>
+                          {loc.city}, {loc.district}
+                        </option>
+                      ))}
                     </select>
+
                   </div>
                 </div>
 
@@ -467,13 +511,13 @@ export default function CreateListingsPage() {
                   <textarea
                     rows={6}
                     placeholder="Describe your listing in detail..."
-                    value={formData.description}
+                    value={formData.longDescription}
                     onChange={(e) => {
                       const text = e.target.value;
                       const words = text.trim() === "" ? [] : text.trim().split(/\s+/);
 
                       if (words.length <= 2000) {
-                        setFormData({ ...formData, description: text });
+                        setFormData({ ...formData, longDescription: text });
                       }
                     }}
                   />
@@ -511,14 +555,16 @@ export default function CreateListingsPage() {
                   if (
                     !formData.title ||
                     !formData.category ||
-                    !formData.district ||
                     !formData.minPrice ||
                     !formData.maxPrice
                   ) {
                     setFormError("Please fill all required fields");
                     return;
                   }
-
+                  if (!selectedAddressId) {
+                    setFormError("Please select a location");
+                    return;
+                  }
                   setFormError("");
 
                   try {
@@ -531,11 +577,11 @@ export default function CreateListingsPage() {
                         },
                         body: JSON.stringify({
                           categoryId: 1,
-                          addressId: 1,
+                          addressId: selectedAddressId,
                           listingType: "EXPERIENCE",
                           title: formData.title,
                           shortDescription: formData.tagline,
-                          longDescription: formData.description,
+                          longDescription: formData.longDescription,
                           priceMin: Number(formData.minPrice),
                           priceMax: Number(formData.maxPrice),
                         }),
