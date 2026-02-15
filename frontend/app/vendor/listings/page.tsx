@@ -11,6 +11,7 @@ export default function CreateListingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  const SHORT_DESC_MAX = 500;
   const [formError, setFormError] = useState("");
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,15 +28,15 @@ export default function CreateListingsPage() {
 
   const [formData, setFormData] = useState({
     title: "",
-    category: "",
-    district: "",
+    categoryId: "",
+    listingType: "EXPERIENCE",
     minPrice: "",
     maxPrice: "",
-    tagline: "",
+    shortDescription: "",
     longDescription: "",
     imageName: "",
     imagePreview: "",
-    tags: "",
+    tags: [] as string[],
   });
 
 
@@ -104,15 +105,15 @@ export default function CreateListingsPage() {
 
   const emptyForm = {
     title: "",
-    category: "",
-    district: "",
+    categoryId: "",
+    listingType: "EXPERIENCE",
     minPrice: "",
     maxPrice: "",
-    tagline: "",
+    shortDescription: "",
     longDescription: "",
     imageName: "",
     imagePreview: "",
-    tags: "",
+    tags: [] as string[],
   };
 
   const wordCount =
@@ -258,15 +259,15 @@ export default function CreateListingsPage() {
 
                             setFormData({
                               title: listing.title || "",
-                              category: listing.categoryId?.toString() || "",
+                              categoryId: listing.categoryId?.toString() || "",
+                              listingType: listing.listingType || "EXPERIENCE",
                               minPrice: listing.priceMin?.toString() || "",
                               maxPrice: listing.priceMax?.toString() || "",
-                              district: listing.location?.district || "",
                               longDescription: listing.longDescription || "",
-                              tagline: listing.shortDescription || "",
+                              shortDescription: listing.shortDescription || "",
                               imageName: existingImage,
                               imagePreview: existingImage,
-                              tags: listing.tags?.join(",") || "",
+                              tags: listing.tags || [],
                             });
 
                             setSelectedAddressId(listing.addressId || null);
@@ -365,11 +366,10 @@ export default function CreateListingsPage() {
       {showModal && (
         <div className="modal-backdrop">
           <div className="modal">
+
             {/* HEADER */}
             <div className="modal-header">
-              <h2>
-                {editingListing ? "Edit Listing" : "Create Listing"}
-              </h2>
+              <h2>{editingListing ? "Edit Listing" : "Create Listing"}</h2>
 
               <button
                 className="modal-close"
@@ -379,7 +379,7 @@ export default function CreateListingsPage() {
               </button>
             </div>
 
-            {/* FORM */}
+            {/* BODY */}
             <div className="modal-body">
               {/* IMAGES */}
               <div className="form-card">
@@ -424,27 +424,59 @@ export default function CreateListingsPage() {
               </div>
 
               {/* BASIC INFO */}
-              <div className="form-card">
+              <div className="form-card premium-card">
                 <div className="form-title">Basic Information</div>
+
+                {/* LISTING TYPE */}
+                <div className="listing-type-toggle">
+                  <div
+                    className={`type-card ${formData.listingType === "EXPERIENCE" ? "active" : ""
+                      }`}
+                    onClick={() =>
+                      setFormData({ ...formData, listingType: "EXPERIENCE" })
+                    }
+                  >
+                    <i className="fa-solid fa-person-walking"></i>
+                    <span>Experience</span>
+                  </div>
+
+                  <div
+                    className={`type-card ${formData.listingType === "PRODUCT" ? "active" : ""
+                      }`}
+                    onClick={() =>
+                      setFormData({ ...formData, listingType: "PRODUCT" })
+                    }
+                  >
+                    <i className="fa-solid fa-box"></i>
+                    <span>Product</span>
+                  </div>
+                </div>
+
+                {/* TITLE */}
                 <div className="form-group">
                   <label>Listing Title *</label>
                   <input
                     required
+                    placeholder="e.g. Traditional Kandyan Dance Workshop"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                   />
                 </div>
 
+                {/* CATEGORY + LOCATION */}
                 <div className="grid-2">
                   <div className="form-group">
-                    <label>Category</label>
+                    <label>Category *</label>
                     <select
                       required
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      value={formData.categoryId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, categoryId: e.target.value })
+                      }
                     >
                       <option value="">Select category</option>
-
                       {categories.map((cat: any) => (
                         <option key={cat.id} value={cat.id}>
                           {cat.categoryName}
@@ -454,7 +486,7 @@ export default function CreateListingsPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Location (District)</label>
+                    <label>Location *</label>
                     <select
                       required
                       value={selectedAddressId || ""}
@@ -467,14 +499,15 @@ export default function CreateListingsPage() {
                         </option>
                       ))}
                     </select>
-
                   </div>
                 </div>
 
+                {/* PRICE FIELDS */}
                 <div className="grid-2">
                   <div className="form-group">
                     <label>Minimum Price</label>
-                    <input placeholder="0"
+                    <input
+                      placeholder="0"
                       required
                       value={formData.minPrice}
                       type="number"
@@ -484,28 +517,39 @@ export default function CreateListingsPage() {
 
                   <div className="form-group">
                     <label>Maximum Price</label>
-                    <input placeholder="0"
+                    <input
+                      placeholder="0"
                       required
                       value={formData.maxPrice}
                       type="number"
                       onChange={(e) => setFormData({ ...formData, maxPrice: e.target.value })}
                     />
                   </div>
-
                 </div>
 
-                <div className="form-group">
-                  <input
-                    placeholder="Short tagline"
-                    value={formData.tagline}
-                    onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                  />
-                </div>
               </div>
 
               {/* DESCRIPTION */}
               <div className="form-card">
                 <div className="form-group">
+                  <label>Short Description *</label>
+                  <textarea
+                    rows={3}
+                    placeholder="Short summary (max 500 characters)"
+                    value={formData.shortDescription}
+                    onChange={(e) => {
+                      const val = e.target.value.slice(0, SHORT_DESC_MAX);
+                      setFormData({ ...formData, shortDescription: val });
+                    }}
+                    maxLength={SHORT_DESC_MAX}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                  />
+                  <div className="text-right text-xs text-gray-500">
+                    {formData.shortDescription.length}/{SHORT_DESC_MAX}
+                  </div>
+
+                  <div style={{ height: 12 }} />
+
                   <div className="form-title">Full Listing Description *</div>
                   <textarea
                     rows={6}
@@ -554,11 +598,15 @@ export default function CreateListingsPage() {
                 onClick={async () => {
                   if (
                     !formData.title ||
-                    !formData.category ||
+                    !formData.categoryId ||
                     !formData.minPrice ||
                     !formData.maxPrice
                   ) {
                     setFormError("Please fill all required fields");
+                    return;
+                  }
+                  if (!formData.shortDescription || formData.shortDescription.trim() === "") {
+                    setFormError("Please provide a short description");
                     return;
                   }
                   if (!selectedAddressId) {
@@ -570,21 +618,23 @@ export default function CreateListingsPage() {
 
                   try {
                     const formDataToSend = new FormData();
-                    formDataToSend.append("categoryId", Number(formData.category).toString());
+                    formDataToSend.append("categoryId", formData.categoryId);
                     formDataToSend.append("addressId", Number(selectedAddressId).toString());
-                    formDataToSend.append("listingType", "EXPERIENCE");
+                    formDataToSend.append("listingType", formData.listingType);
 
                     formDataToSend.append("title", formData.title);
-                    formDataToSend.append("shortDescription", formData.tagline);
-                    formDataToSend.append("longDescription", formData.longDescription);
+                    formDataToSend.append("shortDescription", formData.shortDescription);
+                    if (formData.longDescription) {
+                      formDataToSend.append("longDescription", formData.longDescription);
+                    }
 
                     formDataToSend.append("priceMin", formData.minPrice);
                     formDataToSend.append("priceMax", formData.maxPrice);
 
-                    if (formData.tags) {
+                    if (formData.tags && formData.tags.length > 0) {
                       formDataToSend.append(
                         "tags",
-                        JSON.stringify(formData.tags.split(",")),
+                        JSON.stringify(formData.tags),
                       );
                     }
 
@@ -592,13 +642,14 @@ export default function CreateListingsPage() {
                       formDataToSend.append("image", fileInputRef.current.files[0]);
                     }
 
-                    const response = await fetch(
-                      `http://localhost:3001/vendor/${vendorId}/listings`,
-                      {
-                        method: editingListing ? "PUT" : "POST",
-                        body: formDataToSend,
-                      },
-                    );
+                    const url = editingListing
+                      ? `http://localhost:3001/vendor/${vendorId}/listings/${editingListing.id}`
+                      : `http://localhost:3001/vendor/${vendorId}/listings`;
+
+                    const response = await fetch(url, {
+                      method: editingListing ? "PUT" : "POST",
+                      body: formDataToSend,
+                    });
 
                     const data = await response.json();
 
@@ -609,7 +660,7 @@ export default function CreateListingsPage() {
                     }
 
                     console.log("Saved:", data);
-                    
+
                     // Show new listing immediately with preview image
                     if (!editingListing) {
                       setListings(prev => [
@@ -622,8 +673,19 @@ export default function CreateListingsPage() {
                         ...prev,
                       ]);
                     } else {
-                      // If editing, refetch normally
-                      await fetchListings();
+                      // If editing, update the listing locally for immediate feedback
+                      setListings(prev =>
+                        prev.map(l =>
+                          l.id === editingListing.id
+                            ? {
+                                ...data,
+                                media: formData.imagePreview
+                                  ? [{ mediaUrl: formData.imagePreview }]
+                                  : data.media,
+                              }
+                            : l
+                        )
+                      );
                     }
 
                     setFormData(emptyForm);
@@ -642,12 +704,11 @@ export default function CreateListingsPage() {
                 {submitting ? "Processing..." : (editingListing ? "Update Listing" : "Create Listing")}
               </button>
 
-            </div>
-          </div>
+            </div> {/* modal-actions */}
+          </div> {/* modal */}
         </div>
       )}
 
-
     </main>
-  )
+  );
 }

@@ -693,6 +693,80 @@ body {
   cursor: pointer;
 }
 
+/* Premium Card Styling */
+.premium-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+/* Listing Type Toggle Styling */
+.listing-type-toggle {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.type-card {
+  flex: 1;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: white;
+  font-weight: 500;
+}
+
+.type-card i {
+  font-size: 22px;
+  margin-bottom: 10px;
+  display: block;
+  color: #6b7280;
+}
+
+.type-card:hover {
+  border-color: #10b981;
+  transform: translateY(-2px);
+}
+
+.type-card.active {
+  border-color: #10b981;
+  background: #ecfdf5;
+  box-shadow: 0 8px 18px rgba(16, 185, 129, 0.15);
+}
+
+.type-card.active i {
+  color: #10b981;
+}
+
+/* Input + Select Styling Upgrade */
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  outline: none;
+}
+
+/* Grid Fix */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .form-error {
   color: #dc2626;
   background: #fef2f2;
