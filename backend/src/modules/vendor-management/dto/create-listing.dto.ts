@@ -9,13 +9,16 @@ import {
   Min,
   MaxLength,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ListingType } from '@prisma/client';
 
 export class CreateListingDto {
+  @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
   categoryId: number;
 
+  @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
   addressId: number;
@@ -38,10 +41,12 @@ export class CreateListingDto {
   @IsOptional()
   longDescription?: string;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   priceMin: number;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   @Min(0)
@@ -55,6 +60,7 @@ export class CreateListingDto {
   @IsOptional()
   duration?: string;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   capacity?: number;
@@ -77,6 +83,7 @@ export class CreateListingDto {
   @IsOptional()
   isFeatured?: boolean;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   displayPriority?: number;

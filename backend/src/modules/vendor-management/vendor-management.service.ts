@@ -3,13 +3,16 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 
 @Injectable()
 export class VendorManagementService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService
+  ) { }
 
   /**
    * Get all active categories that vendors can choose from
@@ -57,7 +60,8 @@ export class VendorManagementService {
   /**
    * Create a new listing with validation
    */
-  async createListing(vendorId: number, dto: CreateListingDto) {
+  async createListing(vendorId: number, dto: CreateListingDto, file?: Express.Multer.File,) {
+    console.time("CREATE_LISTING_TOTAL");
     // Validate category exists and is active
     const category = await this.prisma.listingCategory.findUnique({
       where: { id: dto.categoryId },
@@ -90,7 +94,7 @@ export class VendorManagementService {
       );
     }
 
-    // Create the listing
+    // 1. Create the listing (Wait for this to get the ID)
     const listing = await this.prisma.listing.create({
       data: {
         vendorId,
@@ -118,19 +122,37 @@ export class VendorManagementService {
       },
     });
 
-    // Create search index
-    await this.prisma.listingSearchIndex.create({
-      data: {
-        listingId: listing.id,
-        categoryId: listing.categoryId,
-        priceMin: listing.priceMin,
-        priceMax: listing.priceMax,
-        city: location.city,
-        district: location.district,
-        province: location.province,
-      },
+    // Index listing in background
+    setImmediate(() => {
+      this.prisma.listingSearchIndex.create({
+        data: {
+          listingId: listing.id,
+          categoryId: listing.categoryId,
+          priceMin: listing.priceMin,
+          priceMax: listing.priceMax,
+          city: location.city,
+          district: location.district,
+          province: location.province,
+        },
+      }).catch(err => console.error("Background Indexing Error:", err));
     });
 
+    // Handle image upload async
+    if (file) {
+      setImmediate(() => {
+        this.cloudinaryService.uploadFile(file).then(async (uploadResult) => {
+          await this.prisma.listingMedia.create({
+            data: {
+              mediaUrl: uploadResult.secure_url,
+              listingId: listing.id,
+              mediaType: 'IMAGE',
+              isPrimary: true,
+            },
+          });
+        }).catch(err => console.error("Background Upload Error:", err));
+      });
+    }
+    console.timeEnd("CREATE_LISTING_TOTAL");
     return listing;
   }
 
@@ -141,6 +163,7 @@ export class VendorManagementService {
     vendorId: number,
     listingId: number,
     dto: UpdateListingDto,
+    file?: Express.Multer.File,
   ) {
     // Check if listing exists and belongs to vendor
     const existingListing = await this.prisma.listing.findUnique({
@@ -223,6 +246,38 @@ export class VendorManagementService {
         location: true,
       },
     });
+
+    if (file) {
+      // Handle image upload asynchronously: replace primary image cleanly
+      setImmediate(async () => {
+        try {
+          const uploadResult = await this.cloudinaryService.uploadFile(file);
+
+          // Remove old primary image(s)
+          await this.prisma.listingMedia.updateMany({
+            where: {
+              listingId: listingId,
+              isPrimary: true,
+            },
+            data: {
+              isPrimary: false,
+            },
+          });
+
+          // Add new primary image
+          await this.prisma.listingMedia.create({
+            data: {
+              mediaUrl: uploadResult.secure_url,
+              listingId: listingId,
+              mediaType: 'IMAGE',
+              isPrimary: true,
+            },
+          });
+        } catch (err) {
+          console.error("Background Upload Error:", err);
+        }
+      });
+    }
 
     // Update search index if category or location changed
     if (

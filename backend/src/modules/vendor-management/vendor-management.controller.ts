@@ -10,6 +10,9 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+
 import { VendorManagementService } from './vendor-management.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
@@ -60,11 +63,14 @@ export class VendorManagementController {
    */
   @Post(':vendorId/listings')
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('image'))
   async createListing(
     @Param('vendorId', ParseIntPipe) vendorId: number,
     @Body() createListingDto: CreateListingDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.vendorService.createListing(vendorId, createListingDto);
+    console.log("DTO RECEIVED:", createListingDto);
+    return this.vendorService.createListing(vendorId, createListingDto,file);
   }
 
   /**
@@ -72,15 +78,18 @@ export class VendorManagementController {
    * PUT /vendor/:vendorId/listings/:listingId
    */
   @Put(':vendorId/listings/:listingId')
+  @UseInterceptors(FileInterceptor('image'))
   async updateListing(
     @Param('vendorId', ParseIntPipe) vendorId: number,
     @Param('listingId', ParseIntPipe) listingId: number,
     @Body() updateListingDto: UpdateListingDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
     return this.vendorService.updateListing(
       vendorId,
       listingId,
       updateListingDto,
+      file,
     );
   }
 

@@ -10,7 +10,7 @@ export default function CreateListingsPage() {
   const listingsRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [uploading, setUploading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,21 +18,11 @@ export default function CreateListingsPage() {
 
     const file = e.target.files[0];
 
-    setUploading(true);
-
-    setTimeout(() => {
-      setFormData((prev) => ({
-        ...prev,
-        imagePreview: URL.createObjectURL(file),
-        imageName: file.name,
-      }));
-
-      setUploading(false);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }, 1000);
+    setFormData((prev) => ({
+      ...prev,
+      imagePreview: URL.createObjectURL(file),
+      imageName: file.name,
+    }));
   };
 
   const [formData, setFormData] = useState({
@@ -58,6 +48,7 @@ export default function CreateListingsPage() {
   useEffect(() => {
     fetchListings();
     fetchLocations();
+    fetchCategories();
   }, []);
 
 
@@ -87,10 +78,20 @@ export default function CreateListingsPage() {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("http://localhost:3001/vendor/categories");
+      const data = await res.json();
+      setCategories(data);
+    } catch (err) {
+      console.error("Category fetch error", err);
+    }
+  };
+
 
   const [showAll, setShowAll] = useState(false);
 
-  const categories = ["Experience", "Try Out", "Marketplace"];
+  const [categories, setCategories] = useState<any[]>([]);
 
   const sriLankaDistricts = [
     "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
@@ -319,14 +320,14 @@ export default function CreateListingsPage() {
 
                       <div className="meta-row light">
                         <i className="fa-regular fa-calendar"></i>
-                        <span>Created: {new Date(listing.createdAt).toLocaleDateString()}</span>
+                        <span>Created: {new Date(listing.createdAt).toISOString().split("T")[0]}</span>
 
 
                         {listing.updatedAt !== listing.createdAt && (
                           <>
                             <span className="meta-row light"></span>
                             <i className="fa-regular fa-clock"></i>
-                            <span>Updated: {new Date(listing.updatedAt).toLocaleDateString()}</span>
+                            <span>Updated: {new Date(listing.updatedAt).toISOString().split("T")[0]}</span>
                           </>
                         )}
                       </div>
@@ -384,18 +385,11 @@ export default function CreateListingsPage() {
               <div className="form-card">
                 <div className="form-title">Images</div>
                 <label className="upload-dropzone">
-                  {uploading ? (
-                    <>
-                      <div className="spinner"></div>
-                      <p>Uploading images...</p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="upload-icon">⬆</div>
-                      <p>Drag & drop images here, or <span>browse</span></p>
-                      <small>JPG, PNG, WebP · Max 5MB each</small>
-                    </>
-                  )}
+                  <>
+                    <div className="upload-icon">⬆</div>
+                    <p>Drag & drop images here, or <span>browse</span></p>
+                    <small>JPG, PNG, WebP · Max 5MB each</small>
+                  </>
                   <input
                     type="file"
                     accept="image/*"
@@ -450,7 +444,12 @@ export default function CreateListingsPage() {
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     >
                       <option value="">Select category</option>
-                      {categories.map(c => <option key={c}>{c}</option>)}
+
+                      {categories.map((cat: any) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.categoryName}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -551,6 +550,7 @@ export default function CreateListingsPage() {
 
               <button
                 className="btn-primary"
+                disabled={submitting}
                 onClick={async () => {
                   if (
                     !formData.title ||
@@ -566,49 +566,80 @@ export default function CreateListingsPage() {
                     return;
                   }
                   setFormError("");
+                  setSubmitting(true);
 
                   try {
+                    const formDataToSend = new FormData();
+                    formDataToSend.append("categoryId", Number(formData.category).toString());
+                    formDataToSend.append("addressId", Number(selectedAddressId).toString());
+                    formDataToSend.append("listingType", "EXPERIENCE");
+
+                    formDataToSend.append("title", formData.title);
+                    formDataToSend.append("shortDescription", formData.tagline);
+                    formDataToSend.append("longDescription", formData.longDescription);
+
+                    formDataToSend.append("priceMin", formData.minPrice);
+                    formDataToSend.append("priceMax", formData.maxPrice);
+
+                    if (formData.tags) {
+                      formDataToSend.append(
+                        "tags",
+                        JSON.stringify(formData.tags.split(",")),
+                      );
+                    }
+
+                    if (fileInputRef.current?.files?.[0]) {
+                      formDataToSend.append("image", fileInputRef.current.files[0]);
+                    }
+
                     const response = await fetch(
                       `http://localhost:3001/vendor/${vendorId}/listings`,
                       {
                         method: editingListing ? "PUT" : "POST",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                          categoryId: 1,
-                          addressId: selectedAddressId,
-                          listingType: "EXPERIENCE",
-                          title: formData.title,
-                          shortDescription: formData.tagline,
-                          longDescription: formData.longDescription,
-                          priceMin: Number(formData.minPrice),
-                          priceMax: Number(formData.maxPrice),
-                        }),
-                      }
+                        body: formDataToSend,
+                      },
                     );
 
                     const data = await response.json();
 
                     if (!response.ok) {
                       setFormError(data.message || "Failed to save listing");
+                      setSubmitting(false);
                       return;
                     }
 
                     console.log("Saved:", data);
-                    await fetchListings();
+                    
+                    // Show new listing immediately with preview image
+                    if (!editingListing) {
+                      setListings(prev => [
+                        {
+                          ...data,
+                          media: formData.imagePreview
+                            ? [{ mediaUrl: formData.imagePreview }]
+                            : [],
+                        },
+                        ...prev,
+                      ]);
+                    } else {
+                      // If editing, refetch normally
+                      await fetchListings();
+                    }
+
+                    setFormData(emptyForm);
+                    setEditingListing(null);
+                    setShowModal(false);
 
                   } catch (error) {
                     console.error("Error:", error);
+                    setFormError("An error occurred. Please try again.");
+                  } finally {
+                    setSubmitting(false);
                   }
-
-                  setFormData(emptyForm);
-                  setEditingListing(null);
-                  setShowModal(false);
 
                 }}
               >
-                {editingListing ? "Update Listing" : "Create Listing"}
+                {submitting ? "Processing..." : (editingListing ? "Update Listing" : "Create Listing")}
               </button>
 
             </div>
