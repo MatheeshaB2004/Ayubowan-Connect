@@ -294,3 +294,30 @@ model CartItem {
   @@unique([cartId, listingId])
   @@map("cart_items")
 }
+
+model Event {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  location    String
+  city        String
+  district    String
+  province    String
+
+  status      EventStatus  @default(PUBLISHED)
+  isPublished Boolean      @default(true)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("events")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
