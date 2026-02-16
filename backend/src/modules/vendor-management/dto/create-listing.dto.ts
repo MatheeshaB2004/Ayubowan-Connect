@@ -9,7 +9,7 @@ import {
   Min,
   MaxLength,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ListingType } from '@prisma/client';
 
 export class CreateListingDto {
@@ -69,6 +69,16 @@ export class CreateListingDto {
   @IsOptional()
   availability?: string;
 
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   @IsArray()
   @IsOptional()
   tags?: string[];

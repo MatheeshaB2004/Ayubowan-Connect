@@ -13,6 +13,7 @@ export default function CreateListingsPage() {
   const [submitting, setSubmitting] = useState(false);
   const SHORT_DESC_MAX = 500;
   const [formError, setFormError] = useState("");
+  const [tagInput, setTagInput] = useState("");
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
@@ -32,6 +33,7 @@ export default function CreateListingsPage() {
     listingType: "EXPERIENCE",
     minPrice: "",
     maxPrice: "",
+    capacity: "",
     shortDescription: "",
     longDescription: "",
     imageName: "",
@@ -109,6 +111,7 @@ export default function CreateListingsPage() {
     listingType: "EXPERIENCE",
     minPrice: "",
     maxPrice: "",
+    capacity: "",
     shortDescription: "",
     longDescription: "",
     imageName: "",
@@ -263,6 +266,7 @@ export default function CreateListingsPage() {
                               listingType: listing.listingType || "EXPERIENCE",
                               minPrice: listing.priceMin?.toString() || "",
                               maxPrice: listing.priceMax?.toString() || "",
+                              capacity: listing.capacity?.toString() || "",
                               longDescription: listing.longDescription || "",
                               shortDescription: listing.shortDescription || "",
                               imageName: existingImage,
@@ -301,7 +305,9 @@ export default function CreateListingsPage() {
                       {listing.tags?.length > 0 && (
                         <div className="card-tags">
                           {listing.tags.map((tag: string, i: number) => (
-                            <span key={i}>{tag}</span>
+                            <span key={i} className="tag-pill">
+                              {tag}
+                            </span>
                           ))}
                         </div>
                       )}
@@ -318,6 +324,12 @@ export default function CreateListingsPage() {
                         </span>
 
                       </div>
+                      {listing.capacity > 0 && (
+                        <div className="card-capacity">
+                          <i className="fa-solid fa-users"></i>
+                          <span>Up to {listing.capacity} people</span>
+                        </div>
+                      )}
 
                       <div className="meta-row light">
                         <i className="fa-regular fa-calendar"></i>
@@ -527,6 +539,76 @@ export default function CreateListingsPage() {
                   </div>
                 </div>
 
+                {/* CAPACITY FIELD */}
+                <div className="form-group" style={{ marginTop: 16 }}>
+                  <label>Capacity (max people)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 10"
+                    value={formData.capacity}
+                    onChange={(e) =>
+                      setFormData({ ...formData, capacity: e.target.value })
+                    }
+                  />
+                </div>
+
+                {/* TAG INPUT */}
+                <div className="form-group" style={{ marginTop: 16 }}>
+                  <label>Tags (max 3, one word each)</label>
+
+                  <input
+                    type="text"
+                    placeholder="Add up to 3 tags (press Enter)"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+
+                        const cleanTag = tagInput.trim();
+
+                        // Prevent spaces (only one word)
+                        if (cleanTag.includes(" ")) {
+                          return;
+                        }
+
+                        // Prevent empty
+                        if (!cleanTag) return;
+
+                        // Max 3 tags
+                        if (formData.tags.length >= 3) return;
+
+                        // Prevent duplicates
+                        if (formData.tags.includes(cleanTag)) return;
+
+                        setFormData({
+                          ...formData,
+                          tags: [...formData.tags, cleanTag],
+                        });
+
+                        setTagInput("");
+                      }
+                    }}
+                  />
+
+                  {/* Display added tags */}
+                  <div className="tag-preview-row">
+                    {formData.tags.map((tag, index) => (
+                      <span key={index} className="tag-pill">
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newTags = formData.tags.filter((_, i) => i !== index);
+                            setFormData({ ...formData, tags: newTags });
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* DESCRIPTION */}
@@ -631,12 +713,12 @@ export default function CreateListingsPage() {
                     formDataToSend.append("priceMin", formData.minPrice);
                     formDataToSend.append("priceMax", formData.maxPrice);
 
-                    if (formData.tags && formData.tags.length > 0) {
-                      formDataToSend.append(
-                        "tags",
-                        JSON.stringify(formData.tags),
-                      );
+                    if (formData.capacity && formData.capacity.trim() !== "") {
+                      formDataToSend.append("capacity", formData.capacity);
                     }
+
+                    formDataToSend.append("tags", JSON.stringify(formData.tags));
+
 
                     if (fileInputRef.current?.files?.[0]) {
                       formDataToSend.append("image", fileInputRef.current.files[0]);
@@ -678,11 +760,11 @@ export default function CreateListingsPage() {
                         prev.map(l =>
                           l.id === editingListing.id
                             ? {
-                                ...data,
-                                media: formData.imagePreview
-                                  ? [{ mediaUrl: formData.imagePreview }]
-                                  : data.media,
-                              }
+                              ...data,
+                              media: formData.imagePreview
+                                ? [{ mediaUrl: formData.imagePreview }]
+                                : data.media,
+                            }
                             : l
                         )
                       );

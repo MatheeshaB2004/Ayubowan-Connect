@@ -110,7 +110,11 @@ export class VendorManagementService {
         duration: dto.duration,
         capacity: dto.capacity,
         availability: dto.availability,
-        tags: dto.tags || [],
+        tags:
+          typeof dto.tags === 'string'
+            ? JSON.parse(dto.tags)
+            : dto.tags || [],
+
         inclusions: dto.inclusions,
         specs: dto.specs,
         isFeatured: dto.isFeatured || false,
@@ -139,17 +143,28 @@ export class VendorManagementService {
 
     // Handle image upload async
     if (file) {
-      setImmediate(() => {
-        this.cloudinaryService.uploadFile(file).then(async (uploadResult) => {
-          await this.prisma.listingMedia.create({
+      const media = await this.prisma.listingMedia.create({
+        data: {
+          listingId: listing.id,
+          mediaUrl: "__UPLOADING__",
+          mediaType: "IMAGE",
+          isPrimary: true,
+        },
+      });
+
+      setImmediate(async () => {
+        try {
+          const upload = await this.cloudinaryService.uploadFile(file);
+
+          await this.prisma.listingMedia.update({
+            where: { id: media.id },
             data: {
-              mediaUrl: uploadResult.secure_url,
-              listingId: listing.id,
-              mediaType: 'IMAGE',
-              isPrimary: true,
+              mediaUrl: upload.secure_url,
             },
           });
-        }).catch(err => console.error("Background Upload Error:", err));
+        } catch (e) {
+          console.error(e);
+        }
       });
     }
     console.timeEnd("CREATE_LISTING_TOTAL");
@@ -165,6 +180,8 @@ export class VendorManagementService {
     dto: UpdateListingDto,
     file?: Express.Multer.File,
   ) {
+
+
     // Check if listing exists and belongs to vendor
     const existingListing = await this.prisma.listing.findUnique({
       where: { id: listingId },
@@ -229,11 +246,22 @@ export class VendorManagementService {
         ...(dto.priceMax !== undefined && { priceMax: dto.priceMax }),
         ...(dto.priceNote !== undefined && { priceNote: dto.priceNote }),
         ...(dto.duration !== undefined && { duration: dto.duration }),
-        ...(dto.capacity !== undefined && { capacity: dto.capacity }),
+        ...(dto.capacity !== undefined && dto.capacity > 0
+          ? { capacity: dto.capacity }
+          : { capacity: null }),
+
         ...(dto.availability !== undefined && {
           availability: dto.availability,
         }),
-        ...(dto.tags && { tags: dto.tags }),
+        ...(dto.tags !== undefined
+          ? {
+            tags:
+              typeof dto.tags === 'string'
+                ? JSON.parse(dto.tags)
+                : dto.tags,
+          }
+          : {}),
+
         ...(dto.inclusions !== undefined && { inclusions: dto.inclusions }),
         ...(dto.specs !== undefined && { specs: dto.specs }),
         ...(dto.isFeatured !== undefined && { isFeatured: dto.isFeatured }),
@@ -248,33 +276,38 @@ export class VendorManagementService {
     });
 
     if (file) {
-      // Handle image upload asynchronously: replace primary image cleanly
+
+      const media = await this.prisma.listingMedia.create({
+        data: {
+          listingId,
+          mediaUrl: "__UPLOADING__",
+          mediaType: "IMAGE",
+          isPrimary: true,
+        },
+      });
+
+      await this.prisma.listingMedia.updateMany({
+        where: {
+          listingId,
+          id: { not: media.id },
+        },
+        data: {
+          isPrimary: false,
+        },
+      });
+
       setImmediate(async () => {
         try {
-          const uploadResult = await this.cloudinaryService.uploadFile(file);
+          const upload = await this.cloudinaryService.uploadFile(file);
 
-          // Remove old primary image(s)
-          await this.prisma.listingMedia.updateMany({
-            where: {
-              listingId: listingId,
-              isPrimary: true,
-            },
+          await this.prisma.listingMedia.update({
+            where: { id: media.id },
             data: {
-              isPrimary: false,
+              mediaUrl: upload.secure_url,
             },
           });
-
-          // Add new primary image
-          await this.prisma.listingMedia.create({
-            data: {
-              mediaUrl: uploadResult.secure_url,
-              listingId: listingId,
-              mediaType: 'IMAGE',
-              isPrimary: true,
-            },
-          });
-        } catch (err) {
-          console.error("Background Upload Error:", err);
+        } catch (e) {
+          console.error(e);
         }
       });
     }
@@ -328,7 +361,10 @@ export class VendorManagementService {
       include: {
         category: true,
         location: true,
-        media: true,
+        media: {
+          orderBy: { isPrimary: "desc" },
+        },
+
       },
       orderBy: [{ displayPriority: 'desc' }, { createdAt: 'desc' }],
     });

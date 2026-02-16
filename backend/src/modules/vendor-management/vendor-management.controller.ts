@@ -85,6 +85,8 @@ export class VendorManagementController {
     @Body() updateListingDto: UpdateListingDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
+
+    console.log("UPDATE DTO RECEIVED:", updateListingDto);
     return this.vendorService.updateListing(
       vendorId,
       listingId,
