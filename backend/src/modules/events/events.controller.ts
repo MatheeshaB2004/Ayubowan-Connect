@@ -1,18 +1,28 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
-import { CreateEventDto } from './dto/create-event.dto';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { EventsService } from './events.service';
+import { CreateEventDto } from './dto/create-event.dto';
 
 @Controller('events')
 export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Get()
-  getEvents(): any {
+  getAll() {
     return this.eventsService.getAllEvents();
   }
 
+  @Get(':id')
+  getOne(@Param('id') id: string) {
+    return this.eventsService.getEventById(Number(id));
+  }
+
   @Post()
-  createEvent(@Body() eventData: CreateEventDto) {
-    return this.eventsService.createEvent(eventData);
+  create(@Body() dto: CreateEventDto) {
+    return this.eventsService.createEvent(dto);
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.eventsService.deleteEvent(Number(id));
   }
 }
