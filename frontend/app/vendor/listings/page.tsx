@@ -340,7 +340,6 @@ export default function CreateListingsPage() {
                               Delete
                             </button>
                           </div>
-                          <button className="view-btn">View Details</button>
                         </div>
                       </div>
                     </div>
