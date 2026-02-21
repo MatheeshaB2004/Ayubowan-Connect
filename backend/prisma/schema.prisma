@@ -64,6 +64,7 @@ model Vendor {
   updatedAt       DateTime         @updatedAt @map("updated_at")
   listings        Listing[]
   locations       VendorLocation[]
+  goals           Goal[] 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("vendors")
@@ -207,6 +208,7 @@ model ReviewMedia {
   @@map("review_media")
 }
 
+
 enum UserRole {
   USER
   ADMIN
@@ -266,6 +268,21 @@ model Booking {
   @@index([userId])
   @@index([listingId])
   @@map("bookings")
+}
+
+model Goal {
+  id                 Int            @id @default(autoincrement()) @map("goal_id")
+  vendorId           Int            @map("vendor_id")
+  target             Int            @map("target")
+  baselineBookings   Int            @map("baseline_bookings")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  isActive           Boolean        @default(true) @map("is_active")
+
+  vendor   Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  @@unique([vendorId, isActive])
+  @@index([vendorId])
+  @@map("goals")
 }
 
 model Cart {
