@@ -1,12 +1,20 @@
 /* Vendor Dashboard - Custom CSS Classes */
-
+.dashboard-container {
+  position: relative;
+  z-index:10;
+  
+}
+.main-content {
+  position: relative;
+  z-index: 0;
+}
 /* Layout & Container */
 .dashboard-container {
   min-height: 100vh;
   width: 100%;
   display: flex;
   background-color: #F0F2F7;
-  padding-top: 4rem;
+  padding-top: 2rem;
 }
 
 .sidebar {
@@ -15,12 +23,22 @@
   top: 0;
   height: 100vh;
   width: 5rem;
-  background-color: #1a1a2e;
+  background: linear-gradient(to bottom right, #1a3a35, #2d6b5e, #379683);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 1.5rem 0;
-  z-index: 50;
+  z-index: 5;
+}
+
+.sidebar-hidden {
+  transform: translateX(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar {
+  transition: all 0.3s ease;
 }
 
 .main-content {
@@ -32,6 +50,7 @@
   max-width: 72rem;
   margin: 0 auto;
   padding: 1.5rem;
+  overflow: visible;
 }
 
 /* Top Bar */
@@ -39,7 +58,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
+  position: relative;
+
 }
 
 .top-bar-title {
@@ -58,6 +79,7 @@
 .dropdown-container {
   position: relative;
 }
+
 
 .dropdown-button {
   display: flex;
@@ -92,42 +114,50 @@
   transform: rotate(180deg);
 }
 
-.dropdown-menu {
+.period-dropdown-menu {
   position: absolute;
   top: 100%;
   right: 0;
   margin-top: 0.5rem;
   width: 100%;
+  min-width: 10rem; 
   background-color: white;
   border-radius: 0.75rem;
   border: 1px solid #e5e7eb;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  z-index: 50;
+  overflow: visible; /* Change from 'hidden' to 'visible' */
+  z-index: 3000;
+  display: block !important; /* Force display */
+  opacity: 1 !important; /* Force opacity */
+  visibility: visible !important; /* Force visibility */
 }
 
-.dropdown-item {
+.period-dropdown-item {
   width: 100%;
   padding: 0.625rem 1rem;
   text-align: left;
   font-size: 0.875rem;
   transition: background-color 0.2s;
+  color: #1a1a2e !important; /* Force text color */
+  background-color: white !important; /* Force background */
+  display: block !important; /* Force display */
+  opacity: 1 !important; /* Force opacity */
+  visibility: visible !important; /* Force visibility */
 }
 
-.dropdown-item-active {
-  background-color: rgba(55, 150, 131, 0.1);
-  color: #379683;
+.period-dropdown-item-active {
+  background-color: rgba(55, 150, 131, 0.1) !important;
+  color: #379683 !important;
   font-weight: 500;
 }
 
-.dropdown-item-inactive {
-  color: #4a5568;
+.period-dropdown-item-inactive {
+  color: #4a5568 !important;
 }
 
-.dropdown-item-inactive:hover {
-  background-color: #f9fafb;
+.period-dropdown-item-inactive:hover {
+  background-color: #f9fafb !important;
 }
-
 /* Logo Button */
 .logo-button {
   width: 3rem;
@@ -169,7 +199,7 @@
 }
 
 .nav-button-active {
-  background-color: #379683;
+  background-color: #fff;
   box-shadow: 0 10px 15px -3px rgba(55, 150, 131, 0.3);
 }
 
@@ -188,11 +218,11 @@
 }
 
 .nav-icon-active {
-  color: white;
+  color: black;
 }
 
 .nav-icon-inactive {
-  color: #9ca3af;
+  color: black;
 }
 
 .nav-button-inactive:hover .nav-icon-inactive {
@@ -1101,12 +1131,68 @@
   margin-bottom: 1.5rem;
 }
 
+.goal-actions {
+  display: flex;
+  gap: 0.5rem;      
+  margin-left: auto; 
+}
+
 .goal-label {
   color: rgba(255, 255, 255, 0.4);
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+
+.goal-empty {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.goal-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(55,150,131,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #379683;
+  margin-bottom: 0.5rem;
+}
+
+.goal-empty-title {
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.goal-empty-sub {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.9rem;
+  max-width: 360px;
+}
+
+.goal-empty-btn {
+  margin-top: 1rem;
+  background: #379683;
+  color: white;
+  padding: 0.6rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.goal-empty-btn:hover {
+  background: #2d7a6a;
+  transform: translateY(-2px);
+  cursor:pointer;
 }
 
 .goal-edit-button {
@@ -1386,6 +1472,8 @@
   height: 1.5rem;
   color: #379683;
 }
+
+
 
 /* Utility Classes */
 .text-right {

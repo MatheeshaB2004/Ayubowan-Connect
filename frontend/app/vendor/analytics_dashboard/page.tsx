@@ -11,17 +11,19 @@ import {
   ChevronDownIcon,
   TrophyIcon,
   LightbulbIcon
-} from
-  'lucide-react';
+} from 'lucide-react';
 import HeroSection from "./HeroSection";
 import KPIGrid from "./KPIGrid";
 import PerformanceTrends from "./PerformanceTrends";
+import TopListings from "./TopListings";
+import RatingAnalytics from "./RatingAnalytics";
+import EngagementInsights from "./EngagementInsights";
+import GoalTracker from "./GoalTracker";
 import {
   Period,
   dashboardData,
   periodLabels
-} from
-  './datas';
+} from './datas';
 import './page.css';
 import { Inter } from "next/font/google";
 
@@ -63,19 +65,21 @@ export default function Page() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('thisMonth');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('section-overview');
+  const [hideSidebar, setHideSidebar] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const data = dashboardData[selectedPeriod];
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node))
-
         setIsDropdownOpen(false);
     };
-    document.addEventListener('mousedown', handler);
+    document.addEventListener('click', handler, true);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
   useEffect(() => {
     const ids = navItems.map((n) => n.sectionId);
     const observers: IntersectionObserver[] = [];
@@ -96,16 +100,39 @@ export default function Page() {
     });
     return () => observers.forEach((o) => o.disconnect());
   }, [selectedPeriod]);
+
+  useEffect(() => {
+    const footer = document.querySelector(".site-footer");
+    if (!footer) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setHideSidebar(entry.isIntersecting);
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(footer);
+
+    return () => observer.disconnect();
+  }, []);
+
   const scrollTo = (id: string) =>
     document.getElementById(id)?.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     });
+
   const periods: Period[] = ['thisMonth', 'last30Days', 'lastQuarter'];
+  console.log("periodLabels:", periodLabels);
+  console.log("periods:", periods);
+  console.log("periodLabels[periods[0]]:", periodLabels?.[periods[0]]);
   return (
     <div className={`${inter.className} dashboard-container`}>
       {/* ── Sidebar ── */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${hideSidebar ? "sidebar-hidden" : ""}`}>
         <motion.div
           initial={{
             scale: 0
@@ -156,14 +183,12 @@ export default function Page() {
                   <motion.div
                     layoutId="dot"
                     className="nav-dot" />
-
                 }
                 <div className="nav-tooltip">
                   {item.label}
                   <div className="nav-tooltip-arrow" />
                 </div>
               </motion.button>);
-
           })}
         </nav>
 
@@ -178,7 +203,6 @@ export default function Page() {
             delay: 0.5
           }}
           className="user-avatar">
-
           N
         </motion.div>
       </aside>
@@ -200,7 +224,7 @@ export default function Page() {
 
             <div>
               <h1 className="top-bar-title">
-                Good morning, Nimal 🤝
+                Welcome, Nimal 🤝
               </h1>
               <p className="top-bar-subtitle">
                 Pro Vendor Dashboard · AyubowanConnect
@@ -208,15 +232,18 @@ export default function Page() {
             </div>
             <div ref={dropdownRef} className="dropdown-container">
               <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="dropdown-button">
-
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen(prev => !prev);
+                }}
+                className="dropdown-button"
+              >
                 <span className="dropdown-text">
                   {periodLabels[selectedPeriod]}
                 </span>
                 <ChevronDownIcon
                   className={`dropdown-icon ${isDropdownOpen ? 'dropdown-icon-open' : ''}`} />
-
               </button>
               <AnimatePresence>
                 {isDropdownOpen &&
@@ -236,43 +263,149 @@ export default function Page() {
                     transition={{
                       duration: 0.15
                     }}
-                    className="dropdown-menu">
+                    className="period-dropdown-menu">
 
-                    {periods.map((p) =>
-                      <button
-                        key={p}
-                        onClick={() => {
-                          setSelectedPeriod(p);
-                          setIsDropdownOpen(false);
-                        }}
-                        className={`dropdown-item ${selectedPeriod === p ? 'dropdown-item-active' : 'dropdown-item-inactive'}`}>
-
-                        {periodLabels[p]}
-                      </button>
-                    )}
+                    {periods.map((p) => {
+                      console.log("Rendering period:", p, "Label:", periodLabels?.[p]); // DEBUG
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => {
+                            setSelectedPeriod(p);
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`period-dropdown-item ${selectedPeriod === p ? 'period-dropdown-item-active' : 'period-dropdown-item-inactive'}`}>
+                          {periodLabels[p]}
+                        </button>
+                      );
+                    })}
                   </motion.div>
                 }
               </AnimatePresence>
             </div>
           </motion.div>
-          <section className="section-spacing-y">
-            <HeroSection
-              listings={data.kpi.totalListings.value}
-              bookings={data.kpi.bookings.value}
-              views={data.kpi.profileViews.value}
-              inquiries={data.kpi.inquiries.value}
-            />
 
-            <KPIGrid data={data.kpi} />
-            <PerformanceTrends
-              bookingTrend={data.bookingTrend}
-              viewsVsBookings={data.viewsVsBookings}
-              conversionRate={data.conversionRate}
-            />
-          </section>
+          <motion.div
+            key={selectedPeriod}
+            initial={{
+              opacity: 0
+            }}
+            animate={{
+              opacity: 1
+            }}
+            transition={{
+              duration: 0.3
+            }}
+            className="section-spacing-y">
+
+            {/* ── 1. Overview ── */}
+            <section id="section-overview" className="section-container section-spacing-y">
+              <HeroSection
+                listings={data.kpi.totalListings.value}
+                bookings={data.kpi.bookings.value}
+                views={data.kpi.profileViews.value}
+                inquiries={data.kpi.inquiries.value}
+              />
+
+              <div className="section-spacing">
+                <KPIGrid data={data.kpi} />
+              </div>
+            </section>
+
+            {/* ── 2. Bookings ── */}
+            <section id="section-bookings" className="section-container section-spacing">
+              <SectionLabel
+                icon={CalendarCheckIcon}
+                color="#379683"
+                title="Booking Trends" />
+
+              <PerformanceTrends
+                bookingTrend={data.bookingTrend}
+                viewsVsBookings={data.viewsVsBookings}
+                conversionRate={data.conversionRate}
+              />
+            </section>
+
+            {/* ── 3. Listings + Analytics side by side ── */}
+            <div className="section-spacing">
+              <div className="section-grid">
+                <section
+                  id="section-listings"
+                  className="section-container section-grid-col-span-3">
+
+                  <SectionLabel
+                    icon={TrophyIcon}
+                    color="#577399"
+                    title="Top Listings" />
+
+                  <TopListings listings={data.topListings} />
+                </section>
+
+                <section
+                  id="section-analytics"
+                  className="section-container section-grid-col-span-2">
+
+                  <SectionLabel
+                    icon={StarIcon}
+                    color="#379683"
+                    title="Rating Analytics" />
+
+                  <RatingAnalytics
+                    avgRating={data.kpi.avgRating.value}
+                    totalReviews={data.kpi.avgRating.totalReviews}
+                    satisfaction={data.kpi.avgRating.satisfaction}
+                    breakdown={data.ratingBreakdown}
+                  />
+                </section>
+              </div>
+            </div>
+
+            {/* ── 4. Reviews / Insights ── */}
+            <section id="section-reviews" className="section-container section-spacing">
+              <SectionLabel
+                icon={LightbulbIcon}
+                color="#8D5A97"
+                title="Engagement Insights" />
+
+              <EngagementInsights insights={data.insights} />
+            </section>
+
+            {/* ── 5. Goals ── */}
+            <section id="section-goals" className="section-container section-spacing" style={{ paddingBottom: '3rem' }}>
+              <SectionLabel
+                icon={SettingsIcon}
+                color="#379683"
+                title="Monthly Goal" />
+
+              <GoalTracker goal={dashboardData['thisMonth'].goal} />
+            </section>
+          </motion.div>
         </div>
       </main>
     </div>
   )
+}
 
+/* Lightweight section label — no card, just a header row */
+function SectionLabel({
+  icon: Icon,
+  color,
+  title
+}: { icon: React.ElementType; color: string; title: string; }) {
+  return (
+    <div className="section-label">
+      <div
+        className="section-label-icon"
+        style={{
+          backgroundColor: `${color}18`
+        }}>
+        <Icon
+          className="section-label-icon-svg"
+          style={{
+            color
+          }} />
+      </div>
+      <h2 className="section-label-title">{title}</h2>
+      <div className="section-label-divider" />
+    </div>);
 }
