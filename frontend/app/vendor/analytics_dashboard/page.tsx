@@ -15,6 +15,7 @@ import {
   'lucide-react';
 import HeroSection from "./HeroSection";
 import KPIGrid from "./KPIGrid";
+import PerformanceTrends from "./PerformanceTrends";
 import {
   Period,
   dashboardData,
@@ -261,8 +262,13 @@ export default function Page() {
               views={data.kpi.profileViews.value}
               inquiries={data.kpi.inquiries.value}
             />
-            
+
             <KPIGrid data={data.kpi} />
+            <PerformanceTrends
+              bookingTrend={data.bookingTrend}
+              viewsVsBookings={data.viewsVsBookings}
+              conversionRate={data.conversionRate}
+            />
           </section>
         </div>
       </main>
