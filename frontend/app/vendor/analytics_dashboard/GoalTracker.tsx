@@ -10,72 +10,132 @@ import {
     TargetIcon
 } from
     'lucide-react';
-import { GoalData } from './datas';
+
+interface GoalData {
+    exists: boolean;
+    target?: number;
+    current?: number;
+    exceeded?: number;
+    state?: "ACTIVE" | "ACHIEVED" | "SMASHED";
+}
+
 interface GoalTrackerProps {
     goal: GoalData;
 }
-const STORAGE_KEY = 'ayubowan_goal_target';
-const STORAGE_EXISTS_KEY = 'ayubowan_goal_exists';
-export default function GoalTracker({ goal }: GoalTrackerProps) {
-    const [customTarget, setCustomTarget] = useState<number>(goal.target);
-    const [hasGoal, setHasGoal] = useState(false);
-    useEffect(() => {
-        const exists = localStorage.getItem(STORAGE_EXISTS_KEY);
-        const saved = localStorage.getItem(STORAGE_KEY);
 
-        if (exists === 'true' && saved) {
-            setHasGoal(true);
-            setCustomTarget(parseInt(saved, 10));
-        } else {
-            setHasGoal(false);
-        }
-    }, []);
+const USER_ID = 2;
+export default function GoalTracker({ goal }: GoalTrackerProps) {
+    const [customTarget, setCustomTarget] = useState<number>(goal?.target || 0);
+    const [hasGoal, setHasGoal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
-    const [inputValue, setInputValue] = useState(String(customTarget));
+    const [inputValue, setInputValue] = useState('');
     const [inputError, setInputError] = useState('');
-    const current = goal.current;
-    const target = customTarget;
-    const percentage = Math.round(current / target * 100);
+    useEffect(() => {
+        if (goal) {
+            setHasGoal(goal.exists);
+            setCustomTarget(goal.target || 0);
+            setInputValue(String(goal.target || ""));
+        }
+    }, [goal]);
+
+    const current = goal?.current || 0;
+    const target = customTarget || 0;
+    const exceeded = goal?.exceeded || 0;
+    const state = goal?.state;
+    const isSmashed = state === "SMASHED";
+
+    const percentage = target ? Math.round((current / target) * 100) : 0;
     const remaining = Math.max(target - current, 0);
     const isComplete = current >= target;
+
     const size = 120;
     const strokeWidth = 10;
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const progress = Math.min(percentage, 100) / 100 * circumference;
-    const handleSave = () => {
+
+    // CREATE / UPDATE GOAL
+    const saveGoal = async (val: number) => {
+        const method = hasGoal ? "PATCH" : "POST";
+
+        await fetch("http://localhost:3001/vendor/dashboard/goal", {
+            method,
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                userId: USER_ID,
+                target: val,
+            }),
+        });
+
+        window.location.reload();
+    };
+
+    // DELETE GOAL
+    const deleteGoal = async () => {
+        await fetch("http://localhost:3001/vendor/dashboard/goal", {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                userId: USER_ID,
+            }),
+        });
+
+        window.location.reload();
+    };
+
+    const handleSave = async () => {
         const val = parseInt(inputValue, 10);
 
         if (isNaN(val) || val < 1) {
-            setInputError('Enter a number ≥ 1');
+            setInputError("Enter number ≥ 1");
             return;
         }
+
         if (val > 9999) {
-            setInputError('Max 9999');
+            setInputError("Max 9999");
             return;
         }
-        setCustomTarget(val);
-        localStorage.setItem(STORAGE_KEY, String(val));
-        localStorage.setItem(STORAGE_EXISTS_KEY, 'true');
-        setHasGoal(true);
+
+        await saveGoal(val);
+
         setIsEditing(false);
-        setInputError('');
+        setInputError("");
     };
+
     const handleCancel = () => {
         setInputValue(String(customTarget));
-        setInputError('');
+        setInputError("");
         setIsEditing(false);
     };
-    const handleDelete = () => {
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(STORAGE_EXISTS_KEY);
-        setHasGoal(false);
-        setIsEditing(false);
-    };
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') handleSave();
-        if (e.key === 'Escape') handleCancel();
+        if (e.key === "Enter") handleSave();
+        if (e.key === "Escape") handleCancel();
     };
+
+    const today = new Date();
+
+    const endOfMonth = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0
+    );
+
+    const diffTime = endOfMonth.getTime() - today.getTime();
+    const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    const shouldSuggestExtend =
+        (state === "ACHIEVED" || state === "SMASHED") &&
+        daysLeft > 2;
+
+    const isMonthEnding =
+        (state === "ACHIEVED" || state === "SMASHED") &&
+        daysLeft <= 2;
+
     return (
         <motion.div
             initial={{
@@ -193,7 +253,7 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
 
                             <motion.button
                                 whileTap={{ scale: 0.95 }}
-                                onClick={handleDelete}
+                                onClick={deleteGoal}
                                 className="goal-edit-button"
                             >
                                 <XIcon className="goal-edit-icon" />
@@ -228,7 +288,7 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
                                     cy={size / 2}
                                     r={radius}
                                     fill="none"
-                                    stroke={isComplete ? '#4db89e' : '#379683'}
+                                    stroke={isSmashed ? "#FFD700" : isComplete ? "#4db89e" : "#379683"}
                                     strokeWidth={strokeWidth}
                                     strokeLinecap="round"
                                     strokeDasharray={circumference}
@@ -267,7 +327,11 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
                                 }}
                                 className="goal-status">
 
-                                {isComplete ? '🎉 Goal Achieved!' : `${percentage}% complete`}
+                                {isSmashed
+                                    ? "🔥 Target Smashed!"
+                                    : isComplete
+                                        ? "🎉 Goal Achieved!"
+                                        : `${percentage}% complete`}
                             </motion.p>
                             <p className="goal-description">
                                 {isComplete ?
@@ -281,6 +345,27 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
                                     </>
                                 }
                             </p>
+                            {isSmashed && (
+                                <p style={{ color: "#FFD700", fontWeight: 600, marginTop: 6 }}>
+                                    🚀 You exceeded your goal by {exceeded} bookings!
+                                </p>
+                            )}
+
+                            {shouldSuggestExtend && (
+                                <>
+                                    <p style={{ marginTop: 8, fontWeight: 500 }}>
+                                        💡 You still have {daysLeft} days left this month.
+                                        Want to increase your target?
+                                    </p>
+
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        style={{ marginTop: 6 }}
+                                    >
+                                        Extend Goal
+                                    </button>
+                                </>
+                            )}
 
                             {/* Progress bar */}
                             <div className="goal-progress-bar">

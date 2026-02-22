@@ -8,6 +8,7 @@ import { VendorManagementModule } from './modules/vendor-management/vendor-manag
 import { CartModule } from './modules/cart/cart.module';
 import { FilesController } from './files.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     MarketplaceModule,
     VendorManagementModule,
     CartModule,
+    DashboardModule,
   ],
   controllers: [AppController, FilesController],
   providers: [AppService],
