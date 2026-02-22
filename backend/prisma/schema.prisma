@@ -276,6 +276,7 @@ model Goal {
   target             Int            @map("target")
   baselineBookings   Int            @map("baseline_bookings")
   createdAt          DateTime       @default(now()) @map("created_at")
+  expiresAt          DateTime
   isActive           Boolean        @default(true) @map("is_active")
 
   vendor   Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
