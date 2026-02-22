@@ -10,6 +10,7 @@ import {
     TargetIcon
 } from
     'lucide-react';
+import { useRouter } from "next/navigation";
 
 interface GoalData {
     exists: boolean;
@@ -17,31 +18,41 @@ interface GoalData {
     current?: number;
     exceeded?: number;
     state?: "ACTIVE" | "ACHIEVED" | "SMASHED";
+    expiresAt?: string;
 }
 
-interface GoalTrackerProps {
-    goal: GoalData;
-}
 
 const USER_ID = 2;
-export default function GoalTracker({ goal }: GoalTrackerProps) {
-    const [customTarget, setCustomTarget] = useState<number>(goal?.target || 0);
+export default function GoalTracker() {
+    const router = useRouter();
+    const [localGoal, setLocalGoal] = useState<GoalData | null>(null);
+    const [customTarget, setCustomTarget] = useState(0);
     const [hasGoal, setHasGoal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [inputError, setInputError] = useState('');
-    useEffect(() => {
-        if (goal) {
-            setHasGoal(goal.exists);
-            setCustomTarget(goal.target || 0);
-            setInputValue(String(goal.target || ""));
-        }
-    }, [goal]);
+    const [mounted, setMounted] = useState(false);
 
-    const current = goal?.current || 0;
+    useEffect(() => {
+        fetchGoal();
+    }, []);
+
+    useEffect(() => {
+        if (localGoal) {
+            setHasGoal(localGoal.exists);
+            setCustomTarget(localGoal.target || 0);
+            setInputValue(String(localGoal.target || ""));
+        }
+    }, [localGoal]);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const current = localGoal?.current || 0;
     const target = customTarget || 0;
-    const exceeded = goal?.exceeded || 0;
-    const state = goal?.state;
+    const exceeded = localGoal?.exceeded || 0;
+    const state = localGoal?.state;
     const isSmashed = state === "SMASHED";
 
     const percentage = target ? Math.round((current / target) * 100) : 0;
@@ -53,6 +64,14 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const progress = Math.min(percentage, 100) / 100 * circumference;
+
+    const fetchGoal = async () => {
+        const res = await fetch(`http://localhost:3001/vendor/dashboard?userId=${USER_ID}`);
+        const data = await res.json();
+        setLocalGoal(data.goal);
+        setHasGoal(data.goal?.exists ?? false);
+        setCustomTarget(data.goal?.target ?? 0);
+    };
 
     // CREATE / UPDATE GOAL
     const saveGoal = async (val: number) => {
@@ -69,7 +88,7 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
             }),
         });
 
-        window.location.reload();
+        await fetchGoal();
     };
 
     // DELETE GOAL
@@ -84,7 +103,7 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
             }),
         });
 
-        window.location.reload();
+        await fetchGoal();
     };
 
     const handleSave = async () => {
@@ -117,24 +136,28 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
         if (e.key === "Escape") handleCancel();
     };
 
-    const today = new Date();
+    let daysLeft = 0;
+    let isExpired = false;
 
-    const endOfMonth = new Date(
-        today.getFullYear(),
-        today.getMonth() + 1,
-        0
-    );
+    if (mounted && localGoal?.expiresAt) {
+        const today = new Date();
+        const expiresAtDate = new Date(localGoal.expiresAt);
 
-    const diffTime = endOfMonth.getTime() - today.getTime();
-    const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        daysLeft = Math.ceil(
+            (expiresAtDate.getTime() - today.getTime()) /
+            (1000 * 60 * 60 * 24)
+        );
+
+        isExpired = daysLeft <= 0;
+    }
+
+    const isFinished = state === "ACHIEVED" || state === "SMASHED";
 
     const shouldSuggestExtend =
-        (state === "ACHIEVED" || state === "SMASHED") &&
-        daysLeft > 2;
+        isFinished && daysLeft > 2;
 
-    const isMonthEnding =
-        (state === "ACHIEVED" || state === "SMASHED") &&
-        daysLeft <= 2;
+    const isEndingSoon =
+        isFinished && daysLeft > 0 && daysLeft <= 2;
 
     return (
         <motion.div
@@ -315,56 +338,82 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
 
                         {/* Text */}
                         <div className="goal-text">
+                            {isExpired && (
+                                <>
+                                    <p style={{ marginTop: 8, fontWeight: 600 }}>
+                                        ⏳ Your 30-day goal period has ended.
+                                    </p>
+
+                                    <button
+                                        onClick={async () => {
+                                            await deleteGoal();
+                                            setHasGoal(false);
+                                            router.refresh();
+                                        }}
+                                        style={{
+                                            padding: "4px 10px",
+                                            borderRadius: 6,
+                                            background: "rgba(255,255,255,0.08)",
+                                            color: "white",
+                                            border: "1px solid rgba(255,255,255,0.2)",
+                                            fontSize: "0.8rem",
+                                            cursor: "pointer",
+                                        }}
+                                    >
+                                        Start New Goal
+                                    </button>
+                                </>
+                            )}
                             <motion.p
                                 key={percentage}
-                                initial={{
-                                    opacity: 0,
-                                    y: -4
-                                }}
-                                animate={{
-                                    opacity: 1,
-                                    y: 0
-                                }}
-                                className="goal-status">
-
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="goal-status"
+                            >
                                 {isSmashed
                                     ? "🔥 Target Smashed!"
                                     : isComplete
                                         ? "🎉 Goal Achieved!"
                                         : `${percentage}% complete`}
                             </motion.p>
-                            <p className="goal-description">
-                                {isComplete ?
-                                    'Congratulations, you hit your target!' :
-
-                                    <>
-                                        <span className="goal-description-highlight">
-                                            {remaining} more bookings
-                                        </span>{' '}
-                                        to reach your goal
-                                    </>
-                                }
-                            </p>
                             {isSmashed && (
                                 <p style={{ color: "#FFD700", fontWeight: 600, marginTop: 6 }}>
                                     🚀 You exceeded your goal by {exceeded} bookings!
                                 </p>
                             )}
 
-                            {shouldSuggestExtend && (
-                                <>
-                                    <p style={{ marginTop: 8, fontWeight: 500 }}>
-                                        💡 You still have {daysLeft} days left this month.
-                                        Want to increase your target?
+                            {isFinished && !isExpired && (
+                                <div className="goal-cta-card">
+
+                                    <p className="goal-cta-title">
+                                        {isSmashed ? "🔥 You crushed it!" : "🎉 Goal completed"}
                                     </p>
 
-                                    <button
-                                        onClick={() => setIsEditing(true)}
-                                        style={{ marginTop: 6 }}
-                                    >
-                                        Extend Goal
-                                    </button>
-                                </>
+                                    <p className="goal-cta-sub">
+                                        {daysLeft > 2
+                                            ? `You still have ${daysLeft} days left this month. Push further or raise your target.`
+                                            : `This goal ends in ${daysLeft} day${daysLeft === 1 ? "" : "s"}. Start fresh or extend now.`}
+                                    </p>
+
+                                    <div className="goal-cta-actions">
+                                        <button
+                                            onClick={() => setIsEditing(true)}
+                                            className="goal-btn-primary"
+                                        >
+                                            Increase Target
+                                        </button>
+
+                                        {daysLeft <= 2 && (
+                                            <button
+                                                onClick={deleteGoal}
+                                                className="goal-btn-secondary"
+                                            >
+                                                Start New Goal
+                                            </button>
+                                        )}
+                                    </div>
+
+                                </div>
                             )}
 
                             {/* Progress bar */}

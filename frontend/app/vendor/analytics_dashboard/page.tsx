@@ -66,18 +66,8 @@ export default function Page() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('section-overview');
   const [hideSidebar, setHideSidebar] = useState(false);
-  const [goal, setGoal] = useState<any>(undefined);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const data = dashboardData[selectedPeriod];
-
-  useEffect(() => {
-    fetch("http://localhost:3001/vendor/dashboard?userId=2")
-      .then(res => res.json())
-      .then(data => {
-        console.log("GOAL FROM BACKEND:", data.goal);
-        setGoal(data.goal);
-      });
-  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -385,7 +375,7 @@ export default function Page() {
                 color="#379683"
                 title="Monthly Goal" />
 
-              {goal && <GoalTracker goal={goal} />}
+              <GoalTracker />
             </section>
           </motion.div>
         </div>

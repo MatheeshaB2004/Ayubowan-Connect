@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class DashboardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   // CREATE GOAL
   async createGoal(userId: number, target: number) {
@@ -21,11 +21,15 @@ export class DashboardService {
       },
     });
 
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
     return this.prisma.goal.create({
       data: {
         vendorId: vendor.id,
         target,
         baselineBookings: totalBookings,
+        expiresAt,
       },
     });
   }
@@ -37,14 +41,6 @@ export class DashboardService {
     });
 
     if (!vendor) throw new Error('Vendor not found');
-
-    const totalBookings = await this.prisma.booking.count({
-      where: {
-        listing: {
-          vendorId: vendor.id,
-        },
-      },
-    });
 
     const goal = await this.prisma.goal.findFirst({
       where: {
@@ -62,7 +58,18 @@ export class DashboardService {
       };
     }
 
-    const progress = totalBookings - goal.baselineBookings;
+    const totalBookings = await this.prisma.booking.count({
+      where: {
+        listing: {
+          vendorId: vendor.id,
+        },
+        createdAt: {
+          gt: goal.createdAt,
+        },
+      },
+    });
+
+    const progress = totalBookings;
 
     const percentage = Math.min(
       Math.floor((progress / goal.target) * 100),
@@ -82,6 +89,7 @@ export class DashboardService {
         exists: true,
         target: goal.target,
         current: progress,
+        expiresAt: goal.expiresAt,
         remaining: progress >= goal.target ? 0 : goal.target - progress,
         exceeded,
         percentage,
@@ -89,7 +97,6 @@ export class DashboardService {
       },
     };
   }
-
   // INCREASE GOAL
   async increaseGoal(userId: number, target: number) {
     const vendor = await this.prisma.vendor.findUnique({

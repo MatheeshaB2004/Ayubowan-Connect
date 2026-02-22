@@ -1473,6 +1473,97 @@
   color: #379683;
 }
 
+.goal-cta-card {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: linear-gradient(135deg,#111827,#020617);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.goal-cta-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.goal-cta-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.goal-cta-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+.goal-btn-primary {
+  background: linear-gradient(135deg,#379683,#4db89e);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Expired message styling */
+.goal-text p:has(span),
+.goal-text p:has(button),
+.goal-text p:has(a) {
+  text-align: center;
+}
+
+
+.goal-text p {
+  color: #ffffff;
+}
+
+/* Expired goal message */
+.goal-text p:first-of-type {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 30px;
+  margin: 10px;
+}
+
+.goal-text button {
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.08);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.15);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.goal-text button:hover {
+  background: rgba(255,255,255,0.15);
+}
+.goal-btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.goal-btn-secondary {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.goal-btn-secondary:hover {
+  background: rgba(255,255,255,0.05);
+}
+
 
 
 /* Utility Classes */
