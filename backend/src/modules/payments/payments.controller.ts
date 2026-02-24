@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Body } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 
 @Controller('payments')
@@ -11,7 +11,7 @@ export class PaymentsController {
   }
 
   @Post('upgrade')
-  upgrade() {
-    return this.paymentsService.upgradeToPro(1);
+  upgrade(@Body('planType') planType: 'USER' | 'VENDOR') {
+    return this.paymentsService.upgradeToPro(1, planType);
   }
 }
