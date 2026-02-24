@@ -6,41 +6,42 @@ import {
   HomeIcon,
   CalendarCheckIcon,
   EyeIcon,
-  MessageCircleIcon } from
-'lucide-react';
+  MessageCircleIcon
+} from
+  'lucide-react';
 interface HeroSectionProps {
-  listings: number;
+  experiences: number;
+  products: number;
   bookings: number;
-  views: number;
-  inquiries: number;
+  revenue: number;
 }
 export default function HeroSection({
-  listings,
+  experiences,
+  products,
   bookings,
-  views,
-  inquiries
+  revenue,
 }: HeroSectionProps) {
   const stats = [
-  {
-    icon: HomeIcon,
-    value: listings,
-    label: 'Listings'
-  },
-  {
-    icon: CalendarCheckIcon,
-    value: bookings,
-    label: 'Bookings'
-  },
-  {
-    icon: EyeIcon,
-    value: views,
-    label: 'Views'
-  },
-  {
-    icon: MessageCircleIcon,
-    value: inquiries,
-    label: 'Inquiries'
-  }];
+    {
+      icon: HomeIcon,
+      value: experiences,
+      label: 'Experiences'
+    },
+    {
+      icon: CalendarCheckIcon,
+      value: bookings,
+      label: 'Bookings'
+    },
+    {
+      icon: EyeIcon,
+      value: products,
+      label: 'Products'
+    },
+    {
+      icon: MessageCircleIcon,
+      value: revenue,
+      label: 'Estimated Revenue'
+    }];
 
   return (
     <motion.section
@@ -204,20 +205,20 @@ export default function HeroSection({
             className="hero-stats-grid">
 
             {stats.map((stat, index) =>
-            <motion.div
-              key={stat.label}
-              initial={{
-                opacity: 0,
-                scale: 0.9
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1
-              }}
-              transition={{
-                delay: 0.5 + index * 0.1
-              }}
-              className="hero-stat-card">
+              <motion.div
+                key={stat.label}
+                initial={{
+                  opacity: 0,
+                  scale: 0.9
+                }}
+                animate={{
+                  opacity: 1,
+                  scale: 1
+                }}
+                transition={{
+                  delay: 0.5 + index * 0.1
+                }}
+                className="hero-stat-card">
 
                 <div className="hero-stat-icon">
                   <stat.icon className="hero-stat-icon-svg" />

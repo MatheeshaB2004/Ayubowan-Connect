@@ -9,58 +9,63 @@ import {
   StarIcon,
   TrendingUpIcon,
   TrendingDownIcon,
-  InboxIcon } from
-'lucide-react';
-import { KPIData } from './datas';
+  InboxIcon
+} from
+  'lucide-react';
+
 interface KPIGridProps {
-  data: KPIData;
+  summary: any;
 }
-export default function KPIGrid({ data }: KPIGridProps) {
+export default function KPIGrid({ summary }: KPIGridProps) {
+
   const primaryStats = [
-  {
-    label: 'Bookings',
-    value: data.bookings.value,
-    change: data.bookings.change,
-    icon: CalendarCheckIcon,
-    color: '#379683'
-  },
-  {
-    label: 'Profile Views',
-    value: data.profileViews.value,
-    change: data.profileViews.change,
-    icon: EyeIcon,
-    color: '#577399'
-  }];
+    {
+      label: 'Bookings',
+      value: summary?.bookings,
+      change: 0,
+      icon: CalendarCheckIcon,
+      color: '#379683'
+    },
+    {
+      label: 'Profile Views',
+      value: summary?.profileViews,
+      change: 0,
+      icon: EyeIcon,
+      color: '#577399'
+    }];
 
   const secondaryStats = [
-  {
-    label: 'Listings',
-    value: data.totalListings.value,
-    sub: data.totalListings.changeText,
-    icon: LayoutGridIcon,
-    color: '#379683'
-  },
-  {
-    label: 'Inquiries',
-    value: data.inquiries.value,
-    sub: `+${data.inquiries.change}% this period`,
-    icon: InboxIcon,
-    color: '#577399'
-  },
-  {
-    label: 'Reviews',
-    value: data.reviews.value,
-    sub: 'Total feedback',
-    icon: MessageSquareTextIcon,
-    color: '#8D5A97'
-  },
-  {
-    label: 'Avg Rating',
-    value: `${data.avgRating.value}★`,
-    sub: `${data.avgRating.satisfaction}% positive`,
-    icon: StarIcon,
-    color: '#379683'
-  }];
+    {
+      label: 'Listings',
+      value: summary.listings,
+      sub: 'Experiences + Products',
+      icon: LayoutGridIcon,
+      color: '#379683'
+    },
+    {
+      label: 'Response Time',
+      value: summary.avgResponseMinutes
+        ? `${summary.avgResponseMinutes} min`
+        : '—',
+      sub: 'Avg accept time',
+      icon: InboxIcon,
+      color: '#577399'
+    },
+    {
+      label: 'Reviews',
+      value: summary.reviews,
+      sub: 'Customer feedback',
+      icon: MessageSquareTextIcon,
+      color: '#8D5A97'
+    },
+    {
+      label: 'Avg Rating',
+      value: `${summary.avgRating}★`,
+      sub: 'Vendor score',
+      icon: StarIcon,
+      color: '#379683'
+    }
+  ];
 
   return (
     <div className="kpi-container">
@@ -81,31 +86,31 @@ export default function KPIGrid({ data }: KPIGridProps) {
 
         <div className="kpi-primary-grid">
           {primaryStats.map((stat, i) =>
-          <motion.div
-            key={stat.label}
-            initial={{
-              opacity: 0
-            }}
-            animate={{
-              opacity: 1
-            }}
-            transition={{
-              delay: 0.1 + i * 0.1
-            }}
-            className="kpi-primary-card">
+            <motion.div
+              key={stat.label}
+              initial={{
+                opacity: 0
+              }}
+              animate={{
+                opacity: 1
+              }}
+              transition={{
+                delay: 0.1 + i * 0.1
+              }}
+              className="kpi-primary-card">
 
               {/* Icon */}
               <div
-              className="kpi-primary-icon"
-              style={{
-                backgroundColor: `${stat.color}25`
-              }}>
+                className="kpi-primary-icon"
+                style={{
+                  backgroundColor: `${stat.color}25`
+                }}>
 
                 <stat.icon
-                className="kpi-primary-icon-svg"
-                style={{
-                  color: stat.color
-                }} />
+                  className="kpi-primary-icon-svg"
+                  style={{
+                    color: stat.color
+                  }} />
 
               </div>
 
@@ -115,16 +120,16 @@ export default function KPIGrid({ data }: KPIGridProps) {
                   {stat.label}
                 </p>
                 <p className="kpi-primary-value">
-                  {stat.value}
+                  {stat.value ?? ""}
                 </p>
                 <div
-                className={`kpi-primary-change ${stat.change >= 0 ? 'kpi-primary-change-positive' : 'kpi-primary-change-negative'}`}>
+                  className={`kpi-primary-change ${stat.change >= 0 ? 'kpi-primary-change-positive' : 'kpi-primary-change-negative'}`}>
 
                   {stat.change >= 0 ?
-                <TrendingUpIcon className="kpi-primary-change-icon" /> :
+                    <TrendingUpIcon className="kpi-primary-change-icon" /> :
 
-                <TrendingDownIcon className="kpi-primary-change-icon" />
-                }
+                    <TrendingDownIcon className="kpi-primary-change-icon" />
+                  }
                   {stat.change >= 0 ? '+' : ''}
                   {stat.change}% vs last period
                 </div>
@@ -133,24 +138,24 @@ export default function KPIGrid({ data }: KPIGridProps) {
               {/* Decorative bar chart */}
               <div className="kpi-chart">
                 {[35, 60, 45, 80, 65, 90, 75].map((h, idx) =>
-              <motion.div
-                key={idx}
-                initial={{
-                  height: 0
-                }}
-                animate={{
-                  height: `${h}%`
-                }}
-                transition={{
-                  delay: 0.3 + idx * 0.05,
-                  duration: 0.4
-                }}
-                className="kpi-chart-bar"
-                style={{
-                  backgroundColor: stat.color
-                }} />
+                  <motion.div
+                    key={idx}
+                    initial={{
+                      height: 0
+                    }}
+                    animate={{
+                      height: `${h}%`
+                    }}
+                    transition={{
+                      delay: 0.3 + idx * 0.05,
+                      duration: 0.4
+                    }}
+                    className="kpi-chart-bar"
+                    style={{
+                      backgroundColor: stat.color
+                    }} />
 
-              )}
+                )}
               </div>
             </motion.div>
           )}
@@ -174,32 +179,32 @@ export default function KPIGrid({ data }: KPIGridProps) {
         className="kpi-secondary-grid">
 
         {secondaryStats.map((stat, i) =>
-        <motion.div
-          key={stat.label}
-          initial={{
-            opacity: 0,
-            scale: 0.95
-          }}
-          animate={{
-            opacity: 1,
-            scale: 1
-          }}
-          transition={{
-            delay: 0.25 + i * 0.07
-          }}
-          className="kpi-secondary-card">
+          <motion.div
+            key={stat.label}
+            initial={{
+              opacity: 0,
+              scale: 0.95
+            }}
+            animate={{
+              opacity: 1,
+              scale: 1
+            }}
+            transition={{
+              delay: 0.25 + i * 0.07
+            }}
+            className="kpi-secondary-card">
 
             <div
-            className="kpi-secondary-icon"
-            style={{
-              backgroundColor: `${stat.color}15`
-            }}>
+              className="kpi-secondary-icon"
+              style={{
+                backgroundColor: `${stat.color}15`
+              }}>
 
               <stat.icon
-              className="kpi-secondary-icon-svg"
-              style={{
-                color: stat.color
-              }} />
+                className="kpi-secondary-icon-svg"
+                style={{
+                  color: stat.color
+                }} />
 
             </div>
             <div className="kpi-secondary-content">

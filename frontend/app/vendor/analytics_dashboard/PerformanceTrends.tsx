@@ -36,7 +36,13 @@ export default function PerformanceTrends({
     conversionRate
 }: PerformanceTrendsProps) {
     const lineData = {
-        labels: bookingTrend.map((d) => d.date),
+        labels: bookingTrend.map((d) => {
+            const date = new Date(d.date);
+            return date.toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+            });
+        }),
         datasets: [
             {
                 label: 'Bookings',
@@ -93,9 +99,9 @@ export default function PerformanceTrends({
                 },
                 ticks: {
                     color: 'rgba(255,255,255,0.35)',
-                    font: {
-                        size: 11
-                    }
+                    font: { size: 11 },
+                    autoSkip: true,
+                    maxTicksLimit: 8, // 🔥 only show ~8 labels
                 },
                 border: {
                     display: false

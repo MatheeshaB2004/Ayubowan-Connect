@@ -36,4 +36,21 @@ export class DashboardController {
   deleteGoal(@Body() body: { userId: number }) {
     return this.service.deleteGoal(body.userId);
   }
+
+  @Get('summary')
+  getSummary(@Query('userId') userId: string) {
+    return this.service.getVendorSummary(Number(userId));
+  }
+
+  @Get("booking-trend")
+  getBookingTrend(
+    @Query("userId") userId: string,
+    @Query("period") period: string
+  ) {
+    return this.service.getBookingTrend(
+      Number(userId),
+      period
+    );
+  }
+
 }
