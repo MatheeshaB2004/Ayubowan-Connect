@@ -19,6 +19,7 @@ model User {
   localTourist LocalTourist?
 
   reviews  Review[]
+  profileViews ProfileView[] 
   vendor   Vendor?
   bookings Booking[]
   cart     Cart?
@@ -65,6 +66,7 @@ model Vendor {
   listings        Listing[]
   locations       VendorLocation[]
   goals           Goal[] 
+  profileViews    ProfileView[] 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("vendors")
@@ -206,6 +208,21 @@ model ReviewMedia {
 
   @@index([reviewId])
   @@map("review_media")
+}
+
+model ProfileView {
+  id          Int      @id @default(autoincrement()) @map("profile_view_id")
+  vendorId    Int      @map("vendor_id")
+  userId      Int      @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, userId])
+  @@index([vendorId])
+  @@index([userId])
+  @@map("profile_views")
 }
 
 
