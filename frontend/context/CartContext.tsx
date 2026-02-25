@@ -2,66 +2,53 @@
 
 import React, { createContext, useContext, useState } from 'react';
 
-/* =======================
-   TYPES (TOP LEVEL ONLY)
-   ======================= */
-
 export type CartListingSnapshot = {
   id: number;
   title: string;
   priceMin: number;
+  listingType: 'EXPERIENCE' | 'PRODUCT';
   vendor?: {
     businessName?: string;
   };
-  media: { mediaUrl: string }[];
 };
 
 export type CartItem = {
   id: string;
   listingId: number;
   quantity: number;
-  listingType: 'EXPERIENCE' | 'PRODUCT';
   listing: CartListingSnapshot;
 };
 
 type CartContextType = {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, 'id'>) => void;
+  addToCart: (listing: CartListingSnapshot, quantity?: number) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
   totalAmount: number;
 };
 
-/* =======================
-   CONTEXT
-   ======================= */
-
 const CartContext = createContext<CartContextType | undefined>(undefined);
-
-/* =======================
-   PROVIDER
-   ======================= */
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
 
-  const addToCart = (item: Omit<CartItem, 'id'>) => {
-    setItems((prev) => [
+  const addToCart = (listing: CartListingSnapshot, quantity = 1) => {
+    setItems(prev => [
       ...prev,
       {
         id: crypto.randomUUID(),
-        ...item,
+        listingId: listing.id,
+        quantity,
+        listing,
       },
     ]);
   };
 
   const removeFromCart = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    setItems(prev => prev.filter(item => item.id !== id));
   };
 
-  const clearCart = () => {
-    setItems([]);
-  };
+  const clearCart = () => setItems([]);
 
   const totalAmount = items.reduce(
     (sum, item) => sum + item.listing.priceMin * item.quantity,
@@ -69,22 +56,14 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   return (
-    <CartContext.Provider
-      value={{ items, addToCart, removeFromCart, clearCart, totalAmount }}
-    >
+    <CartContext.Provider value={{ items, addToCart, removeFromCart, clearCart, totalAmount }}>
       {children}
     </CartContext.Provider>
   );
 };
 
-/* =======================
-   HOOK
-   ======================= */
-
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (!context) {
-    throw new Error('useCart must be used within CartProvider');
-  }
+  if (!context) throw new Error('useCart must be used within CartProvider');
   return context;
 };

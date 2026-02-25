@@ -1,0 +1,93 @@
+/* ===============================
+   AYUBOWAN CONNECT – GLOBAL THEME
+   Marketplace + Payments
+================================ */
+
+:root {
+  --primary: #0d9488;
+  --primary-dark: #0f766e;
+  --bg-soft: #f0fdfa;
+  --bg-light: #f9fafb;
+  --border-light: #e5e7eb;
+  --text-dark: #111827;
+  --text-muted: #6b7280;
+}
+
+/* ---------- Buttons ---------- */
+
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  padding: 0.75rem 1.5rem;
+  background-color: white;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  background-color: var(--bg-soft);
+}
+
+/* ---------- Cards ---------- */
+
+.card {
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.card-soft {
+  background-color: var(--bg-soft);
+}
+
+/* ---------- Layout ---------- */
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.section-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
+}
+
+/* ---------- Utility ---------- */
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.no-results {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+.divider {
+  height: 1px;
+  background-color: var(--border-light);
+  margin: 2rem 0;
+}
