@@ -1,3 +1,4 @@
+import './styles/payments.css';
 import './styles/marketplace-theme.css';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
