@@ -134,64 +134,182 @@ export class DashboardService {
     return { message: 'Goal deleted' };
   }
 
-  async getVendorSummary(userId: number) {
+  async getVendorSummary(userId: number, period: string) {
     const vendor = await this.prisma.vendor.findUnique({
       where: { userId },
     });
 
     if (!vendor) throw new Error('Vendor not found');
 
-    // Experiences
-    const experiences = await this.prisma.listing.count({
+    const now = new Date();
+    let start = new Date();
+    let prevStart = new Date();
+    let prevEnd = new Date();
+    let end = new Date();
+
+    if (period === "thisMonth") {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+      prevEnd = new Date(start.getTime() - 1);
+      prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    }
+
+    if (period === "last30Days") {
+      end = now;
+
+      start = new Date(now);
+      start.setDate(now.getDate() - 30);
+
+      prevEnd = start;
+
+      prevStart = new Date(start);
+      prevStart.setDate(start.getDate() - 30);
+    }
+
+    if (period === "lastQuarter") {
+      end = now;
+
+      start = new Date(now);
+      start.setMonth(now.getMonth() - 3);
+
+      prevEnd = start;
+
+      prevStart = new Date(start);
+      prevStart.setMonth(start.getMonth() - 3);
+    }
+    //Profile Views
+    const currentProfileViews = await this.prisma.profileView.count({
       where: {
         vendorId: vendor.id,
-        listingType: 'EXPERIENCE',
-      },
-    });
-
-    // Products
-    const products = await this.prisma.listing.count({
-      where: {
-        vendorId: vendor.id,
-        listingType: 'PRODUCT',
-      },
-    });
-
-    // Bookings (through listing → vendor)
-    const bookings = await this.prisma.booking.count({
-      where: {
-        listing: {
-          vendorId: vendor.id,
+        createdAt: {
+          gte: start,
+          lt: end,
         },
       },
     });
+
+    const previousProfileViews = await this.prisma.profileView.count({
+      where: {
+        vendorId: vendor.id,
+        createdAt: {
+          gte: prevStart,
+          lt: prevEnd,
+        },
+      },
+    });
+
+    let profileViewsChange = 0;
+
+    if (previousProfileViews === 0) {
+      profileViewsChange = currentProfileViews > 0 ? -1 : 0;
+    } else {
+      const raw =
+        ((currentProfileViews - previousProfileViews) /
+          previousProfileViews) * 100;
+
+      profileViewsChange = Math.min(Math.round(raw), 100);
+    }
+
+    const currentExperiences = await this.prisma.listing.count({
+      where: {
+        vendorId: vendor.id,
+        listingType: 'EXPERIENCE',
+        createdAt: { gte: start, lt: end },
+      },
+    });
+
+    const currentProducts = await this.prisma.listing.count({
+      where: {
+        vendorId: vendor.id,
+        listingType: 'PRODUCT',
+        createdAt: { gte: start, lt: end },
+      },
+    });
+
+    const previousExperiences = await this.prisma.listing.count({
+      where: {
+        vendorId: vendor.id,
+        listingType: 'EXPERIENCE',
+        createdAt: { gte: prevStart, lt: prevEnd },
+      },
+    });
+
+    const previousProducts = await this.prisma.listing.count({
+      where: {
+        vendorId: vendor.id,
+        listingType: 'PRODUCT',
+        createdAt: { gte: prevStart, lt: prevEnd },
+      },
+    });
+
+    const currentListings = currentExperiences + currentProducts;
+    const previousListings = previousExperiences + previousProducts;
+
+    let listingsChange = 0;
+
+    if (previousListings === 0) {
+      listingsChange = currentListings > 0 ? -1 : 0;
+    } else {
+      listingsChange = Math.min(
+        Math.round(((currentListings - previousListings) / previousListings) * 100),
+        100
+      );
+    }
+
+    // Bookings 
+    const currentBookings = await this.prisma.booking.count({
+      where: {
+        listing: { vendorId: vendor.id },
+        createdAt: {
+          gte: start,
+          lt: end,
+        },
+      },
+    });
+
+    const previousBookings = await this.prisma.booking.count({
+      where: {
+        listing: { vendorId: vendor.id },
+        createdAt: {
+          gte: prevStart,
+          lt: prevEnd,
+        },
+      },
+    });
+
+    let bookingsChange = 0;
+
+    if (previousBookings === 0) {
+      bookingsChange = currentBookings > 0 ? -1 : 0;
+    } else {
+      const raw =
+        ((currentBookings - previousBookings) /
+          previousBookings) * 100;
+
+      bookingsChange = Math.min(Math.round(raw), 100);
+    }
 
     // Estimated Revenue
     const revenueAgg = await this.prisma.booking.aggregate({
       where: {
-        listing: {
-          vendorId: vendor.id,
-        },
+        listing: { vendorId: vendor.id },
+        createdAt: { gte: start },
       },
-      _sum: {
-        totalPrice: true,
-      },
+      _sum: { totalPrice: true },
     });
 
-    const reviews = await this.prisma.review.aggregate({
+    const reviewsAgg = await this.prisma.review.aggregate({
       _count: true,
-      _avg: {
-        rating: true,
-      },
+      _avg: { rating: true },
       where: {
-        listing: {
-          vendorId: vendor.id,
-        },
+        listing: { vendorId: vendor.id },
+        createdAt: { gte: start, lt: end },
       },
     });
 
-    const totalReviews = reviews._count;
-    const avgRating = Number(reviews._avg.rating || 0).toFixed(1);
+    const totalReviews = reviewsAgg._count;
+    const avgRating = Number(reviewsAgg._avg.rating || 0).toFixed(1);
 
     const acceptedBookings = await this.prisma.booking.findMany({
       where: {
@@ -218,21 +336,25 @@ export class DashboardService {
       );
     }
 
-    const listingsCount = await this.prisma.listing.count({
-      where: {
-        vendorId: vendor.id,
-      },
-    });
+    const listingsCount = currentListings;
 
     return {
-      experiences,
-      products,
-      bookings,
-      estimatedRevenue: revenueAgg._sum.totalPrice || 0,
+      experiences: currentExperiences,
+      products: currentProducts,
 
-      listings: listingsCount,
+      listings: currentListings,
+      listingsChange,
+
+      bookings: currentBookings,
+      bookingsChange,
+
+      profileViews: currentProfileViews,
+      profileViewsChange,
+
       reviews: totalReviews,
       avgRating,
+
+      estimatedRevenue: revenueAgg._sum.totalPrice || 0,
       avgResponseMinutes,
     };
   }
@@ -300,5 +422,150 @@ export class DashboardService {
 
     return result;
   }
+
+  async getTopListings(userId: number, period: string) {
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId },
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    const now = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    if (period === "thisMonth") {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    }
+
+    if (period === "last30Days") {
+      end = now;
+      start = new Date(now);
+      start.setDate(now.getDate() - 30);
+    }
+
+    if (period === "lastQuarter") {
+      end = now;
+      start = new Date(now);
+      start.setMonth(now.getMonth() - 3);
+    }
+
+    const listings = await this.prisma.listing.findMany({
+      where: {
+        vendorId: vendor.id,
+        createdAt: {
+          gte: start,
+          lt: end
+        },
+      },
+      include: {
+        bookings: {
+          where: { createdAt: { gte: start } },
+        },
+      },
+    });
+
+    const mapped = listings.map(l => ({
+      name: l.title,
+      bookings: l.bookings.length,
+      createdAt: l.createdAt,
+    }));
+
+    mapped.sort((a, b) => b.bookings - a.bookings);
+
+    const maxBookings = mapped[0]?.bookings || 1;
+
+    return mapped.slice(0, 5).map(l => {
+      let tag: "high" | "needs-improvement" | "new" = "needs-improvement";
+
+      if (l.bookings === maxBookings) tag = "high";
+      if (l.bookings === 0) tag = "new";
+
+      return {
+        name: l.name,
+        bookings: l.bookings,
+        maxBookings,
+        tag,
+      };
+    });
+  }
+
+  async getRatingAnalytics(userId: number, period: string) {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId },
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    const now = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    if (period === "thisMonth") {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    }
+
+    if (period === "last30Days") {
+      end = now;
+      start = new Date(now);
+      start.setDate(now.getDate() - 30);
+    }
+
+    if (period === "lastQuarter") {
+      end = now;
+      start = new Date(now);
+      start.setMonth(now.getMonth() - 3);
+    }
+
+    const reviews = await this.prisma.review.findMany({
+      where: {
+        listing: { vendorId: vendor.id },
+        createdAt: { gte: start, lt: end },
+      },
+      select: { rating: true },
+    });
+
+    const totalReviews = reviews.length;
+
+    if (!totalReviews) {
+      return {
+        avgRating: 0,
+        totalReviews: 0,
+        satisfaction: 0,
+        breakdown: [5, 4, 3, 2, 1].map(s => ({
+          stars: s,
+          count: 0,
+          percentage: 0,
+        })),
+      };
+    }
+
+    const sum = reviews.reduce((a, b) => a + b.rating, 0);
+    const avgRating = Number((sum / totalReviews).toFixed(1));
+
+    const positive = reviews.filter(r => r.rating >= 4).length;
+    const satisfaction = Math.round((positive / totalReviews) * 100);
+
+    const breakdown = [5, 4, 3, 2, 1].map(stars => {
+      const count = reviews.filter(r => r.rating === stars).length;
+
+      return {
+        stars,
+        count,
+        percentage: Math.round((count / totalReviews) * 100),
+      };
+    });
+
+    return {
+      avgRating,
+      totalReviews,
+      satisfaction,
+      breakdown,
+    };
+  }
+
 
 }

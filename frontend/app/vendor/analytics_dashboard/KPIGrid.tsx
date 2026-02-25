@@ -17,19 +17,19 @@ interface KPIGridProps {
   summary: any;
 }
 export default function KPIGrid({ summary }: KPIGridProps) {
-
+  console.log("KPI RECEIVED:", summary);
   const primaryStats = [
     {
       label: 'Bookings',
       value: summary?.bookings,
-      change: 0,
+      change: summary?.bookingsChange ?? null,
       icon: CalendarCheckIcon,
       color: '#379683'
     },
     {
       label: 'Profile Views',
       value: summary?.profileViews,
-      change: 0,
+      change: summary?.profileViewsChange ?? null,
       icon: EyeIcon,
       color: '#577399'
     }];
@@ -38,7 +38,7 @@ export default function KPIGrid({ summary }: KPIGridProps) {
     {
       label: 'Listings',
       value: summary.listings,
-      sub: 'Experiences + Products',
+      change: summary.listingsChange ?? null,
       icon: LayoutGridIcon,
       color: '#379683'
     },
@@ -130,8 +130,14 @@ export default function KPIGrid({ summary }: KPIGridProps) {
 
                     <TrendingDownIcon className="kpi-primary-change-icon" />
                   }
-                  {stat.change >= 0 ? '+' : ''}
-                  {stat.change}% vs last period
+                  {stat.change === -1 ? (
+                    <span className="kpi-new-badge">New</span>
+                  ) : (
+                    <>
+                      {stat.change >= 0 ? '+' : ''}
+                      {stat.change}% vs last period
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -214,6 +220,15 @@ export default function KPIGrid({ summary }: KPIGridProps) {
               <p className="kpi-secondary-value">
                 {stat.value}
               </p>
+
+              {stat.change !== undefined && (
+                <div className="kpi-secondary-change">
+                  {stat.change === -1
+                    ? "New"
+                    : `${stat.change >= 0 ? "+" : ""}${stat.change}% growth vs last period`}
+                </div>
+              )}
+
               <p className="kpi-secondary-sub">{stat.sub}</p>
             </div>
           </motion.div>

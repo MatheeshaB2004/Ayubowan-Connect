@@ -38,8 +38,11 @@ export class DashboardController {
   }
 
   @Get('summary')
-  getSummary(@Query('userId') userId: string) {
-    return this.service.getVendorSummary(Number(userId));
+  getSummary(
+    @Query('userId') userId: string,
+    @Query('period') period: string,
+  ) {
+    return this.service.getVendorSummary(Number(userId), period || "thisMonth");
   }
 
   @Get("booking-trend")
@@ -51,6 +54,22 @@ export class DashboardController {
       Number(userId),
       period
     );
+  }
+
+  @Get("top-listings")
+  getTopListings(
+    @Query("userId") userId: string,
+    @Query("period") period: string
+  ) {
+    return this.service.getTopListings(Number(userId), period || "thisMonth");
+  }
+
+  @Get("ratings")
+  getRatings(
+    @Query("userId") userId: string,
+    @Query("period") period: string
+  ) {
+    return this.service.getRatingAnalytics(Number(userId), period || "thisMonth");
   }
 
 }

@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from "next/navigation";
 import {
   LayoutDashboardIcon,
   CalendarCheckIcon,
@@ -64,16 +65,30 @@ const navItems = [
 export default function DashboardClient({
   summary,
   bookingTrend,
+  topListings,
+  ratings,
   period,
 }: {
   summary: any;
   bookingTrend: any[];
+  topListings: any[];
+  ratings: {
+    avgRating: number;
+    totalReviews: number;
+    satisfaction: number;
+    breakdown: {
+      stars: number;
+      count: number;
+      percentage: number;
+    }[];
+  };
   period: string;
-}){
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('thisMonth');
+}) {
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>(period as Period);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('section-overview');
   const [hideSidebar, setHideSidebar] = useState(false);
+  const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const data = dashboardData[selectedPeriod];
 
@@ -110,6 +125,10 @@ export default function DashboardClient({
   }, [selectedPeriod]);
 
   useEffect(() => {
+    setSelectedPeriod(period as Period);
+  }, [period]);
+
+  useEffect(() => {
     const footer = document.querySelector(".site-footer");
     if (!footer) return;
 
@@ -135,7 +154,7 @@ export default function DashboardClient({
 
   const periods: Period[] = ['thisMonth', 'last30Days', 'lastQuarter'];
   console.log("SUMMARY STATE:", summary);
-  if (!summary) return null; 
+  if (!summary) return null;
   return (
     <div className={`${inter.className} dashboard-container`}>
       {/* ── Sidebar ── */}
@@ -278,6 +297,7 @@ export default function DashboardClient({
                         <button
                           key={p}
                           onClick={() => {
+                            router.push(`/vendor/analytics_dashboard?period=${p}`);
                             setSelectedPeriod(p);
                             setIsDropdownOpen(false);
                           }}
@@ -330,8 +350,8 @@ export default function DashboardClient({
 
               <PerformanceTrends
                 bookingTrend={bookingTrend}
-                viewsVsBookings={[]}   
-                conversionRate={0}     
+                viewsVsBookings={[]}
+                conversionRate={0}
               />
             </section>
 
@@ -347,7 +367,7 @@ export default function DashboardClient({
                     color="#577399"
                     title="Top Listings" />
 
-                  <TopListings listings={data.topListings} />
+                  <TopListings listings={topListings} />
                 </section>
 
                 <section
@@ -360,10 +380,10 @@ export default function DashboardClient({
                     title="Rating Analytics" />
 
                   <RatingAnalytics
-                    avgRating={data.kpi.avgRating.value}
-                    totalReviews={data.kpi.avgRating.totalReviews}
-                    satisfaction={data.kpi.avgRating.satisfaction}
-                    breakdown={data.ratingBreakdown}
+                    avgRating={ratings.avgRating}
+                    totalReviews={ratings.totalReviews}
+                    satisfaction={ratings.satisfaction}
+                    breakdown={ratings.breakdown}
                   />
                 </section>
               </div>
@@ -386,7 +406,7 @@ export default function DashboardClient({
                 color="#379683"
                 title="Monthly Goal" />
 
-              <GoalTracker/>
+              <GoalTracker />
             </section>
           </motion.div>
         </div>

@@ -1,0 +1,3 @@
+### Test profile view
+POST http://localhost:3001/vendor/2/view
+Content-Type: application/json

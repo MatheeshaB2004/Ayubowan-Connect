@@ -393,4 +393,18 @@ export class VendorManagementService {
 
     return { message: 'Listing deleted successfully' };
   }
+
+  async recordProfileView(vendorId: number, userId: number) {
+  try {
+    return await this.prisma.profileView.create({
+      data: {
+        vendorId,
+        userId,
+      },
+    });
+  } catch (error) {
+    // Unique constraint prevents duplicates
+    return null;
+  }
+}
 }
