@@ -1,59 +1,52 @@
-interface Event {
-  id: number;
-  title: string;
-  description?: string | null;
-  location: string;
-  startDate: string;
-  endDate?: string | null;
-}
+import { getEvents } from "@/lib/api/events";
+import CalendarClient from "@/app/events/components/CalendarClient";
+
+export const dynamic = 'force-dynamic';
 
 export default async function EventsPage() {
+  let events: Awaited<ReturnType<typeof getEvents>> = [];
+  let error = null;
+
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
-      cache: 'no-store',
-    });
+    events = await getEvents();
+  } catch (e) {
+    console.error("Failed to fetch events:", e);
+    error = "Failed to load events. Please try again later.";
+  }
 
-    if (!res.ok) {
-      throw new Error('Failed to fetch events');
-    }
-
-    const events: Event[] = await res.json();
-
+  if (error) {
     return (
-      <div className="container mx-auto p-10">
-        <h1 className="text-3xl font-bold mb-6">Event Calendar</h1>
-
-        {events.length === 0 ? (
-          <p className="text-gray-500">No events scheduled yet.</p>
-        ) : (
-          <div className="grid gap-4">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="border border-gray-300 rounded-lg p-4 hover:shadow-md transition"
-              >
-                <h3 className="text-xl font-semibold">{event.title}</h3>
-                {event.description && (
-                  <p className="text-gray-600 mt-2">{event.description}</p>
-                )}
-                <p className="text-gray-500 mt-2">📍 {event.location}</p>
-                <p className="text-gray-500">
-                  📅 {new Date(event.startDate).toLocaleDateString()}
-                  {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString()}`}
-                </p>
-              </div>
-            ))}
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <svg 
+              className="w-8 h-8 text-red-500" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
+              />
+            </svg>
           </div>
-        )}
-      </div>
-    );
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    return (
-      <div className="container mx-auto p-10">
-        <h1 className="text-3xl font-bold mb-6">Event Calendar</h1>
-        <p className="text-red-500">Failed to load events. Please try again later.</p>
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">
+            Unable to Load Calendar
+          </h2>
+          <p className="text-slate-600 mb-6">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
+
+  return <CalendarClient initialEvents={events} />;
 }
