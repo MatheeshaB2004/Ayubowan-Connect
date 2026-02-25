@@ -1,43 +1,43 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaClient } from '../../../prisma/generated/prisma';
+import { Injectable, BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class PaymentsService {
-  private prisma = new PrismaClient();
-
-  async getSubscriptionStatus(userId: number) {
-    const tourist = await this.prisma.localTourist.findUnique({
-      where: { userId },
-    });
-
-    if (!tourist) {
-      throw new NotFoundException('Local tourist not found');
+  getSubscriptionStatus(userId: number) {
+    if (!userId) {
+      throw new BadRequestException('Invalid user');
     }
 
     return {
       userId,
-      isProUser: tourist.isProUser,
-      proSubscriptionExpiry: tourist.proSubscriptionExpiry,
+      isProUser: false,
+      proSubscriptionExpiry: null,
     };
   }
 
-  async upgradeToPro(userId: number, planType: 'USER' | 'VENDOR') {
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + 30); // 30-day subscription
-
-    const updated = await this.prisma.localTourist.update({
-      where: { userId },
-      data: {
-        isProUser: true,
-        proSubscriptionExpiry: expiry,
-      },
-    });
+  upgradeToPro(userId: number, planType: 'USER' | 'VENDOR') {
+    if (!userId) {
+      throw new BadRequestException('Invalid user');
+    }
 
     return {
       message: 'Subscription upgraded successfully (simulated)',
+      userId,
       planType,
-      isProUser: updated.isProUser,
-      proSubscriptionExpiry: updated.proSubscriptionExpiry,
+      isProUser: true,
+      proSubscriptionExpiry: '2026-03-01',
+    };
+  }
+
+  checkout(amount: number, method: 'CARD' | 'CASH') {
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Invalid amount');
+    }
+
+    return {
+      paymentId: `PAY_${Date.now()}`,
+      status: 'SUCCESS',
+      method,
+      amount,
     };
   }
 }
