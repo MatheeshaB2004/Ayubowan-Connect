@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable,ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -566,6 +566,237 @@ export class DashboardService {
       breakdown,
     };
   }
+
+  async getEngagementInsights(userId: number, period: string) {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId },
+      include: { locations: true },
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    const city = vendor.locations[0]?.city;
+
+    const now = new Date();
+    let start = new Date();
+
+    if (period === "thisMonth") start = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (period === "last30Days") start.setDate(now.getDate() - 30);
+    if (period === "lastQuarter") start.setMonth(now.getMonth() - 3);
+
+    // ───────────── Card 1 — Demand Pattern
+
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        listing: { vendorId: vendor.id },
+        createdAt: { gte: start },
+      },
+      select: { createdAt: true },
+    });
+
+    let timingInsight = "Early bookings shape your demand pattern — stay visible.";
+
+    const minBookings = period === "lastQuarter" ? 10 : 5;
+
+    if (bookings.length >= minBookings) {
+      const bucket: Record<string, number> = {};
+
+      bookings.forEach(b => {
+        const key =
+          period === "lastQuarter"
+            ? b.createdAt.toLocaleString("default", { month: "long" })
+            : b.createdAt.toLocaleString("default", { weekday: "long" });
+
+        bucket[key] = (bucket[key] || 0) + 1;
+      });
+
+      const entries = Object.entries(bucket);
+      const max = Math.max(...entries.map(e => e[1]));
+      const winners = entries.filter(e => e[1] === max).map(e => e[0]);
+
+      if (winners.length === 1 && max / bookings.length >= 0.4) {
+        timingInsight =
+          period === "lastQuarter"
+            ? `${winners[0]} generated most of your bookings`
+            : `Most bookings happen on ${winners[0]}`;
+      } else if (winners.length === 2) {
+        timingInsight =
+          period === "lastQuarter"
+            ? `${winners[0]} and ${winners[1]} drove most of your bookings`
+            : `Most bookings happen on ${winners[0]} and ${winners[1]}`;
+      } else {
+        timingInsight =
+          period === "lastQuarter"
+            ? "Your bookings were evenly distributed across multiple months"
+            : "Your bookings are evenly distributed across multiple days";
+      }
+    } else if (bookings.length > 0) {
+      timingInsight = "Your bookings are still forming a pattern — consistency reveals peak days.";
+    }
+
+    // ───────────── Card 2 — Price Positioning
+
+    const myListings = await this.prisma.listing.findMany({
+      where: { vendorId: vendor.id },
+      select: { priceMin: true },
+    });
+
+    const myAvg =
+      myListings.reduce((s, l) => s + l.priceMin, 0) / (myListings.length || 1);
+
+    const competitors = await this.prisma.listing.findMany({
+      where: {
+        vendorId: { not: vendor.id },
+        location: { city },
+      },
+      select: { priceMin: true },
+    });
+
+    let priceInsight = "You are the only vendor operating in this area.";
+
+    if (competitors.length) {
+      const marketAvg =
+        competitors.reduce((s, l) => s + l.priceMin, 0) / competitors.length;
+
+      const diff = Math.round(((myAvg - marketAvg) / marketAvg) * 100);
+
+      priceInsight =
+        diff > 0
+          ? `You are priced ${diff}% higher than vendors in ${city}`
+          : `You are priced ${Math.abs(diff)}% lower than vendors in ${city}`;
+    }
+
+    // ───────────── Card 3 — Revenue + Lost Revenue
+
+    const earned = await this.prisma.booking.aggregate({
+      where: {
+        listing: { vendorId: vendor.id },
+        createdAt: { gte: start },
+        status: "CONFIRMED",
+      },
+      _sum: { totalPrice: true },
+    });
+
+    const lost = await this.prisma.booking.aggregate({
+      where: {
+        listing: { vendorId: vendor.id },
+        createdAt: { gte: start },
+        status: { in: ["CANCELLED", "REJECTED"] },
+      },
+      _sum: { totalPrice: true },
+    });
+
+    const revenue = Math.round(earned._sum.totalPrice || 0);
+    const lostRevenue = Math.round(lost._sum.totalPrice || 0);
+
+    let revenueInsight = `Your Estimated revenue is : LKR ${revenue}.`;
+
+    if (lostRevenue > 0) {
+      revenueInsight += ` You missed LKR ${lostRevenue} from cancelled or rejected bookings.`;
+    }
+    return [
+      { text: timingInsight },
+      { text: priceInsight },
+      { text: revenueInsight },
+    ];
+  }
+
+  async getViewsVsBookings(userId: number, period: string) {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId },
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    const now = new Date();
+    let start = new Date();
+
+    if (period === "thisMonth")
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    if (period === "last30Days")
+      start = new Date(now.getTime() - 30 * 86400000);
+
+    if (period === "lastQuarter")
+      start = new Date(now.getTime() - 90 * 86400000);
+
+    // vendor listing ids
+    const listings = await this.prisma.listing.findMany({
+      where: { vendorId: vendor.id },
+      select: { id: true },
+    });
+
+    const listingIds = listings.map(l => l.id);
+
+    // listing views
+    const views = await this.prisma.listingView.findMany({
+      where: {
+        listingId: { in: listingIds },
+        createdAt: { gte: start },
+      },
+      select: { createdAt: true },
+    });
+
+    // bookings
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        listingId: { in: listingIds },
+        createdAt: { gte: start },
+      },
+      select: { createdAt: true },
+    });
+
+    const bucket: Record<string, { views: number; bookings: number }> = {};
+
+    const key = (d: Date) => d.toLocaleDateString("en-CA");
+
+    views.forEach(v => {
+      const k = key(v.createdAt);
+      bucket[k] ??= { views: 0, bookings: 0 };
+      bucket[k].views++;
+    });
+
+    bookings.forEach(b => {
+      const k = key(b.createdAt);
+      bucket[k] ??= { views: 0, bookings: 0 };
+      bucket[k].bookings++;
+    });
+
+    const result: { week: string; views: number; bookings: number }[] = [];
+    const cur = new Date(start);
+
+    while (cur <= now) {
+      const k = key(cur);
+      result.push({
+        week: k,
+        views: bucket[k]?.views || 0,
+        bookings: bucket[k]?.bookings || 0,
+      });
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    return result;
+  }
+
+  async simulateListingView(listingId: number, userId: number) {
+
+    const localTourist = await this.prisma.localTourist.findUnique({
+      where: { userId },
+    });
+
+    if (!localTourist) {
+      throw new ForbiddenException("Only locals or tourists can view listings");
+    }
+
+    return this.prisma.listingView.create({
+      data: {
+        listingId,
+        userId,
+      },
+    });
+  }
+
+
 
 
 }

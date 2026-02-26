@@ -7,6 +7,7 @@ import {
   Body,
 } from '@nestjs/common';
 import { Query } from '@nestjs/common';
+import { Param } from "@nestjs/common";
 import { DashboardService } from './dashboard.service';
 
 @Controller('vendor/dashboard')
@@ -70,6 +71,33 @@ export class DashboardController {
     @Query("period") period: string
   ) {
     return this.service.getRatingAnalytics(Number(userId), period || "thisMonth");
+  }
+
+  @Get("insights")
+  getInsights(
+    @Query("userId") userId: string,
+    @Query("period") period: string
+  ) {
+    return this.service.getEngagementInsights(Number(userId), period || "thisMonth");
+  }
+
+  @Get("views-vs-bookings")
+  getViewsVsBookings(
+    @Query("userId") userId: string,
+    @Query("period") period: string
+  ) {
+    return this.service.getViewsVsBookings(Number(userId), period || "thisMonth");
+  }
+
+  @Post("simulate-view/:id")
+  simulate(
+    @Param("id") id: string,
+    @Query("userId") userId: string
+  ) {
+    return this.service.simulateListingView(
+      Number(id),
+      Number(userId)
+    );
   }
 
 }

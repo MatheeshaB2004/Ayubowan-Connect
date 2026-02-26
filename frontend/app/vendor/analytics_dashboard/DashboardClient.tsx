@@ -67,6 +67,8 @@ export default function DashboardClient({
   bookingTrend,
   topListings,
   ratings,
+  insights,
+  viewsVsBookings,
   period,
 }: {
   summary: any;
@@ -82,6 +84,8 @@ export default function DashboardClient({
       percentage: number;
     }[];
   };
+  insights: any[];
+  viewsVsBookings: any[];
   period: string;
 }) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>(period as Period);
@@ -350,7 +354,7 @@ export default function DashboardClient({
 
               <PerformanceTrends
                 bookingTrend={bookingTrend}
-                viewsVsBookings={[]}
+                viewsVsBookings={viewsVsBookings}
                 conversionRate={0}
               />
             </section>
@@ -396,7 +400,7 @@ export default function DashboardClient({
                 color="#8D5A97"
                 title="Engagement Insights" />
 
-              <EngagementInsights insights={data.insights} />
+              <EngagementInsights insights={insights} />
             </section>
 
             {/* ── 5. Goals ── */}

@@ -31,6 +31,18 @@ export default async function Page({
     { cache: "no-store" }
   );
 
+  const insightsRes = await fetch(
+    `http://localhost:3001/vendor/dashboard/insights?userId=2&period=${period}`,
+    { cache: "no-store" }
+  );
+
+  const viewsVsBookingsRes = await fetch(
+  `http://localhost:3001/vendor/dashboard/views-vs-bookings?userId=2&period=${period}`,
+  { cache: "no-store" }
+);
+
+  const viewsVsBookings = await viewsVsBookingsRes.json();
+  const insights = await insightsRes.json();
   const topListings = await topListingsRes.json();
   const summary = await summaryRes.json();
   const bookingTrend = await trendRes.json();
@@ -43,6 +55,8 @@ export default async function Page({
       bookingTrend={bookingTrend}
       topListings={topListings}
       ratings={ratings}
+      insights={insights}
+      viewsVsBookings={viewsVsBookings}
       period={period}
     />
   );

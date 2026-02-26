@@ -25,6 +25,7 @@ ChartJS.register(
     Tooltip,
     Legend
 );
+import { useSearchParams } from "next/navigation";
 interface PerformanceTrendsProps {
     bookingTrend: BookingTrendPoint[];
     viewsVsBookings: ViewsVsBookingsPoint[];
@@ -35,6 +36,9 @@ export default function PerformanceTrends({
     viewsVsBookings,
     conversionRate
 }: PerformanceTrendsProps) {
+    const searchParams = useSearchParams();
+    const period = searchParams.get("period");
+    const shouldGroupWeekly = period === "lastQuarter";
     const lineData = {
         labels: bookingTrend.map((d) => {
             const date = new Date(d.date);
@@ -85,8 +89,10 @@ export default function PerformanceTrends({
                 cornerRadius: 10,
 
                 callbacks: {
-                    title: (items: any) => items[0].label,
-                    label: (ctx: any) => `Bookings: ${ctx.parsed.y}`
+                    label: (ctx: any) => {
+                        const value = ctx.parsed.y ?? 0;
+                        return `${ctx.dataset.label}: ${value}`;
+                    }
                 }
 
             }
@@ -101,7 +107,7 @@ export default function PerformanceTrends({
                     color: 'rgba(255,255,255,0.35)',
                     font: { size: 11 },
                     autoSkip: true,
-                    maxTicksLimit: 8, // 🔥 only show ~8 labels
+                    maxTicksLimit: 8,
                 },
                 border: {
                     display: false
@@ -124,24 +130,77 @@ export default function PerformanceTrends({
             }
         }
     };
+
+    const groupWeekly = (data: any[]) => {
+        return Object.values(
+            data.reduce((acc, item) => {
+                const date = new Date(item.week);
+
+                const start = new Date(date);
+                start.setDate(date.getDate() - date.getDay());
+                start.setHours(0, 0, 0, 0);
+
+                const key = start.toISOString();
+
+                if (!acc[key]) {
+                    const end = new Date(start);
+                    end.setDate(start.getDate() + 6);
+
+                    acc[key] = {
+                        start,
+                        end,
+                        views: 0,
+                        bookings: 0
+                    };
+                }
+
+                acc[key].views += item.views;
+                acc[key].bookings += item.bookings;
+
+                return acc;
+            }, {} as Record<string, any>)
+        );
+    };
+
+    const processedData = shouldGroupWeekly
+        ? groupWeekly(viewsVsBookings)
+        : viewsVsBookings.map((d) => ({
+            start: new Date(d.week),
+            end: new Date(d.week),
+            views: d.views,
+            bookings: d.bookings
+        }));
+
     const barData = {
-        labels: viewsVsBookings.map((d) => d.week),
+        labels: processedData.map((d: any) => {
+            const format = (date: Date) =>
+                date.toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric"
+                });
+
+            if (shouldGroupWeekly) {
+                return `${format(d.start)} – ${format(d.end)}`;
+            }
+
+            return format(d.start);
+        }),
         datasets: [
             {
                 label: 'Views',
-                data: viewsVsBookings.map((d) => d.views),
+                data: processedData.map((d: any) => d.views),
                 backgroundColor: 'rgba(87,115,153,0.75)',
                 borderRadius: 5,
-                borderSkipped: false
+                maxBarThickness: 26
             },
             {
                 label: 'Bookings',
-                data: viewsVsBookings.map((d) => d.bookings),
+                data: processedData.map((d: any) => d.bookings),
                 backgroundColor: 'rgba(55,150,131,0.85)',
                 borderRadius: 5,
-                borderSkipped: false
-            }]
-
+                maxBarThickness: 26
+            }
+        ]
     };
     const barOptions = {
         responsive: true,
@@ -171,6 +230,8 @@ export default function PerformanceTrends({
         },
         scales: {
             x: {
+                offset: true,
+                stacked: false,
                 grid: {
                     display: false
                 },
@@ -178,13 +239,19 @@ export default function PerformanceTrends({
                     color: 'rgba(255,255,255,0.35)',
                     font: {
                         size: 11
-                    }
+                    },
+
+                    maxRotation: 0,
+                    minRotation: 0,
+                    autoSkip: true,
+                    maxTicksLimit: 6
                 },
                 border: {
                     display: false
                 }
             },
             y: {
+                beginAtZero: true,
                 grid: {
                     color: 'rgba(255,255,255,0.04)',
                     drawBorder: false
@@ -233,8 +300,8 @@ export default function PerformanceTrends({
             </div>
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 divide-x divide-white/5">
-                <div className="lg:col-span-3 px-8 py-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 divide-x divide-white/5">
+                <div className="lg:col-span-1 px-8 py-6">
                     <p className="text-white/40 text-xs font-medium mb-4">
                         Bookings over time
                     </p>
@@ -242,7 +309,7 @@ export default function PerformanceTrends({
                         <Line data={lineData} options={lineOptions as any} />
                     </div>
                 </div>
-                <div className="lg:col-span-2 px-8 py-6">
+                <div className="lg:col-span-1 px-8 py-6">
                     <p className="text-white/40 text-xs font-medium mb-4">
                         Views vs bookings
                     </p>
