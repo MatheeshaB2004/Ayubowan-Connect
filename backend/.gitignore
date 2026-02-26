@@ -3,6 +3,9 @@
 /node_modules
 /build
 
+# generated prisma client
+/prisma/generated
+
 # Logs
 logs
 *.log
@@ -55,4 +58,9 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-/generated/prisma
+# Prisma generated client
+/prisma/generated
+
+# Uploaded files
+/uploads
+uploads/

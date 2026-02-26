@@ -2,6 +2,11 @@ import './styles/payments.css';
 import './styles/marketplace-theme.css';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import GlobalHeader from "@/components/header_footer/GlobalHeader";
+import Footer from "@/components/header_footer/Footer";
+import ScrollToTopButton from "@/components/common/ScrollToTopButton";
+import { AuthProvider } from "@/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
 import "./globals.css";
 
 
@@ -30,7 +35,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>
+          <CartProvider>
+            <GlobalHeader />
+            <main className="min-h-screen pt-20">
+              {children}
+            </main>
+            <Footer />
+            <ScrollToTopButton />
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

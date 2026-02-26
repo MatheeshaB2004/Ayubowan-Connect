@@ -1,0 +1,236 @@
+.sidebar-container {
+  padding: 24px;
+  border-right: 1px solid #e5e7eb;
+  background-color: #e8f5f2;
+  height: 100%;
+  min-width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.custom-input,
+.custom-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #374151;
+  background-color: #ffffff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.custom-input:focus,
+.custom-select:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.1);
+}
+
+.checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(5, auto);
+  grid-auto-flow: column;
+  gap: 10px;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.checkbox-label,
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  color: #4b5563;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"],
+.radio-label input[type="radio"] {
+  accent-color: #0d9488;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-label:hover,
+.radio-label:hover {
+  color: #111827;
+}
+
+/* Custom Dropdown Styles */
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-header {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #374151;
+  background-color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+
+.dropdown-header:hover {
+  border-color: #9ca3af;
+}
+
+.dropdown-arrow {
+  transition: transform 0.2s;
+  color: #6b7280;
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
+}
+
+.dropdown-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 240px;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  margin-top: 4px;
+  z-index: 50;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.dropdown-item {
+  padding: 10px 12px;
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.dropdown-item:hover {
+  background-color: #379683;
+  /* Main Theme Color */
+  color: white;
+}
+
+.dropdown-item.selected {
+  background-color: #f3f4f6;
+  font-weight: 500;
+}
+
+.dropdown-item.selected:hover {
+  background-color: #379683;
+  color: white;
+}
+
+/* Dropdown Section Headers */
+.dropdown-section-header {
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0d9488;
+  background-color: #f0fdfa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-top: 1px solid #e5e7eb;
+  position: sticky;
+  top: 49px;
+  z-index: 9;
+  cursor: default;
+}
+
+.dropdown-section-header:first-of-type {
+  border-top: none;
+}
+
+/* Dropdown Sub-items (districts under provinces) */
+.dropdown-subitem {
+  padding-left: 28px;
+  position: relative;
+}
+
+.dropdown-subitem::before {
+  content: "•";
+  position: absolute;
+  left: 16px;
+  color: #9ca3af;
+  font-weight: bold;
+}
+
+/* Hide spin buttons for number inputs */
+.custom-input[type=number]::-webkit-inner-spin-button,
+.custom-input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+
+
+.location-search-sticky {
+  padding: 8px;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 10;
+}
+
+.location-search-input {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.875rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.dropdown-no-results {
+  cursor: default;
+  color: #9ca3af;
+  text-align: center;
+  padding: 10px 12px;
+}
+
+.no-categories-msg {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.price-inputs-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.price-input-field {
+  width: 100%;
+}
