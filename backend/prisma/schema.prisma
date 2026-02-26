@@ -20,6 +20,7 @@ model User {
 
   reviews  Review[]
   profileViews ProfileView[] 
+  listingViews ListingView[]
   vendor   Vendor?
   bookings Booking[]
   cart     Cart?
@@ -66,7 +67,8 @@ model Vendor {
   listings        Listing[]
   locations       VendorLocation[]
   goals           Goal[] 
-  profileViews    ProfileView[] 
+  profileViews    ProfileView[]
+  events          Event[] 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("vendors")
@@ -138,6 +140,7 @@ model Listing {
   reviews          Review[]
   bookings         Booking[]
   cartItems        CartItem[]
+  listingViews     ListingView[]
 
   @@index([vendorId])
   @@index([categoryId])
@@ -303,6 +306,20 @@ model Goal {
   @@map("goals")
 }
 
+model ListingView {
+  id        Int      @id @default(autoincrement())
+  listingId Int
+  userId    Int?
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User?     @relation(fields: [userId], references: [id])
+
+  @@index([listingId])
+  @@index([createdAt])
+  @@map("listing_views")
+}
+
 model Cart {
   id        Int      @id @default(autoincrement()) @map("cart_id")
   userId    Int?     @unique @map("user_id")
@@ -340,6 +357,9 @@ model Event {
   city        String
   district    String
   province    String
+
+  vendorId    Int?
+  vendor      Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   status      EventStatus  @default(PUBLISHED)
   isPublished Boolean      @default(true)
