@@ -19,6 +19,8 @@ model User {
   localTourist LocalTourist?
 
   reviews  Review[]
+  profileViews ProfileView[] 
+  listingViews ListingView[]
   vendor   Vendor?
   bookings Booking[]
   cart     Cart?
@@ -64,6 +66,9 @@ model Vendor {
   updatedAt       DateTime         @updatedAt @map("updated_at")
   listings        Listing[]
   locations       VendorLocation[]
+  goals           Goal[] 
+  profileViews    ProfileView[]
+  events          Event[] 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("vendors")
@@ -135,6 +140,7 @@ model Listing {
   reviews          Review[]
   bookings         Booking[]
   cartItems        CartItem[]
+  listingViews     ListingView[]
 
   @@index([vendorId])
   @@index([categoryId])
@@ -207,6 +213,22 @@ model ReviewMedia {
   @@map("review_media")
 }
 
+model ProfileView {
+  id          Int      @id @default(autoincrement()) @map("profile_view_id")
+  vendorId    Int      @map("vendor_id")
+  userId      Int      @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, userId])
+  @@index([vendorId])
+  @@index([userId])
+  @@map("profile_views")
+}
+
+
 enum UserRole {
   USER
   ADMIN
@@ -268,6 +290,36 @@ model Booking {
   @@map("bookings")
 }
 
+model Goal {
+  id                 Int            @id @default(autoincrement()) @map("goal_id")
+  vendorId           Int            @map("vendor_id")
+  target             Int            @map("target")
+  baselineBookings   Int            @map("baseline_bookings")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  expiresAt          DateTime
+  isActive           Boolean        @default(true) @map("is_active")
+
+  vendor   Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  @@unique([vendorId, isActive])
+  @@index([vendorId])
+  @@map("goals")
+}
+
+model ListingView {
+  id        Int      @id @default(autoincrement())
+  listingId Int
+  userId    Int?
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User?     @relation(fields: [userId], references: [id])
+
+  @@index([listingId])
+  @@index([createdAt])
+  @@map("listing_views")
+}
+
 model Cart {
   id        Int      @id @default(autoincrement()) @map("cart_id")
   userId    Int?     @unique @map("user_id")
@@ -305,6 +357,9 @@ model Event {
   city        String
   district    String
   province    String
+
+  vendorId    Int?
+  vendor      Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   status      EventStatus  @default(PUBLISHED)
   isPublished Boolean      @default(true)
