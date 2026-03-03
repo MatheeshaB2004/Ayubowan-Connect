@@ -1,5 +1,10 @@
-import { IsString, IsDateString, IsOptional, IsEnum } from 'class-validator';
-import { EventStatus } from '@prisma/client';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsNumber,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateEventDto {
   @IsString()
@@ -14,7 +19,11 @@ export class CreateEventDto {
 
   @IsOptional()
   @IsDateString()
-  endDate?: Date;
+  endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  time?: string;
 
   @IsString()
   location: string;
@@ -29,6 +38,22 @@ export class CreateEventDto {
   province: string;
 
   @IsOptional()
-  @IsEnum(EventStatus)
-  status?: EventStatus;
+  @IsString()
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsNumber()
+  price?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isFree?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  maxParticipants?: number;
 }
