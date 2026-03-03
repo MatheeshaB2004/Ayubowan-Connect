@@ -24,6 +24,7 @@ model User {
   vendor   Vendor?
   bookings Booking[]
   cart     Cart?
+  eventRegistrations EventRegistration[]
 
   @@map("users")
 }
@@ -228,48 +229,6 @@ model ProfileView {
   @@map("profile_views")
 }
 
-
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum LocalUserType {
-  LOCAL
-  TOURIST
-}
-
-enum VerifiedStatus {
-  PENDING
-  VERIFIED
-  REJECTED
-}
-
-enum VisibilityStatus {
-  DRAFT
-  PENDING_REVIEW
-  PUBLISHED
-  ARCHIVED
-}
-
-enum MediaType {
-  IMAGE
-  VIDEO
-}
-
-enum ListingType {
-  EXPERIENCE
-  PRODUCT
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
-  REJECTED
-}
-
 model Booking {
   id          Int           @id @default(autoincrement()) @map("booking_id")
   userId      Int           @map("user_id")
@@ -367,7 +326,65 @@ model Event {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
+  registrations EventRegistration[]
+
   @@map("events")
+}
+
+model EventRegistration {
+  id        Int      @id @default(autoincrement()) @map("registration_id")
+  userId    Int      @map("user_id")
+  eventId   Int      @map("event_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@map("event_registrations")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum LocalUserType {
+  LOCAL
+  TOURIST
+}
+
+enum VerifiedStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum VisibilityStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum ListingType {
+  EXPERIENCE
+  PRODUCT
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  REJECTED
 }
 
 enum EventStatus {
