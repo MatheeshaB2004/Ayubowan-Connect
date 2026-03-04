@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import GlobalHeader from "@/components/header_footer/GlobalHeader";
 import Footer from "@/components/header_footer/Footer";
 import ScrollToTopButton from "@/components/common/ScrollToTopButton";
+import ChatWidget from "@/components/common/ChatWidget";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
 import "./globals.css";
@@ -40,6 +41,7 @@ export default function RootLayout({
             </main>
             <Footer />
             <ScrollToTopButton />
+            <ChatWidget />
           </CartProvider>
         </AuthProvider>
       </body>
