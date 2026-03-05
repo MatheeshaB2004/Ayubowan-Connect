@@ -530,6 +530,27 @@ const listingSeed = [
 async function main() {
   console.log('Seeding marketplace data...');
 
+    const demoBuyer = await prisma.user.upsert({
+    where: { email: 'demo@buyer.com' },
+    update: {},
+    create: {
+      fullName: 'Demo Buyer',
+      email: 'demo@buyer.com',
+      passwordHash: 'demo',
+      role: 'USER',
+      isActive: true,
+      localTourist: {
+        create: {
+          fullName: 'Demo Buyer',
+          userType: 'TOURIST',
+          preferredLanguage: 'en',
+        },
+      },
+    },
+  });
+
+  console.log('Demo buyer user id:', demoBuyer.id);
+
   const vendorUser = await prisma.user.upsert({
     where: { email: 'vendor@example.com' },
     update: {
