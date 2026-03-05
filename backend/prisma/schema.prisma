@@ -307,26 +307,32 @@ model CartItem {
 }
 
 model Event {
-  id          Int          @id @default(autoincrement())
-  title       String
-  description String?
-  startDate   DateTime
-  endDate     DateTime?
-  location    String
-  city        String
-  district    String
-  province    String
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?
+  startDate       DateTime @map("start_date")
+  endDate         DateTime? @map("end_date")
+  time            String?                         // "09:00 AM - 12:00 PM"
+  location        String                          // display name e.g. "Colombo"
+  city            String
+  district        String
+  province        String
+  imageUrl        String?  @map("image_url")      // Cloudinary URL
+  category        String?                         // "Cooking", "Cultural", etc.
+  price           Float?                          // null = free
+  isFree          Boolean  @default(false) @map("is_free")
+  maxParticipants Int?     @map("max_participants")
 
-  vendorId    Int?
-  vendor      Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendorId        Int?
+  vendor          Vendor?  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
-  status      EventStatus  @default(PUBLISHED)
-  isPublished Boolean      @default(true)
+  status          EventStatus @default(PUBLISHED)
+  isPublished     Boolean     @default(true) @map("is_published")
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  registrations EventRegistration[]
+  registrations   EventRegistration[]
 
   @@map("events")
 }
