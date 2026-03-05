@@ -1,11 +1,10 @@
-'use client';
-
-import { CartProvider } from '@/context/CartContext';
+// frontend/app/payments/layout.tsx
+import './payments.css';
 
 export default function PaymentsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <CartProvider>{children}</CartProvider>;
+  return <section className="payments-layout">{children}</section>;
 }

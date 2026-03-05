@@ -1,73 +1,64 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useCart } from '@/context/CartContext';
 
 export default function CartPage() {
-  const { items, removeFromCart, totalAmount } = useCart();
+  const { items, removeFromCart } = useCart();
+
+  const totalAmount = items.reduce(
+    (sum, item) => sum + item.quantity * item.listing.priceMin,
+    0
+  );
 
   if (items.length === 0) {
     return (
-      <div className="payments-page">
-        <div className="payments-container">
-          <div className="payments-header">
-            <h1>Your Cart</h1>
-            <p>Your cart is currently empty</p>
-          </div>
-
-          <div className="payments-card" style={{ textAlign: 'center' }}>
-            <Link href="/marketplace">
-              <button className="btn-primary">Explore Marketplace</button>
-            </Link>
-          </div>
-        </div>
+      <div style={{ padding: '2rem' }}>
+        <h2>Your cart is empty</h2>
+        <Link href="/marketplace">Go to Marketplace</Link>
       </div>
     );
   }
 
   return (
-    <div className="payments-page">
-      <div className="payments-container">
-        <div className="payments-header">
-          <h1>Your Cart</h1>
-          <p>Review the experiences and products you’ve selected</p>
-        </div>
+    <div style={{ padding: '2rem' }}>
+      <h1>Your Cart</h1>
 
-        <div className="payments-card">
-          {items.map((item) => (
-            <div key={item.id} className="cart-item">
-              <div className="cart-item-info">
-                <h3>{item.listing?.title}</h3>
-                <span>{item.listing?.vendor?.businessName ?? 'Vendor'}</span>
-              </div>
+      {items.map((item) => (
+        <div
+          key={item.id}
+          style={{
+            display: 'flex',
+            gap: '1rem',
+            borderBottom: '1px solid #ddd',
+            padding: '1rem 0',
+          }}
+        >
+          <Image
+            src={item.listing.media?.[0]?.mediaUrl || '/assets/photos/B4.webp'}
+            alt={item.listing.title}
+            width={100}
+            height={80}
+          />
 
-              <div>
-                <p className="cart-item-price">
-                  LKR {item.listing?.priceMin}
-                </p>
-
-                <button
-                  onClick={() => removeFromCart(item.id)}
-                  className="cart-remove"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <div className="payments-summary">
-            <span>Total</span>
-            <span>LKR {totalAmount}</span>
+          <div style={{ flex: 1 }}>
+            <h3>{item.listing.title}</h3>
+            <p>Vendor: {item.listing.vendor.businessName}</p>
+            <p>Type: {item.listing.listingType}</p>
+            <p>Quantity: {item.quantity}</p>
+            <p>Price: LKR {item.listing.priceMin}</p>
           </div>
 
-          <div style={{ marginTop: '2rem', textAlign: 'right' }}>
-            <Link href="/payments/checkout">
-              <button className="btn-primary">Proceed to Checkout</button>
-            </Link>
-          </div>
+          <button onClick={() => removeFromCart(item.id)}>Remove</button>
         </div>
-      </div>
+      ))}
+
+      <h2>Total: LKR {totalAmount.toLocaleString()}</h2>
+
+      <Link href="/payments/checkout">
+        <button>Proceed to Checkout</button>
+      </Link>
     </div>
   );
 }

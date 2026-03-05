@@ -1,50 +1,231 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
+import { useState } from 'react';
 
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart();
   const router = useRouter();
 
-  // ✅ Redirect safely after render
-  useEffect(() => {
-    if (items.length === 0) {
-      router.replace('/payments/cart');
+  const [cardName, setCardName] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [expiry, setExpiry] = useState('');
+  const [cvv, setCvv] = useState('');
+
+  const [errors, setErrors] = useState<{
+    cardName?: string;
+    cardNumber?: string;
+    expiry?: string;
+    cvv?: string;
+  }>({});
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+
+    // Allow only digits and slash
+    value = value.replace(/[^\d/]/g, '');
+
+    // Remove extra slashes
+    const parts = value.split('/');
+    if (parts.length > 2) {
+      value = parts[0] + '/' + parts.slice(1).join('');
     }
-  }, [items, router]);
 
-  if (items.length === 0) {
-    return null; // render nothing while redirecting
-  }
+    // Auto-insert "/" after two digits for the month
+    if (value.length === 2 && !value.includes('/') && expiry.length < 2) {
+      value = value + '/';
+    }
 
-  const handlePayment = () => {
-    // simulate successful payment
-    clearCart();
+    // Cap at 5 characters: MM/YY
+    value = value.slice(0, 5);
+
+    setExpiry(value);
+  };
+
+  const handlePay = async () => {
+    const newErrors: typeof errors = {};
+
+    if (!cardName) {
+      newErrors.cardName = 'Cardholder name is required';
+    }
+
+    if (cardNumber.length < 16) {
+      newErrors.cardNumber = 'Card number must be 16 digits';
+    }
+
+    if (!expiry.match(/^\d{2}\/\d{2}$/)) {
+      newErrors.expiry = 'Expiry must be in MM/YY format';
+    }
+
+    if (cvv.length !== 3) {
+      newErrors.cvv = 'CVV must be exactly 3 digits';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      return;
+    }
+
+    // simulate payment delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // clear cart after success
+    await clearCart();
+
     router.push('/payments/success');
   };
 
+  const inputBase =
+    'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30';
+
   return (
-  <div className="payments-page">
-    <div className="payments-container">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+      <div className="max-w-2xl mx-auto">
 
-      <div className="payments-header">
-        <h1>Checkout</h1>
-        <p>Confirm your booking details</p>
+        {/* Header */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center tracking-tight">
+          Checkout
+        </h1>
+
+        {/* ORDER SUMMARY */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Order Summary
+          </h2>
+
+          <div className="divide-y divide-gray-100">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="flex justify-between items-center py-3"
+              >
+                <div>
+                  <p className="font-medium text-gray-900">{item.listing.title}</p>
+                  <p className="text-sm text-gray-500">
+                    Qty: {item.quantity}
+                  </p>
+                </div>
+
+                <p className="font-medium text-gray-700">
+                  LKR {(item.quantity * item.listing.priceMin).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-between mt-5 pt-4 border-t border-gray-200 font-bold text-lg text-gray-900">
+            <span>Total</span>
+            <span>LKR {totalAmount.toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* PAYMENT FORM */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-6">
+            Payment Details
+          </h2>
+
+          <div className="space-y-5">
+
+            {/* Cardholder Name */}
+            <div>
+              <label htmlFor="cardName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Cardholder Name
+              </label>
+              <input
+                id="cardName"
+                className={`${inputBase} ${errors.cardName ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30' : ''}`}
+                placeholder="John Doe"
+                value={cardName}
+                onChange={(e) => {
+                  setCardName(e.target.value);
+                  if (errors.cardName) setErrors((prev) => ({ ...prev, cardName: undefined }));
+                }}
+              />
+              {errors.cardName && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.cardName}</p>
+              )}
+            </div>
+
+            {/* Card Number */}
+            <div>
+              <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Card Number
+              </label>
+              <input
+                id="cardNumber"
+                className={`${inputBase} ${errors.cardNumber ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30' : ''}`}
+                placeholder="1234 5678 9012 3456"
+                value={cardNumber}
+                onChange={(e) => {
+                  setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16));
+                  if (errors.cardNumber) setErrors((prev) => ({ ...prev, cardNumber: undefined }));
+                }}
+              />
+              {errors.cardNumber && (
+                <p className="mt-1.5 text-sm text-red-600">{errors.cardNumber}</p>
+              )}
+            </div>
+
+            {/* Expiry + CVV */}
+            <div className="grid grid-cols-2 gap-4">
+
+              {/* Expiry */}
+              <div>
+                <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Expiry Date
+                </label>
+                <input
+                  id="expiry"
+                  className={`${inputBase} ${errors.expiry ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30' : ''}`}
+                  placeholder="MM/YY"
+                  value={expiry}
+                  onChange={(e) => {
+                    handleExpiryChange(e);
+                    if (errors.expiry) setErrors((prev) => ({ ...prev, expiry: undefined }));
+                  }}
+                />
+                {errors.expiry && (
+                  <p className="mt-1.5 text-sm text-red-600">{errors.expiry}</p>
+                )}
+              </div>
+
+              {/* CVV */}
+              <div>
+                <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  CVV
+                </label>
+                <input
+                  id="cvv"
+                  className={`${inputBase} ${errors.cvv ? 'border-red-400 focus:border-red-500 focus:ring-red-500/30' : ''}`}
+                  placeholder="123"
+                  value={cvv}
+                  onChange={(e) => {
+                    setCvv(e.target.value.replace(/\D/g, '').slice(0, 3));
+                    if (errors.cvv) setErrors((prev) => ({ ...prev, cvv: undefined }));
+                  }}
+                />
+                {errors.cvv && (
+                  <p className="mt-1.5 text-sm text-red-600">{errors.cvv}</p>
+                )}
+              </div>
+
+            </div>
+
+            {/* Pay Button */}
+            <button
+              onClick={handlePay}
+              className="w-full rounded-lg bg-green-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700 hover:shadow-md active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-green-500/50 mt-2"
+            >
+              Pay Now
+            </button>
+
+          </div>
+        </div>
+
       </div>
-
-      <div className="payments-card">
-        <form className="checkout-form">
-          {/* your existing inputs */}
-
-          <button type="submit" className="btn-primary">
-            Confirm Booking
-          </button>
-        </form>
-      </div>
-
     </div>
-  </div>
-);
+  );
 }
