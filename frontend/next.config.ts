@@ -6,9 +6,7 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
-        feature/ai-services
-        pathname: '/**', 
-        Develop
+        pathname: '/**',
       },
     ],
   },
