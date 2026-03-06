@@ -1,11 +1,15 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   Req,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthenticationService } from './authentication.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -40,5 +44,27 @@ export class AuthenticationController {
   ) {
     // Note: In a real app, use a Guard to extract this info
     return this.authService.refreshTokens(userId, refreshToken);
+  }
+
+  @Get('google')
+  googleAuth(@Res() res: Response) {
+    const googleAuthUrl = this.authService.getGoogleAuthUrl();
+    res.redirect(googleAuthUrl);
+  }
+
+  @Get('google/callback')
+  async googleAuthCallback(@Query('code') code: string, @Res() res: Response) {
+    try {
+      const tokens = await this.authService.googleLogin(code);
+      // Redirect to frontend with tokens as query parameters
+      // In production, consider using httpOnly cookies instead
+      res.redirect(
+        `http://localhost:3001/auth/callback?access_token=${tokens.access_token}&refresh_token=${tokens.refresh_token}`,
+      );
+    } catch (error) {
+      res.redirect(
+        'http://localhost:3001/auth/login?error=authentication_failed',
+      );
+    }
   }
 }

@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ConfigService } from '@nestjs/config';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthenticationService {
@@ -106,5 +107,99 @@ export class AuthenticationService {
       access_token: at,
       refresh_token: rt,
     };
+  }
+
+  getGoogleAuthUrl(): string {
+    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    const redirectUri =
+      this.config.get<string>('GOOGLE_REDIRECT_URI') ||
+      'http://localhost:3000/auth/google/callback';
+    const scope = 'email profile';
+
+    if (!clientId) {
+      throw new Error('GOOGLE_CLIENT_ID is not configured');
+    }
+
+    const params = new URLSearchParams({
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: scope,
+      access_type: 'offline',
+      prompt: 'consent',
+    });
+
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+  }
+
+  async googleLogin(code: string) {
+    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.config.get<string>('GOOGLE_CLIENT_SECRET');
+    const redirectUri =
+      this.config.get<string>('GOOGLE_REDIRECT_URI') ||
+      'http://localhost:3000/auth/google/callback';
+
+    if (!clientId || !clientSecret) {
+      throw new ForbiddenException('Google OAuth is not configured');
+    }
+
+    // Exchange code for tokens
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      throw new ForbiddenException('Failed to exchange authorization code');
+    }
+
+    const tokens = await tokenResponse.json();
+
+    // Get user info from Google
+    const userInfoResponse = await fetch(
+      'https://www.googleapis.com/oauth2/v2/userinfo',
+      {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`,
+        },
+      },
+    );
+
+    if (!userInfoResponse.ok) {
+      throw new ForbiddenException('Failed to get user info from Google');
+    }
+
+    const userInfo = await userInfoResponse.json();
+
+    // Check if user exists
+    let user = await this.prisma.user.findUnique({
+      where: { email: userInfo.email },
+    });
+
+    if (!user) {
+      // Create new user
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const hash = await bcrypt.hash(randomPassword, 10);
+
+      user = await this.prisma.user.create({
+        data: {
+          fullName: userInfo.name || userInfo.email,
+          email: userInfo.email,
+          passwordHash: hash,
+          role: 'USER',
+        },
+      });
+    }
+
+    return this.signTokens(user.id, user.email, user.role);
   }
 }

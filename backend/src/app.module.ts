@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthenticationModule } from './modules/authentication/authentication.module';
+import { AiServicesModule } from './modules/ai-services/ai-services.module'; // Import AI Service module
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { AuthenticationModule } from './modules/authentication/authentication.mo
     }),
     PrismaModule,
     AuthenticationModule,
+    AiServicesModule, // Add this module
   ],
   controllers: [AppController],
   providers: [AppService],
