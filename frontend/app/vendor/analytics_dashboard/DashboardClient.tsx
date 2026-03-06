@@ -69,11 +69,17 @@ export default function DashboardClient({
   ratings,
   insights,
   viewsVsBookings,
+  conversionRate,
   period,
 }: {
   summary: any;
   bookingTrend: any[];
-  topListings: any[];
+  topListings: {
+    name: string;
+    bookings: number;
+    maxBookings: number;
+    tags: string[];
+  }[];
   ratings: {
     avgRating: number;
     totalReviews: number;
@@ -86,6 +92,7 @@ export default function DashboardClient({
   };
   insights: any[];
   viewsVsBookings: any[];
+  conversionRate: number;
   period: string;
 }) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>(period as Period);
@@ -335,7 +342,7 @@ export default function DashboardClient({
                 experiences={summary?.experiences || 0}
                 bookings={summary?.bookings || 0}
                 products={summary?.products || 0}
-                revenue={summary?.estimatedRevenue || 0}
+                events={summary?.events || 0}
               />
 
               <div className="section-spacing">
@@ -355,7 +362,7 @@ export default function DashboardClient({
               <PerformanceTrends
                 bookingTrend={bookingTrend}
                 viewsVsBookings={viewsVsBookings}
-                conversionRate={0}
+                conversionRate={conversionRate}
               />
             </section>
 

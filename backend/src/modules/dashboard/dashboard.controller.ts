@@ -5,12 +5,14 @@ import {
   Patch,
   Delete,
   Body,
+  Req,
+  Query,
+  Param,
+  ParseIntPipe
 } from '@nestjs/common';
-import { Query } from '@nestjs/common';
-import { Param } from "@nestjs/common";
 import { DashboardService } from './dashboard.service';
 
-@Controller('vendor/dashboard')
+@Controller('dashboard/vendor')
 export class DashboardController {
   constructor(private readonly service: DashboardService) { }
 
@@ -89,6 +91,11 @@ export class DashboardController {
     return this.service.getViewsVsBookings(Number(userId), period || "thisMonth");
   }
 
+  @Get("event-overview")
+  getEventOverview(@Query("userId") userId: string) {
+    return this.service.getEventOverview(Number(userId));
+  }
+
   @Post("simulate-view/:id")
   simulate(
     @Param("id") id: string,
@@ -99,5 +106,33 @@ export class DashboardController {
       Number(userId)
     );
   }
+
+  @Get("stats")
+  getStats(@Query("userId") userId: string) {
+    return this.service.getDashboardStats(Number(userId));
+  }
+
+  @Get("rating-summary")
+  getDashboardRating(@Query("userId") userId: string) {
+    return this.service.getDashboardRating(Number(userId));
+  }
+
+  @Get("reviews")
+  getVendorReviews(@Query("userId") userId: number) {
+    return this.service.getVendorReviews(Number(userId));
+  }
+
+  @Get("listings")
+  getVendorListings(@Query("userId", ParseIntPipe) userId: number) {
+    return this.service.getVendorListings(userId);
+  }
+
+  /*@Post("reply-review")
+  replyReview(
+    @Body("reviewId") reviewId: number,
+    @Body("reply") reply: string
+  ) {
+    return this.service.replyToReview(reviewId, reply);
+  }*/
 
 }
