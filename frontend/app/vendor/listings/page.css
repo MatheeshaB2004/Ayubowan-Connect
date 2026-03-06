@@ -98,7 +98,7 @@
 }
 
 body {
-  background: #BFD6D1;
+  background: #f9fafb;
 }
 
 /* ===== BASE ===== */
@@ -1593,8 +1593,9 @@ body {
   padding-left: 0;
   padding-right: 0;
 }
-.listings-page .page-container {
-  background: #D8E6E2 !important;
+.listings-page,
+.listings-page .page-container  {
+  background: #f9fafb;
   max-width: 100%;
   width: 100%;
   margin: 0; 
