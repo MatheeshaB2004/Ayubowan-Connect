@@ -12,53 +12,130 @@ export default function CartPage() {
     0
   );
 
-  if (items.length === 0) {
-    return (
-      <div style={{ padding: '2rem' }}>
-        <h2>Your cart is empty</h2>
-        <Link href="/marketplace">Go to Marketplace</Link>
-      </div>
-    );
-  }
-
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Your Cart</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+      <div className="max-w-3xl mx-auto">
 
-      {items.map((item) => (
-        <div
-          key={item.id}
-          style={{
-            display: 'flex',
-            gap: '1rem',
-            borderBottom: '1px solid #ddd',
-            padding: '1rem 0',
-          }}
+        {/* Continue Shopping */}
+        <Link
+          href="/marketplace"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-green-700 transition-colors mb-6"
         >
-          <Image
-            src={item.listing.media?.[0]?.mediaUrl || '/assets/photos/B4.webp'}
-            alt={item.listing.title}
-            width={100}
-            height={80}
-          />
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+          Continue Shopping
+        </Link>
 
-          <div style={{ flex: 1 }}>
-            <h3>{item.listing.title}</h3>
-            <p>Vendor: {item.listing.vendor.businessName}</p>
-            <p>Type: {item.listing.listingType}</p>
-            <p>Quantity: {item.quantity}</p>
-            <p>Price: LKR {item.listing.priceMin}</p>
+        {/* Title */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 tracking-tight">Your Cart</h1>
+
+        {items.length === 0 ? (
+          /* ── Empty State ── */
+          <div className="bg-white rounded-xl shadow-md border border-gray-100 p-12 text-center">
+            {/* Shopping bag icon */}
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100">
+              <svg className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            </div>
+
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Your cart is empty</h2>
+            <p className="text-gray-500 mb-6">
+              Browse experiences and products to add them to your cart.
+            </p>
+
+            <Link href="/marketplace">
+              <button className="rounded-lg bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700 hover:shadow-md">
+                Browse Marketplace
+              </button>
+            </Link>
           </div>
+        ) : (
+          <>
+            {/* ── Cart Items ── */}
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 mb-6">
+              <div className="divide-y divide-gray-100">
+                {items.map((item) => {
+                  const imageUrl =
+                    item.listing.media?.[0]?.mediaUrl ||
+                    '/assets/photos/B4.webp';
 
-          <button onClick={() => removeFromCart(item.id)}>Remove</button>
-        </div>
-      ))}
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-4 py-5 first:pt-0 last:pb-0"
+                    >
+                      {/* Image */}
+                      <div className="flex-shrink-0 overflow-hidden rounded-lg">
+                        <Image
+                          src={imageUrl}
+                          alt={item.listing.title}
+                          width={110}
+                          height={80}
+                          className="object-cover rounded-lg"
+                        />
+                      </div>
 
-      <h2>Total: LKR {totalAmount.toLocaleString()}</h2>
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-gray-900 truncate">
+                          {item.listing.title}
+                        </h3>
 
-      <Link href="/payments/checkout">
-        <button>Proceed to Checkout</button>
-      </Link>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Vendor: {item.listing.vendor.businessName}
+                        </p>
+
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="inline-flex items-center bg-green-50 text-green-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                            {item.listing.listingType === 'EXPERIENCE' ? 'Experience' : 'Product'}
+                          </span>
+
+                          <span className="text-sm text-gray-500">
+                            Qty: {item.quantity}
+                          </span>
+                        </div>
+
+                        <p className="text-base font-bold text-gray-900 mt-2">
+                          LKR {item.listing.priceMin.toLocaleString()}
+                        </p>
+                      </div>
+
+                      {/* Remove Button */}
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="flex-shrink-0 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Remove item"
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Total Section ── */}
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-semibold text-gray-700">Total Amount</span>
+                <span className="text-2xl font-bold text-gray-900">
+                  LKR {totalAmount.toLocaleString()}
+                </span>
+              </div>
+
+              <Link href="/payments/checkout">
+                <button className="w-full rounded-lg bg-green-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700 hover:shadow-md">
+                  Proceed to Checkout
+                </button>
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
