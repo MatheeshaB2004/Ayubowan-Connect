@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 export default function PaymentSuccessPage() {
   const { clearCart } = useCart();
 
-  // ensure cart is cleared after successful payment
   useEffect(() => {
     clearCart();
   }, []);
@@ -18,9 +17,9 @@ export default function PaymentSuccessPage() {
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 max-w-md w-full text-center">
 
         {/* Success Icon */}
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-50">
+        <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-50 ring-4 ring-green-100">
           <svg
-            className="h-10 w-10 text-green-500"
+            className="h-12 w-12 text-green-500"
             fill="none"
             viewBox="0 0 24 24"
             strokeWidth={2.5}
@@ -41,26 +40,17 @@ export default function PaymentSuccessPage() {
 
         {/* Subtitle */}
         <p className="text-gray-500 text-base mb-8 leading-relaxed">
-          Your order has been placed successfully.<br />
+          Your order has been placed successfully.
+          <br />
           Thank you for shopping with us!
         </p>
 
-        {/* Buttons */}
-        <div className="flex flex-col gap-3">
-
-          <Link href="/marketplace">
-            <button className="w-full rounded-lg bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700 hover:shadow-md active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-green-500/50">
-              Back to Marketplace
-            </button>
-          </Link>
-
-          <Link href="/payments/cart">
-            <button className="w-full rounded-lg border border-gray-300 bg-white px-6 py-3 text-base font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:border-gray-400 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-gray-300/50">
-              View Cart
-            </button>
-          </Link>
-
-        </div>
+        {/* Button */}
+        <Link href="/marketplace">
+          <button className="w-full rounded-lg bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700">
+            Back to Marketplace
+          </button>
+        </Link>
 
       </div>
 
