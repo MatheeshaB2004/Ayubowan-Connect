@@ -19,9 +19,12 @@ model User {
   localTourist LocalTourist?
 
   reviews  Review[]
+  profileViews ProfileView[] 
+  listingViews ListingView[]
   vendor   Vendor?
   bookings Booking[]
   cart     Cart?
+  eventRegistrations EventRegistration[]
 
   @@map("users")
 }
@@ -64,6 +67,9 @@ model Vendor {
   updatedAt       DateTime         @updatedAt @map("updated_at")
   listings        Listing[]
   locations       VendorLocation[]
+  goals           Goal[] 
+  profileViews    ProfileView[]
+  events          Event[] 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("vendors")
@@ -135,6 +141,7 @@ model Listing {
   reviews          Review[]
   bookings         Booking[]
   cartItems        CartItem[]
+  listingViews     ListingView[]
 
   @@index([vendorId])
   @@index([categoryId])
@@ -207,6 +214,144 @@ model ReviewMedia {
   @@map("review_media")
 }
 
+model ProfileView {
+  id          Int      @id @default(autoincrement()) @map("profile_view_id")
+  vendorId    Int      @map("vendor_id")
+  userId      Int      @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, userId])
+  @@index([vendorId])
+  @@index([userId])
+  @@map("profile_views")
+}
+
+model Booking {
+  id          Int           @id @default(autoincrement()) @map("booking_id")
+  userId      Int           @map("user_id")
+  listingId   Int           @map("listing_id")
+  bookingDate DateTime      @map("booking_date")
+  status      BookingStatus @default(PENDING)
+  guests      Int           @default(1)
+  totalPrice  Float         @default(0) @map("total_price")
+  notes       String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([listingId])
+  @@map("bookings")
+}
+
+model Goal {
+  id                 Int            @id @default(autoincrement()) @map("goal_id")
+  vendorId           Int            @map("vendor_id")
+  target             Int            @map("target")
+  baselineBookings   Int            @map("baseline_bookings")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  expiresAt          DateTime
+  isActive           Boolean        @default(true) @map("is_active")
+
+  vendor   Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  @@unique([vendorId, isActive])
+  @@index([vendorId])
+  @@map("goals")
+}
+
+model ListingView {
+  id        Int      @id @default(autoincrement())
+  listingId Int
+  userId    Int?
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user    User?     @relation(fields: [userId], references: [id])
+
+  @@index([listingId])
+  @@index([createdAt])
+  @@map("listing_views")
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement()) @map("cart_id")
+  userId    Int?     @unique @map("user_id")
+  sessionId String?  @unique @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items CartItem[]
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement()) @map("cart_item_id")
+  cartId    Int      @map("cart_id")
+  listingId Int      @map("listing_id")
+  quantity  Int      @default(1)
+  addedAt   DateTime @default(now()) @map("added_at")
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, listingId])
+  @@map("cart_items")
+}
+
+model Event {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?
+  startDate       DateTime @map("start_date")
+  endDate         DateTime? @map("end_date")
+  time            String?                         // "09:00 AM - 12:00 PM"
+  location        String                          // display name e.g. "Colombo"
+  city            String
+  district        String
+  province        String
+  imageUrl        String?  @map("image_url")      // Cloudinary URL
+  category        String?                         // "Cooking", "Cultural", etc.
+  price           Float?                          // null = free
+  isFree          Boolean  @default(false) @map("is_free")
+  maxParticipants Int?     @map("max_participants")
+
+  vendorId        Int?
+  vendor          Vendor?  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  status          EventStatus @default(PUBLISHED)
+  isPublished     Boolean     @default(true) @map("is_published")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  registrations   EventRegistration[]
+
+  @@map("events")
+}
+
+model EventRegistration {
+  id        Int      @id @default(autoincrement()) @map("registration_id")
+  userId    Int      @map("user_id")
+  eventId   Int      @map("event_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@map("event_registrations")
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -248,49 +393,9 @@ enum BookingStatus {
   REJECTED
 }
 
-model Booking {
-  id          Int           @id @default(autoincrement()) @map("booking_id")
-  userId      Int           @map("user_id")
-  listingId   Int           @map("listing_id")
-  bookingDate DateTime      @map("booking_date")
-  status      BookingStatus @default(PENDING)
-  guests      Int           @default(1)
-  totalPrice  Float         @default(0) @map("total_price")
-  notes       String?
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([listingId])
-  @@map("bookings")
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
 }
 
-model Cart {
-  id        Int      @id @default(autoincrement()) @map("cart_id")
-  userId    Int?     @unique @map("user_id")
-  sessionId String?  @unique @map("session_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  items CartItem[]
-  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("carts")
-}
-
-model CartItem {
-  id        Int      @id @default(autoincrement()) @map("cart_item_id")
-  cartId    Int      @map("cart_id")
-  listingId Int      @map("listing_id")
-  quantity  Int      @default(1)
-  addedAt   DateTime @default(now()) @map("added_at")
-
-  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  @@unique([cartId, listingId])
-  @@map("cart_items")
-}
