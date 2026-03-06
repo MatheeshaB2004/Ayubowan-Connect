@@ -52,21 +52,23 @@ model Vendor {
   businessName  String  @map("business_name")
   shortTagline  String? @map("short_tagline")
   contactPhone  String? @map("contact_phone")
-  establishedYear    Int?                 @map("established_year")
-  ratingAverage      Float                @default(0) @map("rating_average")
-  ratingCount        Int                  @default(0) @map("rating_count")
-  verifiedStatus     VerifiedStatus       @default(PENDING) @map("verified_status")
-  profileComplete    Boolean              @default(false) @map("profile_complete")
-  isActive           Boolean              @default(true) @map("is_active")
-  createdAt          DateTime             @default(now()) @map("created_at")
-  updatedAt          DateTime             @updatedAt @map("updated_at")
-  listings           Listing[]
-  locations          VendorLocation[]
-  goals              Goal[]
-  profileViews       ProfileView[]
-  events             Event[]
-  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  VendorAvailability VendorAvailability[]
+  establishedYear       Int?               @map("established_year")
+  ratingAverage         Float              @default(0) @map("rating_average")
+  ratingCount           Int                @default(0) @map("rating_count")
+  verifiedStatus        VerifiedStatus     @default(PENDING) @map("verified_status")
+  isProUser             Boolean            @default(false) @map("is_pro_user")
+  proSubscriptionExpiry DateTime?          @map("pro_subscription_expiry")
+  profileComplete       Boolean            @default(false) @map("profile_complete")
+  isActive              Boolean            @default(true) @map("is_active")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @updatedAt @map("updated_at")
+  listings              Listing[]
+  locations             VendorLocation[]
+  goals                 Goal[]
+  profileViews          ProfileView[]
+  events                Event[]
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  VendorAvailability    VendorAvailability[]
 
   @@map("vendors")
 }
