@@ -228,6 +228,19 @@ model ListingMedia {
   @@map("listing_media")
 }
 
+// REFRESH TOKEN
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      @map("user_id")
+  revoked   Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("refresh_tokens")
+}
+
 // LISTING SEARCH INDEX 
 
 model ListingSearchIndex {
