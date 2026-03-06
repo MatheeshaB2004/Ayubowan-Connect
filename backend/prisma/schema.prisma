@@ -190,6 +190,7 @@ model Review {
   userId    Int           @map("user_id")
   rating    Int
   comment   String
+  reply     String?
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")
   media     ReviewMedia[]
