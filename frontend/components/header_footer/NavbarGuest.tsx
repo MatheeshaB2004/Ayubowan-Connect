@@ -1,0 +1,126 @@
+"use client";
+
+import React from "react";
+import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
+
+interface NavbarGuestProps {
+  textColorClass?: string;
+  isSignedIn?: boolean;
+  user?: any;
+}
+
+const NavbarGuest: React.FC<NavbarGuestProps> = ({
+  textColorClass = "",
+  isSignedIn,
+  user,
+}) => {
+  const buttonBorderClass = textColorClass.includes("white")
+    ? "border-white/30 text-white hover:bg-white/10"
+    : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400";
+
+  return (
+    <div className="nav-guest-container">
+      {/* Navigation Links - Centered Absolutely */}
+      <div className="nav-links-center">
+        <Link href="/" className={`nav-link ${textColorClass}`}>
+          Home
+        </Link>
+        <Link href="/events" className={`nav-link ${textColorClass}`}>
+          Events
+        </Link>
+        <Link href="/marketplace" className={`nav-link ${textColorClass}`}>
+          Marketplace
+        </Link>
+        <Link href="/pro" className={`nav-link ${textColorClass}`}>
+          Pro
+        </Link>
+        <Link href="/trips" className={`nav-link ${textColorClass}`}>
+          Tours
+        </Link>
+
+        <div className="relative group">
+          <button
+            className={`nav-link more-dropdown-btn ${textColorClass}`}
+            suppressHydrationWarning
+          >
+            where
+            <svg
+              className="w-3 h-3 ml-1 transition-transform duration-200 group-hover:rotate-180"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
+            </svg>
+          </button>
+
+          {/* Dropdown Menu */}
+          <div className="dropdown-menu">
+            <Link
+              href="/experiences"
+              className="dropdown-item w-full text-left block"
+            >
+              Experiences
+            </Link>
+            <Link
+              href="/landing#testimonials"
+              className="dropdown-item w-full text-left block"
+            >
+              Testimonials
+            </Link>
+            <Link
+              href="/landing#team"
+              className="dropdown-item w-full text-left block"
+            >
+              Our Story
+            </Link>
+            <button className="dropdown-item w-full text-left">
+              Destinations
+            </button>
+            <div
+              style={{ borderTop: "1px solid #f3f4f6", margin: "0.25rem 0" }}
+            ></div>
+            <button className="dropdown-item w-full text-left">Contact</button>
+            <button className="dropdown-item w-full text-left">Help</button>
+            <button className="dropdown-item w-full text-left">FAQ</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="auth-buttons">
+        {isSignedIn ? (
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className={`nav-link ${textColorClass}`}>
+              Dashboard
+            </Link>
+            <UserButton afterSignOutUrl="/" />
+          </div>
+        ) : (
+          <>
+            <Link
+              href="/auth/login"
+              className={`btn-login ${buttonBorderClass} inline-block text-center pt-1.5`}
+            >
+              Log in
+            </Link>
+            <Link
+              href="/auth/register"
+              className="btn-signup inline-block text-center pt-1.5"
+            >
+              Sign up
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default NavbarGuest;
