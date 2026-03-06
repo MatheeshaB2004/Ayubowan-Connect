@@ -6,20 +6,21 @@ import {
   HomeIcon,
   CalendarCheckIcon,
   EyeIcon,
-  MessageCircleIcon
+  MessageCircleIcon,
+  CalendarIcon
 } from
   'lucide-react';
 interface HeroSectionProps {
   experiences: number;
   products: number;
   bookings: number;
-  revenue: number;
+  events: number;
 }
 export default function HeroSection({
   experiences,
   products,
   bookings,
-  revenue,
+  events,
 }: HeroSectionProps) {
   const stats = [
     {
@@ -38,9 +39,9 @@ export default function HeroSection({
       label: 'Products'
     },
     {
-      icon: MessageCircleIcon,
-      value: revenue,
-      label: 'Estimated Revenue'
+      icon: CalendarIcon,
+      value: events,
+      label: 'Events'
     }];
 
   return (

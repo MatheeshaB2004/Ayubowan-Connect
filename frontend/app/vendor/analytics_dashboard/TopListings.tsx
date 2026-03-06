@@ -1,40 +1,65 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FlameIcon, AlertTriangleIcon, SparklesIcon } from 'lucide-react';
-import { ListingPerformance } from './datas';
+import { FlameIcon, AlertTriangleIcon, SparklesIcon,CircleIcon } from 'lucide-react';
+
+interface ListingPerformance {
+  name: string;
+  bookings: number;
+  maxBookings: number;
+  tags: string[];
+}
 interface TopListingsProps {
   listings: ListingPerformance[];
 }
 const medalColors = [
-'listings-rank-1',
-'listings-rank-2',
-'listings-rank-3',
-'listings-rank-4',
-'listings-rank-5'];
+  'listings-rank-1',
+  'listings-rank-2',
+  'listings-rank-3',
+  'listings-rank-4',
+  'listings-rank-5'];
 
 const medalLabels = ['1st', '2nd', '3rd', '4th', '5th'];
 export default function TopListings({ listings }: TopListingsProps) {
-  const getTag = (tag: ListingPerformance['tag']) => {
+  const getTag = (tag: string) => {
     switch (tag) {
       case 'high':
         return {
           icon: FlameIcon,
-          label: 'Top',
+          label: 'High',
           color: '#379683'
         };
+
+      case 'strong':
+        return {
+          icon: SparklesIcon,
+          label: 'Strong',
+          color: '#2563eb'
+        };
+
+      case 'average':
+        return {
+          icon: SparklesIcon,
+          label: 'Average',
+          color: '#f59e0b'
+        };
+
       case 'needs-improvement':
         return {
-          icon: AlertTriangleIcon,
-          label: 'Improve',
-          color: '#d97706'
+          icon: CircleIcon,
+          label: 'Low Activity',
+          color: '#dc2626'
         };
+
       case 'new':
         return {
           icon: SparklesIcon,
           label: 'New',
           color: '#8D5A97'
         };
+
+      default:
+        return null;
     }
   };
   return (
@@ -69,8 +94,12 @@ export default function TopListings({ listings }: TopListingsProps) {
 
       <div className="listings-list">
         {listings.map((listing, index) => {
-          const tag = getTag(listing.tag);
-          const pct = listing.bookings / listing.maxBookings * 100;
+          const primaryTag = listing.tags?.[0];
+          const tag = primaryTag ? getTag(primaryTag) : null;
+          const pct =
+            listing.maxBookings > 0
+              ? (listing.bookings / listing.maxBookings) * 100
+              : 0;
           return (
             <motion.div
               key={listing.name}
@@ -112,11 +141,15 @@ export default function TopListings({ listings }: TopListingsProps) {
                     className="listings-bar"
                     style={{
                       background:
-                      tag.color === '#379683' ?
-                      'linear-gradient(90deg, #379683, #2d6b5e)' :
-                      tag.color === '#8D5A97' ?
-                      'linear-gradient(90deg, #8D5A97, #6b4275)' :
-                      'linear-gradient(90deg, #d97706, #b45309)'
+                        tag?.color === '#379683'
+                          ? 'linear-gradient(90deg, #379683, #2d6b5e)'
+                          : tag?.color === '#2563eb'
+                            ? 'linear-gradient(90deg, #2563eb, #1e40af)'
+                            : tag?.color === '#8D5A97'
+                              ? 'linear-gradient(90deg, #8D5A97, #6b4275)'
+                              : tag?.color === '#f59e0b'
+                                ? 'linear-gradient(90deg, #f59e0b, #b45309)'
+                                : 'linear-gradient(90deg, #dc2626, #991b1b)'
                     }} />
 
                 </div>
@@ -125,23 +158,31 @@ export default function TopListings({ listings }: TopListingsProps) {
               {/* Booking count */}
               <div className="listings-bookings">
                 <span className="listings-bookings-value">
-                  {listing.bookings}
+                  {listing.bookings.toLocaleString()}
                 </span>
                 <span className="listings-bookings-label">bkgs</span>
               </div>
 
               {/* Tag */}
               <div className="listings-tag-container">
-                <span
-                  className="listings-tag"
-                  style={{
-                    backgroundColor: `${tag.color}15`,
-                    color: tag.color
-                  }}>
+                {listing.tags?.map((t) => {
+                  const tag = getTag(t);
+                  if (!tag) return null;
 
-                  <tag.icon className="listings-tag-icon" />
-                  {tag.label}
-                </span>
+                  return (
+                    <span
+                      key={t}
+                      className="listings-tag"
+                      style={{
+                        backgroundColor: `${tag.color}15`,
+                        color: tag.color
+                      }}
+                    >
+                      <tag.icon className="listings-tag-icon" />
+                      {tag.label}
+                    </span>
+                  );
+                })}
               </div>
             </motion.div>);
 

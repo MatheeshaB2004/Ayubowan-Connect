@@ -39,6 +39,7 @@ export default function PerformanceTrends({
     const searchParams = useSearchParams();
     const period = searchParams.get("period");
     const shouldGroupWeekly = period === "lastQuarter";
+    console.log("bookingTrend:", bookingTrend);
     const lineData = {
         labels: bookingTrend.map((d) => {
             const date = new Date(d.date);
@@ -311,7 +312,7 @@ export default function PerformanceTrends({
                 </div>
                 <div className="lg:col-span-1 px-8 py-6">
                     <p className="text-white/40 text-xs font-medium mb-4">
-                        Views vs bookings
+                        Listing Views vs Bookings
                     </p>
                     <div className="h-[240px]">
                         <Bar data={barData} options={barOptions as any} />
