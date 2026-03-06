@@ -21,10 +21,8 @@ import { EventsModule } from './modules/events/events.module';
     MarketplaceModule,
     VendorManagementModule,
     CartModule,
-    feature/ai-services
     ChatbotModule,
-    EventsModule,
-    Develop
+    EventsModule
   ],
   controllers: [AppController, FilesController],
   providers: [AppService],
