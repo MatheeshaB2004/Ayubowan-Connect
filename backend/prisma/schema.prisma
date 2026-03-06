@@ -24,6 +24,7 @@ model User {
   vendor   Vendor?
   bookings Booking[]
   cart     Cart?
+  eventRegistrations EventRegistration[]
 
   @@map("users")
 }
@@ -228,48 +229,6 @@ model ProfileView {
   @@map("profile_views")
 }
 
-
-enum UserRole {
-  USER
-  ADMIN
-}
-
-enum LocalUserType {
-  LOCAL
-  TOURIST
-}
-
-enum VerifiedStatus {
-  PENDING
-  VERIFIED
-  REJECTED
-}
-
-enum VisibilityStatus {
-  DRAFT
-  PENDING_REVIEW
-  PUBLISHED
-  ARCHIVED
-}
-
-enum MediaType {
-  IMAGE
-  VIDEO
-}
-
-enum ListingType {
-  EXPERIENCE
-  PRODUCT
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
-  COMPLETED
-  REJECTED
-}
-
 model Booking {
   id          Int           @id @default(autoincrement()) @map("booking_id")
   userId      Int           @map("user_id")
@@ -348,26 +307,90 @@ model CartItem {
 }
 
 model Event {
-  id          Int          @id @default(autoincrement())
-  title       String
-  description String?
-  startDate   DateTime
-  endDate     DateTime?
-  location    String
-  city        String
-  district    String
-  province    String
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?
+  startDate       DateTime @map("start_date")
+  endDate         DateTime? @map("end_date")
+  time            String?                         // "09:00 AM - 12:00 PM"
+  location        String                          // display name e.g. "Colombo"
+  city            String
+  district        String
+  province        String
+  imageUrl        String?  @map("image_url")      // Cloudinary URL
+  category        String?                         // "Cooking", "Cultural", etc.
+  price           Float?                          // null = free
+  isFree          Boolean  @default(false) @map("is_free")
+  maxParticipants Int?     @map("max_participants")
 
-  vendorId    Int?
-  vendor      Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendorId        Int?
+  vendor          Vendor?  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
-  status      EventStatus  @default(PUBLISHED)
-  isPublished Boolean      @default(true)
+  status          EventStatus @default(PUBLISHED)
+  isPublished     Boolean     @default(true) @map("is_published")
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  registrations   EventRegistration[]
 
   @@map("events")
+}
+
+model EventRegistration {
+  id        Int      @id @default(autoincrement()) @map("registration_id")
+  userId    Int      @map("user_id")
+  eventId   Int      @map("event_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+  @@map("event_registrations")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum LocalUserType {
+  LOCAL
+  TOURIST
+}
+
+enum VerifiedStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum VisibilityStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum ListingType {
+  EXPERIENCE
+  PRODUCT
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  REJECTED
 }
 
 enum EventStatus {
