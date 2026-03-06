@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
 import { CartModule } from './modules/cart/cart.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { FilesController } from './files.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EventsModule } from './modules/events/events.module';
@@ -20,9 +21,12 @@ import { EventsModule } from './modules/events/events.module';
     MarketplaceModule,
     VendorManagementModule,
     CartModule,
+    feature/ai-services
+    ChatbotModule,
     EventsModule,
+    Develop
   ],
   controllers: [AppController, FilesController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
