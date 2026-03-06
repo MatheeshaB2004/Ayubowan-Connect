@@ -409,7 +409,4 @@ enum EventStatus {
   PUBLISHED
   CANCELLED
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> 2ad9dbe (Added vendor availability model)
