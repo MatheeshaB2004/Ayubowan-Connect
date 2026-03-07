@@ -127,12 +127,40 @@ export class DashboardController {
     return this.service.getVendorListings(userId);
   }
 
-  /*@Post("reply-review")
-  replyReview(
-    @Body("reviewId") reviewId: number,
-    @Body("reply") reply: string
-  ) {
-    return this.service.replyToReview(reviewId, reply);
-  }*/
+  @Post("availability")
+  saveAvailability(@Body() body: any) {
+    return this.service.saveAvailability(body.userId, body.dates);
+  }
 
+  @Get("availability")
+  getAvailability(
+    @Query("userId") userId: string,
+    @Query("month") month: string
+  ) {
+    return this.service.getAvailability(Number(userId), month);
+  }
+  @Delete("availability/previous")
+  deletePreviousAvailability(@Query("userId") userId: string) {
+    return this.service.deletePreviousAvailability(Number(userId));
+  }
+
+  @Delete("availability")
+  deleteAvailability(
+    @Query("userId") userId: string,
+    @Query("month") month: string
+  ) {
+    return this.service.deleteAvailabilityForMonth(
+      Number(userId),
+      month
+    );
+  }
 }
+
+/*@Post("reply-review")
+replyReview(
+  @Body("reviewId") reviewId: number,
+  @Body("reply") reply: string
+) {
+  return this.service.replyToReview(reviewId, reply);
+}*/
+

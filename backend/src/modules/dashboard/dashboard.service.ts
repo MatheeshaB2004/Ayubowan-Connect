@@ -1177,4 +1177,192 @@ export class DashboardService {
     });
   }
 
+  async saveAvailability(userId: number, dates: any[]) {
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId }
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    for (const d of dates) {
+
+      const dateObj = new Date(d.date);
+
+      const availability = await this.prisma.vendorAvailability.findFirst({
+        where: {
+          vendorId: vendor.id,
+          date: dateObj
+        }
+      });
+
+      let availabilityRecord;
+
+      if (!availability) {
+
+        availabilityRecord = await this.prisma.vendorAvailability.create({
+          data: {
+            vendorId: vendor.id,
+            date: dateObj
+          }
+        });
+
+      } else {
+
+        availabilityRecord = availability;
+
+        await this.prisma.availabilitySlot.deleteMany({
+          where: {
+            availabilityId: availability.id
+          }
+        });
+
+      }
+
+      for (const slot of d.slots) {
+
+        await this.prisma.availabilitySlot.create({
+          data: {
+            availabilityId: availabilityRecord.id,
+            startTime: new Date(`${d.date}T${slot.start}`),
+            endTime: new Date(`${d.date}T${slot.end}`)
+          }
+        });
+
+      }
+    }
+    return { message: "Availability saved successfully" }
+
+  }
+
+  async getAvailability(userId: number, month: string) {
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId }
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    const input = new Date(month);
+
+    const start = new Date(input.getFullYear(), input.getMonth(), 1);
+    const end = new Date(input.getFullYear(), input.getMonth() + 1, 1);
+
+    const dates = await this.prisma.vendorAvailability.findMany({
+      where: {
+        vendorId: vendor.id,
+        date: {
+          gte: start,
+          lt: end
+        }
+      },
+      include: {
+        slots: true
+      }
+    });
+    return dates.map(d => ({
+      date: d.date,
+      slots: d.slots.map(s => ({
+        start: s.startTime.toISOString().slice(11, 16),
+        end: s.endTime.toISOString().slice(11, 16)
+      }))
+    }));
+  }
+
+  async deletePreviousAvailability(userId: number) {
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId }
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    //const now = new Date();
+    const now = new Date(2026, 3, 1);
+
+    const startOfCurrentMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+
+    // find all previous month availability
+    const records = await this.prisma.vendorAvailability.findMany({
+      where: {
+        vendorId: vendor.id,
+        date: {
+          lt: startOfCurrentMonth
+        }
+      }
+    });
+
+    const ids = records.map(r => r.id);
+    console.log("Deleting availability IDs:", ids); 
+
+    if (ids.length === 0) {
+      return { message: "No previous availability found" };
+    }
+
+    // delete slots first
+    await this.prisma.availabilitySlot.deleteMany({
+      where: {
+        availabilityId: {
+          in: ids
+        }
+      }
+    });
+
+    // delete availability rows
+    await this.prisma.vendorAvailability.deleteMany({
+      where: {
+        id: {
+          in: ids
+        }
+      }
+    });
+
+    return { message: "Previous month availability deleted" };
+  }
+
+  async deleteAvailabilityForMonth(userId: number, month: string) {
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId }
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    const input = new Date(month);
+
+    const start = new Date(input.getFullYear(), input.getMonth(), 1);
+    const end = new Date(input.getFullYear(), input.getMonth() + 1, 1);
+
+    // find availability rows
+    const records = await this.prisma.vendorAvailability.findMany({
+      where: {
+        vendorId: vendor.id,
+        date: {
+          gte: start,
+          lt: end
+        }
+      }
+    });
+
+    const ids = records.map(r => r.id);
+
+    // delete slots first
+    await this.prisma.availabilitySlot.deleteMany({
+      where: {
+        availabilityId: { in: ids }
+      }
+    });
+
+    // then delete availability
+    return this.prisma.vendorAvailability.deleteMany({
+      where: {
+        id: { in: ids }
+      }
+    });
+  }
+
 }
