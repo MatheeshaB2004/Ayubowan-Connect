@@ -5,18 +5,24 @@ import {
   Put,
   Delete,
   Body,
+  Req,
   Param,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  UnauthorizedException
 } from '@nestjs/common';
+import { Request } from 'express';
+import { UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+
 import { VendorManagementService } from './vendor-management.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 
 @Controller('vendor')
 export class VendorManagementController {
-  constructor(private readonly vendorService: VendorManagementService) {}
+  constructor(private readonly vendorService: VendorManagementService) { }
 
   /**
    * Get all active categories (fixed list)
@@ -60,11 +66,14 @@ export class VendorManagementController {
    */
   @Post(':vendorId/listings')
   @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('image'))
   async createListing(
     @Param('vendorId', ParseIntPipe) vendorId: number,
     @Body() createListingDto: CreateListingDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.vendorService.createListing(vendorId, createListingDto);
+    console.log("DTO RECEIVED:", createListingDto);
+    return this.vendorService.createListing(vendorId, createListingDto, file);
   }
 
   /**
@@ -72,15 +81,20 @@ export class VendorManagementController {
    * PUT /vendor/:vendorId/listings/:listingId
    */
   @Put(':vendorId/listings/:listingId')
+  @UseInterceptors(FileInterceptor('image'))
   async updateListing(
     @Param('vendorId', ParseIntPipe) vendorId: number,
     @Param('listingId', ParseIntPipe) listingId: number,
     @Body() updateListingDto: UpdateListingDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
+
+    console.log("UPDATE DTO RECEIVED:", updateListingDto);
     return this.vendorService.updateListing(
       vendorId,
       listingId,
       updateListingDto,
+      file,
     );
   }
 
@@ -95,5 +109,23 @@ export class VendorManagementController {
     @Param('listingId', ParseIntPipe) listingId: number,
   ) {
     return this.vendorService.deleteListing(vendorId, listingId);
+  }
+
+  @Post(":id/view")
+  async recordProfileView(
+    @Param("id") id: string,
+    @Req() req: any
+  ) {
+    //const userId = req.user?.id; // After profile is built
+    const userId = 4;//Temporary test
+
+    /*if (!userId) {
+      throw new UnauthorizedException("Login required");
+    }*/
+
+    return this.vendorService.recordProfileView(
+      Number(id),
+      userId
+    );
   }
 }

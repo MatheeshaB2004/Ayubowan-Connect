@@ -19,9 +19,9 @@ const provinceByDistrict: Record<string, string> = {
 // Coordinates for major Sri Lankan cities
 const coordinatesByCity: Record<string, { lat: number; lng: number }> = {
   Kandy: { lat: 7.2906, lng: 80.6337 },
-  Sigiriya: { lat: 7.9570, lng: 80.7603 },
+  Sigiriya: { lat: 7.957, lng: 80.7603 },
   Colombo: { lat: 6.9271, lng: 79.8612 },
-  Galle: { lat: 6.0535, lng: 80.2210 },
+  Galle: { lat: 6.0535, lng: 80.221 },
   Mirissa: { lat: 5.9467, lng: 80.4564 },
   Negombo: { lat: 7.2088, lng: 79.8358 },
   'Nuwara Eliya': { lat: 6.9497, lng: 80.7891 },
@@ -30,7 +30,7 @@ const coordinatesByCity: Record<string, { lat: number; lng: number }> = {
   Polonnaruwa: { lat: 7.9403, lng: 81.0188 },
   Trincomalee: { lat: 8.5874, lng: 81.2152 },
   Matale: { lat: 7.4675, lng: 80.6234 },
-  Bentota: { lat: 6.4260, lng: 79.9957 },
+  Bentota: { lat: 6.426, lng: 79.9957 },
   Arugam: { lat: 6.8408, lng: 81.8369 },
   Dambulla: { lat: 7.8731, lng: 80.6514 },
   Tangalle: { lat: 6.0243, lng: 80.7968 },
@@ -55,9 +55,18 @@ const listingSeed = [
     listingType: ListingType.EXPERIENCE,
     tags: ['Culture', 'Dance', 'Music'],
     inclusions: [
-      { title: 'Live Drumming', description: 'Enjoy the powerful beats of traditional drums.' },
-      { title: 'Cultural Context', description: 'Learn the stories behind each performance.' },
-      { title: 'Photo Session', description: 'Take photos with the dancers in full costume.' },
+      {
+        title: 'Live Drumming',
+        description: 'Enjoy the powerful beats of traditional drums.',
+      },
+      {
+        title: 'Cultural Context',
+        description: 'Learn the stories behind each performance.',
+      },
+      {
+        title: 'Photo Session',
+        description: 'Take photos with the dancers in full costume.',
+      },
     ],
     mediaUrl: '/assets/photos/B4.webp',
   },
@@ -75,9 +84,18 @@ const listingSeed = [
     listingType: ListingType.EXPERIENCE,
     tags: ['History', 'Nature', 'Adventure'],
     inclusions: [
-      { title: 'Expert Guide', description: 'Certified archaeologist guide.' },
-      { title: 'Morning Start', description: 'Beat the heat with an early climb.' },
-      { title: 'Scenic Views', description: 'Panoramic views from the summit.' },
+      {
+        title: 'Expert Guide',
+        description: 'Certified archaeologist guide.',
+      },
+      {
+        title: 'Morning Start',
+        description: 'Beat the heat with an early climb.',
+      },
+      {
+        title: 'Scenic Views',
+        description: 'Panoramic views from the summit.',
+      },
     ],
     mediaUrl: '/assets/photos/B6.jpg',
   },
@@ -97,7 +115,10 @@ const listingSeed = [
     inclusions: [
       { title: 'Photo Ops', description: 'Stops at key scenic points.' },
       { title: 'Reserved Seating', description: 'Guaranteed window seats.' },
-      { title: 'Tea & Snacks', description: 'Traditional snacks served on board.' },
+      {
+        title: 'Tea & Snacks',
+        description: 'Traditional snacks served on board.',
+      },
     ],
     mediaUrl: '/assets/photos/B7.jpg',
   },
@@ -359,9 +380,18 @@ const listingSeed = [
     listingType: ListingType.EXPERIENCE,
     tags: ['History', 'Culture', 'UNESCO'],
     inclusions: [
-      { title: 'Expert Guide', description: 'Archaeological expert with deep historical knowledge.' },
-      { title: 'Transport', description: 'Air-conditioned vehicle for site visits.' },
-      { title: 'Lunch', description: 'Traditional Sri Lankan meal included.' },
+      {
+        title: 'Expert Guide',
+        description: 'Archaeological expert with deep historical knowledge.',
+      },
+      {
+        title: 'Transport',
+        description: 'Air-conditioned vehicle for site visits.',
+      },
+      {
+        title: 'Lunch',
+        description: 'Traditional Sri Lankan meal included.',
+      },
     ],
     mediaUrl: '/assets/photos/B6.jpg',
   },
@@ -379,9 +409,15 @@ const listingSeed = [
     listingType: ListingType.EXPERIENCE,
     tags: ['Wellness', 'Spa', 'Ayurveda'],
     inclusions: [
-      { title: 'Ayurvedic Massage', description: '90-minute traditional herbal oil massage.' },
+      {
+        title: 'Ayurvedic Massage',
+        description: '90-minute traditional herbal oil massage.',
+      },
       { title: 'Steam Bath', description: 'Herbal steam therapy session.' },
-      { title: 'Wellness Consultation', description: 'Personal health assessment by Ayurvedic doctor.' },
+      {
+        title: 'Wellness Consultation',
+        description: 'Personal health assessment by Ayurvedic doctor.',
+      },
     ],
     mediaUrl: '/assets/photos/B7.jpg',
   },
@@ -430,7 +466,7 @@ const listingSeed = [
     title: 'Organic Ceylon Spice Collection',
     shortDescription: 'Premium spice gift set.',
     longDescription:
-      'A curated collection of Sri Lanka\'s finest organic spices including cinnamon, cardamom, cloves, and nutmeg. Perfect for cooking enthusiasts.',
+      "A curated collection of Sri Lanka's finest organic spices including cinnamon, cardamom, cloves, and nutmeg. Perfect for cooking enthusiasts.",
     priceMin: 3200,
     location: { city: 'Matale', district: 'Matale' },
     ratingAverage: 4.8,
@@ -439,7 +475,8 @@ const listingSeed = [
     listingType: ListingType.PRODUCT,
     tags: ['Spices', 'Organic', 'Gift'],
     specs: {
-      composition: 'Ceylon cinnamon, cardamom, cloves, pepper, nutmeg - all organic certified.',
+      composition:
+        'Ceylon cinnamon, cardamom, cloves, pepper, nutmeg - all organic certified.',
       dimensions: 'Gift box 8x8x4 inches, 500g total weight.',
       care: 'Store in airtight containers away from direct sunlight.',
     },
@@ -459,9 +496,18 @@ const listingSeed = [
     listingType: ListingType.EXPERIENCE,
     tags: ['Spices', 'Food', 'Educational'],
     inclusions: [
-      { title: 'Garden Tour', description: 'Walk through organic spice plantations.' },
-      { title: 'Cooking Demo', description: 'Learn to prepare traditional spice blends.' },
-      { title: 'Take-home Kit', description: 'Small spice collection to take with you.' },
+      {
+        title: 'Garden Tour',
+        description: 'Walk through organic spice plantations.',
+      },
+      {
+        title: 'Cooking Demo',
+        description: 'Learn to prepare traditional spice blends.',
+      },
+      {
+        title: 'Take-home Kit',
+        description: 'Small spice collection to take with you.',
+      },
     ],
     mediaUrl: '/assets/photos/B7.jpg',
   },
@@ -479,9 +525,18 @@ const listingSeed = [
     listingType: ListingType.EXPERIENCE,
     tags: ['Craft', 'Workshop', 'Heritage'],
     inclusions: [
-      { title: 'Materials Provided', description: 'All lace-making tools and threads included.' },
-      { title: 'Expert Instruction', description: 'Learn from master lace makers.' },
-      { title: 'Your Creation', description: 'Take home your handmade lace piece.' },
+      {
+        title: 'Materials Provided',
+        description: 'All lace-making tools and threads included.',
+      },
+      {
+        title: 'Expert Instruction',
+        description: 'Learn from master lace makers.',
+      },
+      {
+        title: 'Your Creation',
+        description: 'Take home your handmade lace piece.',
+      },
     ],
     mediaUrl: '/assets/photos/B4.webp',
   },
@@ -499,9 +554,18 @@ const listingSeed = [
     listingType: ListingType.EXPERIENCE,
     tags: ['Gemstones', 'Adventure', 'Educational'],
     inclusions: [
-      { title: 'Mine Visit', description: 'Tour active gem mining operations.' },
-      { title: 'Gem Panning', description: 'Try your luck at finding gemstones.' },
-      { title: 'Expert Guide', description: 'Learn to identify different gemstones.' },
+      {
+        title: 'Mine Visit',
+        description: 'Tour active gem mining operations.',
+      },
+      {
+        title: 'Gem Panning',
+        description: 'Try your luck at finding gemstones.',
+      },
+      {
+        title: 'Expert Guide',
+        description: 'Learn to identify different gemstones.',
+      },
     ],
     mediaUrl: '/assets/photos/B8.jpg',
   },
@@ -510,7 +574,7 @@ const listingSeed = [
     title: 'Polonnaruwa Medieval Capital Tour',
     shortDescription: 'Explore the medieval kingdom ruins.',
     longDescription:
-      'Discover the well-preserved ruins of Sri Lanka\'s medieval capital. See the royal palace, Gal Vihara rock sculptures, and ancient irrigation systems.',
+      "Discover the well-preserved ruins of Sri Lanka's medieval capital. See the royal palace, Gal Vihara rock sculptures, and ancient irrigation systems.",
     priceMin: 4800,
     location: { city: 'Polonnaruwa', district: 'Matale' },
     ratingAverage: 4.9,
@@ -519,9 +583,18 @@ const listingSeed = [
     listingType: ListingType.EXPERIENCE,
     tags: ['History', 'UNESCO', 'Culture'],
     inclusions: [
-      { title: 'Bicycle Tour', description: 'Explore the vast site by bicycle.' },
-      { title: 'Archaeological Guide', description: 'Expert commentary on historical significance.' },
-      { title: 'Museum Entry', description: 'Access to Polonnaruwa archaeological museum.' },
+      {
+        title: 'Bicycle Tour',
+        description: 'Explore the vast site by bicycle.',
+      },
+      {
+        title: 'Archaeological Guide',
+        description: 'Expert commentary on historical significance.',
+      },
+      {
+        title: 'Museum Entry',
+        description: 'Access to Polonnaruwa archaeological museum.',
+      },
     ],
     mediaUrl: '/assets/photos/B6.jpg',
   },
@@ -597,13 +670,17 @@ async function main() {
     ),
   );
 
-  const categoryByName = new Map(categories.map((category) => [category.categoryName, category]));
+  const categoryByName = new Map(
+    categories.map((category) => [category.categoryName, category]),
+  );
 
   for (const listing of listingSeed) {
-    const province =
-      provinceByDistrict[listing.location.district] ?? 'Central';
+    const province = provinceByDistrict[listing.location.district] ?? 'Central';
 
-    const coordinates = coordinatesByCity[listing.location.city] || { lat: 7.8731, lng: 80.7718 }; // Default to Sri Lanka center
+    const coordinates = coordinatesByCity[listing.location.city] || {
+      lat: 7.8731,
+      lng: 80.7718,
+    }; // Default to Sri Lanka center
 
     const location = await prisma.vendorLocation.findFirst({
       where: {
