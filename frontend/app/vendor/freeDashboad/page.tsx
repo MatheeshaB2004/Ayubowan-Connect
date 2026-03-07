@@ -98,8 +98,8 @@ export default function Dashboard() {
     useEffect(() => {
 
         const interval = setInterval(async () => {
-            //const now = new Date()
-            const now = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+            const now = new Date()
+            //const now = new Date(today.getFullYear(), today.getMonth() + 1, 1)
 
             if (
                 now.getMonth() !== currentDate.getMonth() ||
