@@ -9,6 +9,7 @@ import { CartModule } from './modules/cart/cart.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { FilesController } from './files.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventsModule } from './modules/events/events.module';
 
 @Module({
@@ -21,6 +22,8 @@ import { EventsModule } from './modules/events/events.module';
     MarketplaceModule,
     VendorManagementModule,
     CartModule,
+    DashboardModule,
+    EventsModule,
     ChatbotModule,
     EventsModule
   ],

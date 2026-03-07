@@ -207,9 +207,22 @@ model VendorAvailability {
 
   vendor Vendor @relation(fields: [vendorId], references: [id])
 
+  slots AvailabilitySlot[]
+
   createdAt DateTime @default(now())
 
   @@unique([vendorId, date])
+}
+
+model AvailabilitySlot {
+  id Int @id @default(autoincrement())
+
+  availabilityId Int
+
+  startTime DateTime
+  endTime   DateTime
+
+  availability VendorAvailability @relation(fields: [availabilityId], references: [id])
 }
 
 model ReviewMedia {
@@ -409,4 +422,3 @@ enum EventStatus {
   PUBLISHED
   CANCELLED
 }
-

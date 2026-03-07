@@ -3,13 +3,16 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
 
 @Injectable()
 export class VendorManagementService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService
+  ) { }
 
   /**
    * Get all active categories that vendors can choose from
@@ -57,7 +60,8 @@ export class VendorManagementService {
   /**
    * Create a new listing with validation
    */
-  async createListing(vendorId: number, dto: CreateListingDto) {
+  async createListing(vendorId: number, dto: CreateListingDto, file?: Express.Multer.File,) {
+    console.time("CREATE_LISTING_TOTAL");
     // Validate category exists and is active
     const category = await this.prisma.listingCategory.findUnique({
       where: { id: dto.categoryId },
@@ -90,7 +94,7 @@ export class VendorManagementService {
       );
     }
 
-    // Create the listing
+    // 1. Create the listing (Wait for this to get the ID)
     const listing = await this.prisma.listing.create({
       data: {
         vendorId,
@@ -106,7 +110,11 @@ export class VendorManagementService {
         duration: dto.duration,
         capacity: dto.capacity,
         availability: dto.availability,
-        tags: dto.tags || [],
+        tags:
+          typeof dto.tags === 'string'
+            ? JSON.parse(dto.tags)
+            : dto.tags || [],
+
         inclusions: dto.inclusions,
         specs: dto.specs,
         isFeatured: dto.isFeatured || false,
@@ -118,19 +126,48 @@ export class VendorManagementService {
       },
     });
 
-    // Create search index
-    await this.prisma.listingSearchIndex.create({
-      data: {
-        listingId: listing.id,
-        categoryId: listing.categoryId,
-        priceMin: listing.priceMin,
-        priceMax: listing.priceMax,
-        city: location.city,
-        district: location.district,
-        province: location.province,
-      },
+    // Index listing in background
+    setImmediate(() => {
+      this.prisma.listingSearchIndex.create({
+        data: {
+          listingId: listing.id,
+          categoryId: listing.categoryId,
+          priceMin: listing.priceMin,
+          priceMax: listing.priceMax,
+          city: location.city,
+          district: location.district,
+          province: location.province,
+        },
+      }).catch(err => console.error("Background Indexing Error:", err));
     });
 
+    // Handle image upload async
+    if (file) {
+      const media = await this.prisma.listingMedia.create({
+        data: {
+          listingId: listing.id,
+          mediaUrl: "__UPLOADING__",
+          mediaType: "IMAGE",
+          isPrimary: true,
+        },
+      });
+
+      setImmediate(async () => {
+        try {
+          const upload = await this.cloudinaryService.uploadFile(file);
+
+          await this.prisma.listingMedia.update({
+            where: { id: media.id },
+            data: {
+              mediaUrl: upload.secure_url,
+            },
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
+    console.timeEnd("CREATE_LISTING_TOTAL");
     return listing;
   }
 
@@ -141,7 +178,10 @@ export class VendorManagementService {
     vendorId: number,
     listingId: number,
     dto: UpdateListingDto,
+    file?: Express.Multer.File,
   ) {
+
+
     // Check if listing exists and belongs to vendor
     const existingListing = await this.prisma.listing.findUnique({
       where: { id: listingId },
@@ -206,11 +246,22 @@ export class VendorManagementService {
         ...(dto.priceMax !== undefined && { priceMax: dto.priceMax }),
         ...(dto.priceNote !== undefined && { priceNote: dto.priceNote }),
         ...(dto.duration !== undefined && { duration: dto.duration }),
-        ...(dto.capacity !== undefined && { capacity: dto.capacity }),
+        ...(dto.capacity !== undefined && dto.capacity > 0
+          ? { capacity: dto.capacity }
+          : { capacity: null }),
+
         ...(dto.availability !== undefined && {
           availability: dto.availability,
         }),
-        ...(dto.tags && { tags: dto.tags }),
+        ...(dto.tags !== undefined
+          ? {
+            tags:
+              typeof dto.tags === 'string'
+                ? JSON.parse(dto.tags)
+                : dto.tags,
+          }
+          : {}),
+
         ...(dto.inclusions !== undefined && { inclusions: dto.inclusions }),
         ...(dto.specs !== undefined && { specs: dto.specs }),
         ...(dto.isFeatured !== undefined && { isFeatured: dto.isFeatured }),
@@ -223,6 +274,43 @@ export class VendorManagementService {
         location: true,
       },
     });
+
+    if (file) {
+
+      const media = await this.prisma.listingMedia.create({
+        data: {
+          listingId,
+          mediaUrl: "__UPLOADING__",
+          mediaType: "IMAGE",
+          isPrimary: true,
+        },
+      });
+
+      await this.prisma.listingMedia.updateMany({
+        where: {
+          listingId,
+          id: { not: media.id },
+        },
+        data: {
+          isPrimary: false,
+        },
+      });
+
+      setImmediate(async () => {
+        try {
+          const upload = await this.cloudinaryService.uploadFile(file);
+
+          await this.prisma.listingMedia.update({
+            where: { id: media.id },
+            data: {
+              mediaUrl: upload.secure_url,
+            },
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
 
     // Update search index if category or location changed
     if (
@@ -273,7 +361,10 @@ export class VendorManagementService {
       include: {
         category: true,
         location: true,
-        media: true,
+        media: {
+          orderBy: { isPrimary: "desc" },
+        },
+
       },
       orderBy: [{ displayPriority: 'desc' }, { createdAt: 'desc' }],
     });
@@ -302,4 +393,18 @@ export class VendorManagementService {
 
     return { message: 'Listing deleted successfully' };
   }
+
+  async recordProfileView(vendorId: number, userId: number) {
+  try {
+    return await this.prisma.profileView.create({
+      data: {
+        vendorId,
+        userId,
+      },
+    });
+  } catch (error) {
+    // Unique constraint prevents duplicates
+    return null;
+  }
+}
 }
