@@ -84,48 +84,57 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         try {
             const response = await fetch(`${API_BASE}/cart`, {
                 headers: {
-                    'x-user-id': String(activeUser.id),
+                    "x-user-id": "1",
                 },
             });
 
-            if (!response.ok) return;
+            if (!response.ok) {
+                console.error("Failed to fetch cart");
+                return;
+            }
 
             const data = await response.json();
-            setItems(data.items ?? []);
+            setItems(data.items || []);
         } catch (error) {
-            console.error('Failed to fetch cart', error);
+            console.error("Fetch cart error:", error);
         }
     };
 
     useEffect(() => {
         fetchCart();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeUser.id]);
+    }, []);
 
     /* =======================
        Actions
     ======================= */
 
-    const addToCart = async (listingId: number, quantity: number) => {
+    const addToCart = async (listingId: number, quantity = 1) => {
         try {
             const response = await fetch(`${API_BASE}/cart`, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
-                    'x-user-id': String(activeUser.id),
+                    "Content-Type": "application/json",
+                    "x-user-id": "1", // demo user
                 },
-                body: JSON.stringify({ listingId, quantity }),
+                body: JSON.stringify({
+                    listingId,
+                    quantity,
+                }),
             });
 
             if (!response.ok) {
                 const text = await response.text();
-                console.error('Add to cart failed:', response.status, text);
+                console.error("Add to cart failed:", response.status, text);
                 return;
             }
 
-            await fetchCart();
+            // IMPORTANT
+            await fetchCart();   // refresh cart items
+
+            alert("Added to cart!");
         } catch (error) {
-            console.error('Error adding to cart', error);
+            console.error("Cart error:", error);
         }
     };
 
