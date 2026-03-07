@@ -1277,8 +1277,8 @@ export class DashboardService {
 
     if (!vendor) throw new Error("Vendor not found");
 
-    //const now = new Date();
-    const now = new Date(2026, 3, 1);
+    const now = new Date();
+    //const now = new Date(2026, 3, 1);
 
     const startOfCurrentMonth = new Date(
       now.getFullYear(),
