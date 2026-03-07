@@ -27,6 +27,7 @@ import './ExperienceDetail.css';
 import ReviewSection from '../../review';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import toast from "react-hot-toast";
 
 type ApiListing = {
   id: number;
@@ -132,7 +133,7 @@ export default function ExperienceDetailPage() {
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      alert('Please log in to book this experience.');
+      toast.error("Please log in to book this experience");
       return;
     }
 
@@ -162,9 +163,14 @@ export default function ExperienceDetailPage() {
     }
   };
 
-  const handleAddToCart = () => {
-    if (listing) {
-      addToCart(listing.id, 1);
+  const handleAddToCart = async () => {
+    if (!listing) return;
+
+    try {
+      await addToCart(listing.id, 1);
+      toast.success("Item added to cart");
+    } catch {
+      toast.error("Could not add item to cart");
     }
   };
 
@@ -694,12 +700,8 @@ export default function ExperienceDetailPage() {
                 Book Now
               </button>
 
-              <button
-                className="btn-add-cart"
-                onClick={handleAddToCart}
-              >
-                Add to Cart
-              </button>
+
+
             </div>
           </div>
         </aside>
