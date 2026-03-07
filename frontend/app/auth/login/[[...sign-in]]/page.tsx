@@ -8,18 +8,6 @@ import "../login.css";
 export default function LoginPage() {
   return (
     <div className="login-container">
-      {/* Header */}
-      <header className="login-header">
-        <div className="logo">Logo</div>
-        <nav className="nav-menu">
-          <Link href="/experiences">Experiences</Link>
-          <Link href="/products">Products</Link>
-          <Link href="/events">Events</Link>
-          <div className="more-dropdown">
-            More <span className="dropdown-arrow">▼</span>
-          </div>
-        </nav>
-      </header>
 
       {/* Hero Section */}
       <section className="hero-section">
