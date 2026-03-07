@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
+
 
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart();
@@ -66,9 +68,16 @@ export default function CheckoutPage() {
       <div className="max-w-2xl mx-auto">
 
         {/* Back Button */}
+        <Link
+          href="/marketplace"
+          className="text-sm text-gray-600 hover:text-green-700 transition-colors mb-4 inline-block"
+        >
+          ← Back to Marketplace
+        </Link>
+
         <button
           onClick={() => router.push('/payments/cart')}
-          className="mb-6 text-sm text-gray-600 hover:text-gray-900"
+          className="mb-6 text-sm text-gray-600 hover:text-green-700 transition-colors block"
         >
           ← Back to Cart
         </button>
