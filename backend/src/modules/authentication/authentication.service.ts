@@ -53,26 +53,16 @@ export class AuthenticationService {
   }
 
   async logout(userId: number) {
-    await this.prisma.refreshToken.deleteMany({
-      where: { userId: userId },
-    });
+    // RefreshToken model was removed from DB schema
     return { message: 'Logged out successfully' };
   }
 
   async refreshTokens(userId: number, rt: string) {
-    const tokenRecord = await this.prisma.refreshToken.findUnique({
-      where: { token: rt },
-    });
-
-    if (!tokenRecord || tokenRecord.userId !== userId || tokenRecord.revoked)
-      throw new ForbiddenException('Access Denied');
-
-    if (tokenRecord.expiresAt < new Date()) {
-      await this.prisma.refreshToken.delete({ where: { id: tokenRecord.id } });
-      throw new ForbiddenException('Token Expired');
+    try {
+      this.jwt.verify(rt, { secret: this.config.get<string>('JWT_SECRET') || 'secret' });
+    } catch {
+      throw new ForbiddenException('Token Expired or Invalid');
     }
-
-    await this.prisma.refreshToken.delete({ where: { id: tokenRecord.id } });
 
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new ForbiddenException('User not found');
@@ -95,13 +85,7 @@ export class AuthenticationService {
       }),
     ]);
 
-    await this.prisma.refreshToken.create({
-      data: {
-        token: rt,
-        userId: userId,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    // RefreshToken persistence was removed from schema
 
     return {
       access_token: at,
