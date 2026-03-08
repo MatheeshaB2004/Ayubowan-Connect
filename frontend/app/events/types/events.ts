@@ -21,7 +21,26 @@ export interface Event {
   maxParticipants?: number;
   participantCount: number;
   isLive?: boolean;
-  computedStatus?: 'live' | 'upcoming' | 'past';
-  status: 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+  computedStatus?: "live" | "upcoming" | "past";
+  status: "DRAFT" | "PUBLISHED" | "CANCELLED";
   vendor?: EventVendor;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateEventPayload {
+  title: string;
+  description?: string;
+  category?: string;
+  location: string;
+  city: string;
+  district: string;
+  province: string;
+  startDate: string;
+  endDate?: string;
+  time?: string;
+  maxParticipants?: number;
+  price?: number;
+  isFree?: boolean;
+  imageUrl?: string;
 }

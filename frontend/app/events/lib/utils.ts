@@ -1,34 +1,8 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
 /**
- * Merges Tailwind CSS classes safely, resolving conflicts.
- * Used by shadcn/ui components throughout the project.
- *
- * Example:
- *   cn("px-4 py-2", isActive && "bg-green-500", "px-6")
- *   // → "py-2 bg-green-500 px-6"  (px-6 wins over px-4)
- */
-export function cn(...inputs: ClassValue[]): string {
-  return twMerge(clsx(inputs));
-}
-
-/**
- * Format a number as Sri Lankan Rupees.
- * Example: formatPrice(3500) → "Rs. 3,500"
- */
-export function formatPrice(amount: number | null | undefined): string {
-  if (amount == null) return "Free";
-  return `Rs. ${amount.toLocaleString("en-LK")}`;
-}
-
-/**
- * Format an ISO date string to a readable date.
- * Example: formatDate("2026-03-05") → "Mar 5, 2026"
+ * Format an ISO date string to "Mar 5, 2026"
  */
 export function formatDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -36,39 +10,48 @@ export function formatDate(dateString: string): string {
 }
 
 /**
- * Format a date range. If same day, returns single date.
- * Example: formatDateRange("2026-03-08", "2026-03-10") → "Mar 8 – 10, 2026"
+ * Format a date range.
+ * Same day  → "Mar 5, 2026"
+ * Same month → "Mar 8 – 10, 2026"
+ * Diff month → "Mar 8 – Apr 2, 2026"
  */
 export function formatDateRange(
   startDate: string,
   endDate?: string | null
 ): string {
   const start = new Date(startDate);
-  if (!endDate || startDate.slice(0, 10) === endDate.slice(0, 10)) {
-    return formatDate(startDate);
-  }
-  const end = new Date(endDate);
   const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jan","Feb","Mar","Apr","May","Jun",
+    "Jul","Aug","Sep","Oct","Nov","Dec",
   ];
-  if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+
+  if (!endDate || startDate.slice(0, 10) === endDate.slice(0, 10)) {
+    return `${months[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()}`;
+  }
+
+  const end = new Date(endDate);
+  if (
+    start.getMonth() === end.getMonth() &&
+    start.getFullYear() === end.getFullYear()
+  ) {
     return `${months[start.getMonth()]} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
   }
-  return `${formatDate(startDate)} – ${formatDate(endDate)}`;
+
+  return `${months[start.getMonth()]} ${start.getDate()} – ${months[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
 }
 
 /**
- * Truncate a string to a maximum length with ellipsis.
+ * Format a price: null/0 → "Free", otherwise "Rs. 3,500"
  */
-export function truncate(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength).trimEnd() + "…";
+export function formatPrice(price?: number | null, isFree?: boolean): string {
+  if (isFree || price == null || price === 0) return "Free";
+  return `Rs. ${price.toLocaleString("en-LK")}`;
 }
 
 /**
- * Check if a value is a non-empty string.
+ * Get "March 2026" from an ISO date string (for the sticky month header)
  */
-export function isNonEmpty(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
+export function getMonthYear(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
