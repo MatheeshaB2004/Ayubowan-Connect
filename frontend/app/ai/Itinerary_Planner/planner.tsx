@@ -19,7 +19,7 @@ interface Itinerary {
 }
 
 export default function ItineraryPlanner() {
-    const { isLoaded, isSignedIn, user } = useUser();
+    const { isSignedIn } = useUser();
     const router = useRouter();
 
     const [loading, setLoading] = useState(false);
@@ -81,8 +81,8 @@ export default function ItineraryPlanner() {
 
             const data = await res.json();
             setItinerary(data);
-        } catch (err: any) {
-            setError(err.message || "An error occurred");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "An error occurred");
         } finally {
             setLoading(false);
         }
@@ -99,7 +99,7 @@ export default function ItineraryPlanner() {
                         </span>
                     </h1>
                     <p className="planner-description">
-                        Tell us your preferences, and we'll craft the perfect Sri Lankan
+                        Tell us your preferences, and we&apos;ll craft the perfect Sri Lankan
                         adventure just for you.
                     </p>
                 </div>
@@ -110,10 +110,11 @@ export default function ItineraryPlanner() {
                             <div className="planner-form-grid">
                                 {/* Destination */}
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="destination" className="form-label">
                                         <MapPin className="form-icon" /> Destination
                                     </label>
                                     <input
+                                        id="destination"
                                         type="text"
                                         required
                                         placeholder="e.g., Kandy, Galle, Ella"
@@ -127,10 +128,11 @@ export default function ItineraryPlanner() {
 
                                 {/* Duration */}
                                 <div className="form-group">
-                                    <label className="form-label">
+                                    <label htmlFor="duration" className="form-label">
                                         <Calendar className="form-icon" /> Duration (Days)
                                     </label>
                                     <input
+                                        id="duration"
                                         type="number"
                                         min="1"
                                         max="14"
