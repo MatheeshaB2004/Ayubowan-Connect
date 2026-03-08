@@ -321,14 +321,15 @@ model Cart {
 model CartItem {
   id        Int      @id @default(autoincrement()) @map("cart_item_id")
   cartId    Int      @map("cart_id")
-  listingId Int      @map("listing_id")
+  listingId Int?     @map("listing_id")
+  bookingId Int?     @map("booking_id")
+
   quantity  Int      @default(1)
   addedAt   DateTime @default(now()) @map("added_at")
 
   cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
-  @@unique([cartId, listingId])
   @@map("cart_items")
 }
 
