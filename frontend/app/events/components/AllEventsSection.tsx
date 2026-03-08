@@ -3,54 +3,45 @@
 import { useRef, useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 import { EventBar } from "./EventBar";
-import { Event } from "@/app/events/types/events";
+import { Event } from "../types/events";
+import { getMonthYear } from "../lib/utils";
 
 interface AllEventsSectionProps {
   events: Event[];
   totalCount: number;
+  isGuest: boolean;
 }
 
-function getMonthYear(dateString: string): string {
-  const date = new Date(dateString);
-  const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-  ];
-  return `${months[date.getMonth()]} ${date.getFullYear()}`;
-}
-
-export function AllEventsSection({ events, totalCount }: AllEventsSectionProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const eventRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+export function AllEventsSection({
+  events,
+  totalCount,
+  isGuest,
+}: AllEventsSectionProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const eventRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const [currentMonth, setCurrentMonth] = useState(() =>
     events.length > 0 ? getMonthYear(events[0].startDate) : ""
   );
 
   useEffect(() => {
-    const container = scrollContainerRef.current;
+    const container = scrollRef.current;
     if (!container || events.length === 0) return;
 
     const handleScroll = () => {
-      const containerRect = container.getBoundingClientRect();
-      const containerCenter = containerRect.top + containerRect.height / 3;
+      const containerTop = container.getBoundingClientRect().top;
+      const threshold = containerTop + 80;
 
-      let closestEvent: Event | null = null;
-      let closestDistance = Infinity;
+      let best: Event | null = null;
+      let bestDist = Infinity;
 
-      events.forEach((event) => {
-        const el = eventRefs.current[event.id];
+      events.forEach((ev) => {
+        const el = eventRefs.current[ev.id];
         if (!el) return;
-        const rect = el.getBoundingClientRect();
-        const dist = Math.abs(rect.top - containerCenter);
-        if (dist < closestDistance) {
-          closestDistance = dist;
-          closestEvent = event;
-        }
+        const dist = Math.abs(el.getBoundingClientRect().top - threshold);
+        if (dist < bestDist) { bestDist = dist; best = ev; }
       });
 
-      if (closestEvent) {
-        setCurrentMonth(getMonthYear((closestEvent as Event).startDate));
-      }
+      if (best) setCurrentMonth(getMonthYear((best as Event).startDate));
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
@@ -66,11 +57,26 @@ export function AllEventsSection({ events, totalCount }: AllEventsSectionProps) 
       </div>
 
       {/* Sticky month indicator */}
-      <div className="sticky top-[65px] z-30 bg-gray-50 py-3 border-b-2 border-[#379683] mb-4">
-        <h3 className="text-lg font-semibold text-[#379683]">{currentMonth}</h3>
+      <div className="sticky top-[65px] z-30 bg-gray-50 py-2.5 border-b-2 border-[#379683] mb-4">
+        <span className="text-[17px] font-semibold text-[#379683]">
+          {currentMonth}
+        </span>
       </div>
 
-      {/* Scrollable list */}
+      {/* Guest notice */}
+      {isGuest && (
+        <div className="flex items-center gap-3 bg-[#379683]/5 border border-[#379683]/20 rounded-xl px-4 py-3 mb-4 text-sm text-[#2d7a6a]">
+          <span className="text-lg">🌿</span>
+          <span>
+            <strong>Sign in</strong> to register for events and view full details.{" "}
+            <a href="/auth/login" className="underline font-semibold hover:text-[#379683]">
+              Log in here
+            </a>
+          </span>
+        </div>
+      )}
+
+      {/* List */}
       {events.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-xl border border-gray-100">
           <Calendar className="w-12 h-12 mb-3 text-gray-200" />
@@ -79,17 +85,16 @@ export function AllEventsSection({ events, totalCount }: AllEventsSectionProps) 
         </div>
       ) : (
         <div
-          ref={scrollContainerRef}
-          className="h-[580px] overflow-y-auto pr-2 space-y-0"
+          ref={scrollRef}
+          className="h-[580px] overflow-y-auto pr-1"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#d1d5db transparent" }}
         >
           {events.map((event) => (
             <EventBar
               key={event.id}
               event={event}
-              innerRef={(el) => {
-                eventRefs.current[event.id] = el;
-              }}
+              isGuest={isGuest}
+              innerRef={(el) => { eventRefs.current[event.id] = el; }}
             />
           ))}
         </div>
