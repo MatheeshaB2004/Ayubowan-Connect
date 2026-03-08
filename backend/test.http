@@ -1,0 +1,7 @@
+### Test profile view
+POST http://localhost:3001/vendor/2/view
+Content-Type: application/json
+
+### Local tourist views listing 
+POST http://localhost:3001/vendor/dashboard/simulate-view/113?userId=2
+Content-Type: application/json

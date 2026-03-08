@@ -4,7 +4,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthenticationModule } from './modules/authentication/authentication.module';
-import { AiServicesModule } from './modules/ai-services/ai-services.module'; // Import AI Service module
+import { MarketplaceModule } from './modules/marketplace/marketplace.module';
+import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
+import { CartModule } from './modules/cart/cart.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
+import { FilesController } from './files.controller';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { EventsModule } from './modules/events/events.module';
 
 @Module({
   imports: [
@@ -13,9 +20,15 @@ import { AiServicesModule } from './modules/ai-services/ai-services.module'; // 
     }),
     PrismaModule,
     AuthenticationModule,
-    AiServicesModule, // Add this module
+    CloudinaryModule,
+    MarketplaceModule,
+    VendorManagementModule,
+    CartModule,
+    DashboardModule,
+    EventsModule,
+    ChatbotModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, FilesController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
