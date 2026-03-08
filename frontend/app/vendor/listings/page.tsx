@@ -50,6 +50,10 @@ export default function CreateListingsPage() {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const fetchListings = async () => {
     try {
       const response = await fetch(`http://localhost:3001/vendor/${vendorId}/listings`);

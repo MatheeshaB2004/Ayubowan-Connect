@@ -154,13 +154,23 @@ export class DashboardController {
       month
     );
   }
+
+  @Post("reply")
+  async reply(@Body() body: any) {
+    console.log("Reply request:", body);
+
+    const { reviewId, reply } = body;
+
+    return this.service.replyToReview(reviewId, reply);
+
+  }
+
+  @Post("delete-reply")
+  deleteReply(@Body() body: any) {
+
+    return this.service.deleteReply(body.reviewId)
+
+  }
 }
 
-/*@Post("reply-review")
-replyReview(
-  @Body("reviewId") reviewId: number,
-  @Body("reply") reply: string
-) {
-  return this.service.replyToReview(reviewId, reply);
-}*/
 

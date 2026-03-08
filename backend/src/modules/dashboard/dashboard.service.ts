@@ -1108,6 +1108,7 @@ export class DashboardService {
             title: true,
           },
         },
+        media: true
       },
       orderBy: {
         createdAt: "desc",
@@ -1115,6 +1116,28 @@ export class DashboardService {
     });
 
     return reviews;
+  }
+
+  async replyToReview(reviewId: number, reply: string) {
+
+    return this.prisma.review.update({
+      where: {
+        id: reviewId
+      },
+      data: {
+        reply: reply
+      }
+    });
+
+  }
+
+  async deleteReply(reviewId: number) {
+
+    return this.prisma.review.update({
+      where: { id: reviewId },
+      data: { reply: null }
+    })
+
   }
 
   /*async replyToReview(reviewId: number, reply: string) {
@@ -1144,18 +1167,26 @@ export class DashboardService {
           where: { isPrimary: true },
           take: 1,
         },
+
         location: true,
+
+        category: {
+          select: {
+            categoryName: true,
+          },
+        },
+
         reviews: {
           select: { rating: true },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
+        _count: {
+          select: { reviews: true },
+        },
       },
     });
 
     return listings.map((listing) => {
-      const reviewCount = listing.reviews.length;
+      const reviewCount = listing._count.reviews;
 
       const avgRating =
         reviewCount > 0
@@ -1167,12 +1198,24 @@ export class DashboardService {
 
       return {
         id: listing.id,
+
         title: listing.title,
+
         city: listing.location?.city || null,
+
+        categoryName: listing.category?.categoryName || null,
+
+        tags: listing.tags || [],
+
+        capacity: listing.capacity || null,
+
+        priceMin: listing.priceMin || 0,
+
         image: listing.media[0]?.mediaUrl || null,
+
         avgRating: Number(avgRating),
+
         reviewCount,
-        createdAt: listing.createdAt,
       };
     });
   }
@@ -1297,7 +1340,7 @@ export class DashboardService {
     });
 
     const ids = records.map(r => r.id);
-    console.log("Deleting availability IDs:", ids); 
+    console.log("Deleting availability IDs:", ids);
 
     if (ids.length === 0) {
       return { message: "No previous availability found" };

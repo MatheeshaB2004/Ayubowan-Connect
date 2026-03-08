@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Toaster, toast } from "react-hot-toast";
+import Link from "next/link";
 import "./page.css";
 
 type Ratings = {
@@ -25,12 +27,54 @@ export default function Dashboard() {
     const [isEditingCal, setIsEditingCal] = useState(false);
     const today = new Date();
     const [reviews, setReviews] = useState<any[]>([]);
+    const [showAllReviews, setShowAllReviews] = useState(false);
 
     const [ratings, setRatings] = useState<Ratings>({
         avgRating: 0,
         totalReviews: 0,
         percentages: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
     });
+
+    const deleteReply = async (reviewId: number) => {
+
+        await fetch("http://localhost:3001/dashboard/vendor/delete-reply", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ reviewId })
+        })
+
+        setReviews(prev =>
+            prev.map(r =>
+                r.id === reviewId ? { ...r, reply: null } : r
+            )
+        )
+
+    }
+
+    const sendReply = async (reviewId: number) => {
+
+        await fetch("http://localhost:3001/dashboard/vendor/reply", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reviewId,
+                reply: replyText
+            })
+        })
+
+        setReplyText("")
+        setSelectedReview(null)
+
+        // reload reviews
+        const res = await fetch(`http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`)
+        const data = await res.json()
+        setReviews(data)
+
+    }
 
     const [listings, setListings] = useState<any[]>([]);
 
@@ -105,7 +149,7 @@ export default function Dashboard() {
                 now.getMonth() !== currentDate.getMonth() ||
                 now.getFullYear() !== currentDate.getFullYear()
 
-                
+
             ) {
                 console.log("MONTH CHANGED — deleting previous availability")
                 const res = await fetch(
@@ -191,10 +235,12 @@ export default function Dashboard() {
 
             const mapped: AvailabilityState = {};
 
-            data.forEach((d: any) => {
-                const day = new Date(d.date).getDate();
-                mapped[day] = d.slots || [];
-            });
+            if (Array.isArray(data)) {
+                data.forEach((d: any) => {
+                    const day = new Date(d.date).getDate();
+                    mapped[day] = d.slots || [];
+                });
+            }
 
             setAvailability(mapped);
         };
@@ -234,26 +280,32 @@ export default function Dashboard() {
     };
 
     const toggleDate = (day: number) => {
-        if (!isEditingCal) return;
 
         setActiveDay(prev => prev === day ? null : day);
 
-        setAvailability(prev => {
-            const copy = { ...prev };
+        if (isEditingCal) {
+            setAvailability(prev => {
+                const copy = { ...prev };
 
-            if (!copy[day]) {
-                copy[day] = []; // create date with empty slots
-            }
+                if (!copy[day]) {
+                    copy[day] = [];
+                }
 
-            return copy;
-        });
+                return copy;
+            });
+        }
     };
     const addSlot = (day: number) => {
 
         if (!startTime || !endTime) return
 
         if (startTime >= endTime) {
-            alert("End time must be later than start time.")
+            toast.error("End time must be later than start time.", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                }
+            })
             return
         }
 
@@ -265,7 +317,12 @@ export default function Dashboard() {
         )
 
         if (duplicate) {
-            alert("This exact slot already exists.")
+            toast.error("This exact slot already exists.", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                }
+            })
             return
         }
 
@@ -275,7 +332,12 @@ export default function Dashboard() {
         )
 
         if (overlapping) {
-            alert("This slot overlaps with an existing slot.")
+            toast.error("This slot overlaps with an existing slot", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                },
+            });
             return
         }
 
@@ -326,6 +388,7 @@ export default function Dashboard() {
 
     return (
         <div className="proplux-app">
+            <Toaster position="top-right" reverseOrder={false} />
             <aside className="proplux-sidebar">
                 <div className="proplux-logo">
                     <div className="proplux-logo-icon">
@@ -370,7 +433,9 @@ export default function Dashboard() {
                         <p>Add new properties and maximize your earnings</p>
                     </div>
                     <div className="proplux-hero-buttons">
-                        <button className="btn-light-green active">Create Listing</button>
+                        <Link href="/vendor/listings" scroll={true}>
+                            <button className="btn-light-green active">Create Listing</button>
+                        </Link>
                         <button className="proplux-btn-light">Create Events</button>
                     </div>
                 </div>
@@ -512,55 +577,162 @@ export default function Dashboard() {
                         {listings.length === 0 ? (
                             <p style={{ color: "var(--text-muted)" }}>No listings found.</p>
                         ) : (
-                            listings.map((l) => (
-                                <div className="property-item mt-lite" key={l.id}>
-                                    <div className="property-image">
-                                        <img src={l.image || "/vendor_management/Create-listing.png"} />
-                                    </div>
+                            <div className="listings-scroll-container">
 
-                                    <div className="property-details">
-                                        <h4>{l.title}</h4>
-                                        <p>{l.city}</p>
+                                {listings.map((l) => (
+                                    <div className="dashboard-listing-card" key={l.id}>
 
-                                        <div className="property-rating">
-                                            <div className="stars">⭐ {l.avgRating}</div>
-                                            <span>({l.reviewCount} reviews)</span>
+                                        <img
+                                            className="listing-thumb"
+                                            src={l.image || "/vendor_management/Create-listing.png"}
+                                            alt={l.title}
+                                        />
+
+                                        <div className="listing-info">
+
+                                            <div className="listing-header">
+
+                                                <div className="listing-title">
+                                                    <h4>{l.title}</h4>
+                                                    <div className="listing-location">
+                                                        {l.city} • {l.categoryName}
+                                                    </div>
+                                                </div>
+
+                                                <div className="listing-meta">
+                                                    <div className="listing-price">LKR {l.priceMin}</div>
+
+                                                    <div className="listing-rating">
+
+                                                        <span>
+                                                            ⭐ ({l.reviewCount} {l.reviewCount === 1 ? "review" : "reviews"})
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                            {l.tags?.length > 0 && (
+                                                <div className="listing-tags">
+                                                    {l.tags.map((tag: string, i: number) => (
+                                                        <span key={i} className="listing-tag">{tag}</span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {l.capacity && (
+                                                <div className="listing-capacity">
+                                                    👥 Up to {l.capacity} people
+                                                </div>
+                                            )}
+
+
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         )}
+
                     </div>
 
-                    <div className="proplux-card col-span-6">
+                    <div className="proplux-card col-span-6 reviews-card">
                         <h3>Recent Reviews</h3>
-                        {Array.isArray(reviews) && reviews.map((r) => (
-                            <div className="review-item mt-lite" key={r.id}>
-                                <div className="review-header">
 
-                                    <img
-                                        src="https://i.pravatar.cc/150"
-                                        className="review-avatar"
-                                    />
+                        <div className="reviews-preview">
+                            {Array.isArray(reviews) && reviews.slice(0, 2).map((r) => (
+                                <div className="review-item mt-lite" key={r.id}>
+                                    <div className="review-header">
 
-                                    <div className="review-meta">
-                                        <span className="reviewer-name">
-                                            {r.user.fullName}
-                                        </span>
+                                        <img
+                                            src="https://i.pravatar.cc/150"
+                                            className="review-avatar"
+                                        />
 
-                                        <span className="review-date">
-                                            {new Date(r.createdAt).toLocaleDateString()}
-                                        </span>
+                                        <div className="review-meta">
+                                            <span className="reviewer-name">{r.user.fullName}</span>
+                                            <span className="review-date">
+                                                {new Date(r.createdAt).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric"
+                                                })}
+                                            </span>
 
-                                        <div className="stars">
-                                            {"⭐".repeat(r.rating)}
+                                            <div className="stars">
+                                                {"⭐".repeat(r.rating)}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <p className="review-text">{r.comment}</p>
-                            </div>
-                        ))}
+                                    <p className="review-text">{r.comment}</p>
+                                    <button
+                                        className="reply-btn"
+                                        onClick={() => setSelectedReview(r.id)}
+                                    >
+                                        Reply
+                                    </button>
+                                    {r.reply && (
+                                        <div className="vendor-reply">
+                                            <strong>Vendor Reply:</strong>
+                                            <p>{r.reply}</p>
+                                        </div>
+                                    )}
+                                    {r.reply && (
+                                        <button
+                                            className="delete-reply-btn"
+                                            onClick={() => deleteReply(r.id)}
+                                        >
+                                            Delete Reply
+                                        </button>
+                                    )}
+                                    {selectedReview === r.id && (
+                                        <div className="reply-box">
+
+                                            <div className="reply-actions">
+
+                                                <textarea
+                                                    placeholder="Write your reply..."
+                                                    value={replyText}
+                                                    onChange={(e) => setReplyText(e.target.value)}
+                                                />
+
+                                                <div className="reply-buttons">
+
+                                                    <button
+                                                        className="send-reply-btn"
+                                                        onClick={() => sendReply(r.id)}
+                                                    >
+                                                        Send
+                                                    </button>
+
+                                                    <button
+                                                        className="cancel-reply-btn"
+                                                        onClick={() => {
+                                                            setReplyText("")
+                                                            setSelectedReview(null)
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        {/* VIEW ALL REVIEWS BUTTON */}
+
+                        <button
+                            className="view-all-reviews-btn"
+                            onClick={() => setShowAllReviews(true)}
+                        >
+                            View All Reviews
+                        </button>
+
                     </div>
 
                     {/* Availability Calendar (New Section) */}
@@ -651,38 +823,48 @@ export default function Dashboard() {
                                         style={{ border: activeDay === day ? '2px solid var(--primary)' : '' }}
                                         onClick={() => toggleDate(day)}
                                     >
-                                        {day}
-                                        {hasSlots && <div style={{ fontSize: '10px', marginTop: '4px', color: 'var(--primary)' }}>{availability[day].length} slot{availability[day].length > 1 ? 's' : ''}</div>}
+                                        <span className="day-number">{day}</span>
+
+                                        {hasSlots && (
+                                            <span className="slot-count">
+                                                {availability[day].length}
+                                            </span>
+                                        )}
                                     </div>
                                 )
                             })}
                         </div>
 
                         {/* Slot Editor Panel */}
-                        {isEditingCal && activeDay !== null && (
+                        {activeDay !== null && (
                             <div className="slot-editor-panel mt-lite" style={{ background: "var(--bg-light)", padding: "20px", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
-                                <h4>Edit Slots for {currentDate.toLocaleString("default", { month: "long" })} {activeDay}</h4>
-                                <div className="add-slot-row" style={{ display: "flex", gap: "10px", marginTop: "15px", alignItems: "flex-end", flexWrap: "wrap" }}>
-                                    <div>
-                                        <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>Start Time</label>
-                                        <select value={startTime} onChange={e => setStartTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
-                                            {times.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
+                                <h4>
+                                    {isEditingCal ? "Edit Slots for" : "Slots for"}{" "}
+                                    {currentDate.toLocaleString("default", { month: "long" })} {activeDay}
+                                </h4>
+                                {isEditingCal && (
+                                    <div className="add-slot-row" style={{ display: "flex", gap: "10px", marginTop: "15px", alignItems: "flex-end", flexWrap: "wrap" }}>
+                                        <div>
+                                            <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>Start Time</label>
+                                            <select value={startTime} onChange={e => setStartTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
+                                                {times.map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>End Time</label>
+                                            <select value={endTime} onChange={e => setEndTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
+                                                {times.map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn-light-green"
+                                            onClick={() => addSlot(activeDay)}
+                                        >
+                                            Add Slot
+                                        </button>
                                     </div>
-                                    <div>
-                                        <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>End Time</label>
-                                        <select value={endTime} onChange={e => setEndTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
-                                            {times.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="btn-light-green"
-                                        onClick={() => addSlot(activeDay)}
-                                    >
-                                        Add Slot
-                                    </button>
-                                </div>
+                                )}
 
                                 <div className="slots-list" style={{ marginTop: "20px" }}>
                                     {(availability[activeDay] || []).length === 0 ? (
@@ -711,18 +893,19 @@ export default function Dashboard() {
                                                     <span style={{ fontWeight: 500 }}>
                                                         {slot.start} – {slot.end}
                                                     </span>
-
-                                                    <button
-                                                        onClick={() => removeSlot(activeDay, idx)}
-                                                        style={{
-                                                            border: "none",
-                                                            background: "transparent",
-                                                            color: "red",
-                                                            cursor: "pointer"
-                                                        }}
-                                                    >
-                                                        🗑
-                                                    </button>
+                                                    {isEditingCal && (
+                                                        <button
+                                                            onClick={() => removeSlot(activeDay, idx)}
+                                                            style={{
+                                                                border: "none",
+                                                                background: "transparent",
+                                                                color: "red",
+                                                                cursor: "pointer"
+                                                            }}
+                                                        >
+                                                            🗑
+                                                        </button>
+                                                    )}
 
                                                 </div>
 
@@ -746,6 +929,146 @@ export default function Dashboard() {
 
                 </div>
             </main>
+            {showAllReviews && (
+                <div className="reviews-modal-overlay">
+
+                    <div className="reviews-modal">
+
+                        <div className="reviews-modal-header">
+                            <h3>All Reviews</h3>
+
+                            <button
+                                className="close-modal"
+                                onClick={() => setShowAllReviews(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="reviews-modal-content">
+
+                            {reviews.map((r) => (
+                                <div key={r.id} className="review-item-modal">
+
+                                    <div className="review-header">
+
+                                        <img
+                                            src="https://i.pravatar.cc/150"
+                                            className="review-avatar"
+                                        />
+
+                                        <div className="review-meta">
+
+                                            <span className="reviewer-name">
+                                                {r.user.fullName}
+                                            </span>
+
+                                            <span className="review-date">
+                                                {new Date(r.createdAt).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric"
+                                                })}
+                                            </span>
+
+                                            <div className="stars">
+                                                {"⭐".repeat(r.rating)}
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <p className="review-text-full">{r.comment}</p>
+                                    <button
+                                        className="reply-btn"
+                                        onClick={() => setSelectedReview(r.id)}
+                                    >
+                                        Reply
+                                    </button>
+                                    {r.reply && (
+                                        <div className="vendor-reply">
+                                            <strong>Vendor Reply:</strong>
+                                            <p>{r.reply}</p>
+                                        </div>
+                                    )}
+                                    {r.reply && (
+                                        <button
+                                            className="delete-reply-btn"
+                                            onClick={() => deleteReply(r.id)}
+                                        >
+                                            Delete Reply
+                                        </button>
+                                    )}
+                                    {selectedReview === r.id && (
+                                        <div className="reply-box">
+
+                                            <div className="reply-actions">
+
+                                                <textarea
+                                                    placeholder="Write your reply..."
+                                                    value={replyText}
+                                                    onChange={(e) => setReplyText(e.target.value)}
+                                                />
+
+                                                <div className="reply-buttons">
+
+                                                    <button
+                                                        className="send-reply-btn"
+                                                        onClick={() => sendReply(r.id)}
+                                                    >
+                                                        Send
+                                                    </button>
+
+                                                    <button
+                                                        className="cancel-reply-btn"
+                                                        onClick={() => {
+                                                            setReplyText("")
+                                                            setSelectedReview(null)
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* MEDIA */}
+                                    {r.media?.length > 0 && (
+                                        <div className="review-media">
+
+                                            {r.media.map((m: any) => (
+                                                m.mediaType === "IMAGE" ? (
+                                                    <img
+                                                        key={m.id}
+                                                        src={m.mediaUrl}
+                                                        className="review-media-img"
+                                                    />
+                                                ) : (
+                                                    <video
+                                                        key={m.id}
+                                                        src={m.mediaUrl}
+                                                        controls
+                                                        className="review-media-video"
+                                                    />
+                                                )
+                                            ))}
+
+                                        </div>
+                                    )}
+
+                                </div>
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
         </div>
     );
 }
