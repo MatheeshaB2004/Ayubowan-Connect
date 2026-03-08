@@ -74,7 +74,7 @@ export class MarketplaceController {
   createReview(@Body() createReviewDto: CreateReviewDto) {
     // For now, we'll use a default userId (1) since authentication might not be set up
     // In production, this should come from the authenticated user
-    const userId = 1;
+    const userId = 3;
     return this.marketplaceService.createReview(createReviewDto, userId);
   }
 

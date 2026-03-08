@@ -34,7 +34,7 @@ type ListingSummary = {
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(query: MarketplaceQuery) {
     const {
@@ -59,20 +59,20 @@ export class MarketplaceService {
       ...(location ? { location: { district: location } } : {}),
       ...(priceBounds
         ? {
-            priceMin: {
-              gte: priceBounds.min,
-              lte: priceBounds.max,
-            },
-          }
+          priceMin: {
+            gte: priceBounds.min,
+            lte: priceBounds.max,
+          },
+        }
         : {}),
       ...(search
         ? {
-            OR: [
-              { title: { contains: search, mode: 'insensitive' } },
-              { shortDescription: { contains: search, mode: 'insensitive' } },
-              { longDescription: { contains: search, mode: 'insensitive' } },
-            ],
-          }
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { shortDescription: { contains: search, mode: 'insensitive' } },
+            { longDescription: { contains: search, mode: 'insensitive' } },
+          ],
+        }
         : {}),
     };
 
@@ -84,6 +84,9 @@ export class MarketplaceService {
           category: true,
           location: true,
           media: true,
+          reviews: {
+            select: { rating: true },
+          },
         },
         orderBy: [{ displayPriority: 'desc' }, { createdAt: 'desc' }],
         skip: offset,
@@ -112,6 +115,9 @@ export class MarketplaceService {
           },
         },
         media: true,
+        reviews: {
+          select: { rating: true }
+        },
         vendor: {
           include: {
             user: {
@@ -128,15 +134,29 @@ export class MarketplaceService {
       throw new NotFoundException(`Listing with ID ${id} not found`);
     }
 
+    const ratingAverage =
+      listing.reviews.length > 0
+        ? Number(
+          (
+            listing.reviews.reduce((sum, r) => sum + r.rating, 0) /
+            listing.reviews.length
+          ).toFixed(1)
+        )
+        : 0;
+
+    const ratingCount = listing.reviews.length;
+
     // Transform to include contactEmail in vendor
     const result = {
       ...listing,
+      ratingAverage,
+      ratingCount,
       vendor: listing.vendor
         ? {
-            ...listing.vendor,
-            contactEmail: listing.vendor.user.email,
-            contactPhone: '+94 77 123 4567', // Placeholder - add phone field to schema later
-          }
+          ...listing.vendor,
+          contactEmail: listing.vendor.user.email,
+          contactPhone: '+94 77 123 4567', // Placeholder - add phone field to schema later
+        }
         : null,
     };
 
@@ -218,7 +238,7 @@ export class MarketplaceService {
     title: string;
     shortDescription: string;
     priceMin: number;
-    ratingAverage: number;
+    reviews: { rating: number }[];
     listingType: ListingType;
     category: { categoryName: string };
     location: { city: string; district: string };
@@ -227,13 +247,23 @@ export class MarketplaceService {
     const primaryMedia =
       listing.media.find((media) => media.isPrimary) ?? listing.media[0];
 
+    const rating =
+      listing.reviews.length > 0
+        ? Number(
+          (
+            listing.reviews.reduce((sum, r) => sum + r.rating, 0) /
+            listing.reviews.length
+          ).toFixed(1)
+        )
+        : 0;
+
     return {
       id: listing.id,
       title: listing.title,
       price: listing.priceMin,
       location: listing.location.city,
       district: listing.location.district,
-      rating: listing.ratingAverage,
+      rating: rating,
       imageUrl: primaryMedia?.mediaUrl ?? null,
       category: listing.category.categoryName,
       type:
@@ -300,9 +330,18 @@ export class MarketplaceService {
       }),
     ]);
 
+    const averageRating =
+      total > 0
+        ? Number(
+          (
+            reviews.reduce((sum, r) => sum + r.rating, 0) / total
+          ).toFixed(1)
+        )
+        : 0;
+
     return {
       total,
-      averageRating: listing?.ratingAverage || 0,
+      averageRating,
       reviews: reviews.map((review) => ({
         id: review.id,
         listingId: review.listingId,
@@ -310,6 +349,7 @@ export class MarketplaceService {
         userName: review.user.fullName,
         rating: review.rating,
         comment: review.comment,
+        reply: review.reply,
         media: review.media.map((m) => ({
           id: m.id,
           mediaType: m.mediaType,
@@ -326,6 +366,14 @@ export class MarketplaceService {
     createReviewDto: CreateReviewDto,
     userId: number,
   ): Promise<ReviewResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { localTourist: true }
+    });
+
+    if (!user?.localTourist) {
+      throw new Error("Only LocalTourists can create reviews");
+    }
     // Check if listing exists
     const listing = await this.prisma.listing.findUnique({
       where: { id: createReviewDto.listingId },
