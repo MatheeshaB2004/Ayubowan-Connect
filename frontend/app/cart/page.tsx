@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useCart } from '../../context/CartContext';
-import { useAuth } from '../../context/AuthContext';
+import { useUser } from '@clerk/nextjs';
 import { Trash2, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -11,10 +11,10 @@ import './Cart.css';
 
 export default function CartPage() {
     const { items, removeFromCart, cartCount } = useCart();
-    const { user } = useAuth();
+    const { isSignedIn } = useUser();
     const router = useRouter();
 
-    if (!user) {
+    if (!isSignedIn) {
         return (
             <div className="cart-login-container">
                 <h1 className="login-title">Please Log In</h1>

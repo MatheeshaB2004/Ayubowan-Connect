@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SignUp, useUser } from "@clerk/nextjs";
+import LocationPicker from "@/components/maps/LocationPicker";
 import "../vendor-register.css";
 
 export default function VendorRegisterPage() {
@@ -26,6 +27,8 @@ export default function VendorRegisterPage() {
   const [district, setDistrict] = useState("");
   const [province, setProvince] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
 
   // After Clerk sign up is complete, show vendor-specific form
   React.useEffect(() => {
@@ -56,7 +59,9 @@ export default function VendorRegisterPage() {
             city,
             district,
             province,
-            postalCode
+            postalCode,
+            latitude,
+            longitude
           }
         };
 
@@ -282,6 +287,25 @@ export default function VendorRegisterPage() {
                       </div>
                     </div>
 
+                    <div className="form-group mb-8">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Pinpoint Exact Location *</label>
+                      <LocationPicker
+                        onLocationSelect={(lat: number, lng: number) => {
+                          setLatitude(lat);
+                          setLongitude(lng);
+                        }}
+                      />
+                      {latitude && longitude ? (
+                        <p className="text-sm text-teal-600 mt-2 font-medium">
+                          ✓ Location selected: {latitude.toFixed(5)}, {longitude.toFixed(5)}
+                        </p>
+                      ) : (
+                        <p className="text-sm text-red-500 mt-2">
+                          Please select your location on the map.
+                        </p>
+                      )}
+                    </div>
+
                     <div className="form-actions flex flex-col-reverse md:flex-row justify-between gap-4">
                       <button
                         type="button"
@@ -294,7 +318,7 @@ export default function VendorRegisterPage() {
                       <button
                         type="submit"
                         className="bg-teal-600 text-white px-8 py-3 rounded-lg hover:bg-teal-700 font-medium transition-colors disabled:opacity-50 w-full md:w-auto"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || !latitude || !longitude}
                       >
                         {isSubmitting ? "Submitting..." : "Complete Vendor Setup"}
                       </button>
