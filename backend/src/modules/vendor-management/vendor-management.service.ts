@@ -115,7 +115,10 @@ export class VendorManagementService {
             ? JSON.parse(dto.tags)
             : dto.tags || [],
 
-        inclusions: dto.inclusions,
+        inclusions:
+          typeof dto.inclusions === "string"
+            ? JSON.parse(dto.inclusions)
+            : dto.inclusions,
         specs: dto.specs,
         isFeatured: dto.isFeatured || false,
         displayPriority: dto.displayPriority || 0,
@@ -262,7 +265,14 @@ export class VendorManagementService {
           }
           : {}),
 
-        ...(dto.inclusions !== undefined && { inclusions: dto.inclusions }),
+        ...(dto.inclusions !== undefined
+          ? {
+            inclusions:
+              typeof dto.inclusions === "string"
+                ? JSON.parse(dto.inclusions)
+                : dto.inclusions,
+          }
+          : {}),
         ...(dto.specs !== undefined && { specs: dto.specs }),
         ...(dto.isFeatured !== undefined && { isFeatured: dto.isFeatured }),
         ...(dto.displayPriority !== undefined && {
@@ -395,16 +405,16 @@ export class VendorManagementService {
   }
 
   async recordProfileView(vendorId: number, userId: number) {
-  try {
-    return await this.prisma.profileView.create({
-      data: {
-        vendorId,
-        userId,
-      },
-    });
-  } catch (error) {
-    // Unique constraint prevents duplicates
-    return null;
+    try {
+      return await this.prisma.profileView.create({
+        data: {
+          vendorId,
+          userId,
+        },
+      });
+    } catch (error) {
+      // Unique constraint prevents duplicates
+      return null;
+    }
   }
-}
 }

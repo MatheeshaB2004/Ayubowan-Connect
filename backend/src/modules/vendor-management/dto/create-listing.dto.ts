@@ -97,4 +97,5 @@ export class CreateListingDto {
   @IsNumber()
   @IsOptional()
   displayPriority?: number;
+  
 }

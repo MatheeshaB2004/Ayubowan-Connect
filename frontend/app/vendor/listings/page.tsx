@@ -37,6 +37,7 @@ export default function CreateListingsPage() {
     imageName: "",
     imagePreview: "",
     tags: [] as string[],
+    inclusions: [] as { title: string; description: string }[]
   });
 
   const [listings, setListings] = useState<any[]>([]);
@@ -108,6 +109,7 @@ export default function CreateListingsPage() {
     imageName: "",
     imagePreview: "",
     tags: [] as string[],
+    inclusions: [] as { title: string; description: string }[],
   };
 
   const wordCount =
@@ -288,6 +290,11 @@ export default function CreateListingsPage() {
                             </div>
                           )}
                           <h3 className="card-title">{listing.title}</h3>
+                          {listing.shortDescription && (
+                            <p className="card-description">
+                              {listing.shortDescription}
+                            </p>
+                          )}
                           {listing.capacity > 0 && (
                             <div className="card-capacity">
                               <i className="fa-solid fa-users"></i>
@@ -327,6 +334,7 @@ export default function CreateListingsPage() {
                                   imageName: existingImage,
                                   imagePreview: existingImage,
                                   tags: listing.tags || [],
+                                  inclusions: listing.inclusions ?? []
                                 });
                                 setSelectedAddressId(listing.addressId || null);
                                 setShowModal(true);
@@ -478,12 +486,77 @@ export default function CreateListingsPage() {
                     <input
                       type="number"
                       placeholder="e.g. 10"
+                      required
+                      min="1"
                       value={formData.capacity}
                       onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
                     />
                   </div>
                   <div className="form-group" style={{ marginTop: 16 }}>
                     <label>Tags (max 3, one word each)</label>
+                    <div className="form-group" style={{ marginTop: 20 }}>
+                      <label className="form-label">What's Included</label>
+
+                      <div className="inclusions-container">
+
+                        {formData.inclusions.map((item, index) => (
+                          <div key={index} className="inclusion-card">
+
+                            <div className="inclusion-icon">
+                              ✓
+                            </div>
+
+                            <div className="inclusion-inputs">
+                              <input
+                                placeholder="Title (e.g. Tea & refreshments)"
+                                value={item.title}
+                                onChange={(e) => {
+                                  const updated = [...formData.inclusions];
+                                  updated[index].title = e.target.value;
+                                  setFormData({ ...formData, inclusions: updated });
+                                }}
+                              />
+
+                              <input
+                                placeholder="Short description"
+                                value={item.description}
+                                onChange={(e) => {
+                                  const updated = [...formData.inclusions];
+                                  updated[index].description = e.target.value;
+                                  setFormData({ ...formData, inclusions: updated });
+                                }}
+                              />
+                            </div>
+
+                            <button
+                              className="remove-inclusion"
+                              type="button"
+                              onClick={() => {
+                                const updated = formData.inclusions.filter((_, i) => i !== index);
+                                setFormData({ ...formData, inclusions: updated });
+                              }}
+                            >
+                              ✕
+                            </button>
+
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          className="add-inclusion-button"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              inclusions: [...formData.inclusions, { title: "", description: "" }]
+                            })
+                          }
+                        >
+                          + Add inclusion
+                        </button>
+
+                      </div>
+                    </div>
                     <input
                       type="text"
                       placeholder="Add up to 3 tags (press Enter)"
@@ -566,7 +639,7 @@ export default function CreateListingsPage() {
                   className="btn-primary"
                   disabled={submitting}
                   onClick={async () => {
-                    if (!formData.title || !formData.categoryId || !formData.minPrice || !formData.maxPrice) {
+                    if (!formData.title || !formData.categoryId || !formData.minPrice || !formData.maxPrice || !formData.capacity) {
                       setFormError("Please fill all required fields");
                       return;
                     }
@@ -592,6 +665,10 @@ export default function CreateListingsPage() {
                       formDataToSend.append("priceMax", formData.maxPrice);
                       if (formData.capacity && formData.capacity.trim() !== "") formDataToSend.append("capacity", formData.capacity);
                       formDataToSend.append("tags", JSON.stringify(formData.tags));
+                      formDataToSend.append(
+                        "inclusions",
+                        JSON.stringify(formData.inclusions)
+                      );
                       if (fileInputRef.current?.files?.[0]) formDataToSend.append("image", fileInputRef.current.files[0]);
 
                       const url = editingListing

@@ -1603,6 +1603,79 @@ body {
   
 }
 
+/* INCLUDED SECTION */
+
+.inclusions-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inclusion-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.inclusion-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #d1fae5;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.inclusion-inputs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inclusion-inputs input {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  outline: none;
+}
+
+.remove-inclusion {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  color: #ef4444;
+}
+
+.add-inclusion-button {
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px dashed #0d9488;
+  background: #ecfdf5;
+  color: #0f766e;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.add-inclusion-button:hover {
+  background: #d1fae5;
+}
+.card-description {
+  font-size: 13px;
+  color: #64748b;
+  margin: 6px 0 10px;
+  line-height: 1.4;
+}
+
 .listings-page .offerings {
   max-width: 1200px;
   width: 100%;
