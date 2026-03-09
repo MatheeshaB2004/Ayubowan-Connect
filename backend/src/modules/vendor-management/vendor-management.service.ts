@@ -109,6 +109,7 @@ export class VendorManagementService {
         priceNote: dto.priceNote,
         duration: dto.duration,
         capacity: dto.capacity,
+        visibilityStatus: dto.visibilityStatus || "DRAFT", 
         availability: dto.availability,
         tags:
           typeof dto.tags === 'string'

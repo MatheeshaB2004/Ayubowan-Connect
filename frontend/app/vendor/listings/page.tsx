@@ -14,6 +14,7 @@ export default function CreateListingsPage() {
   const SHORT_DESC_MAX = 500;
   const [formError, setFormError] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const [isPublished, setIsPublished] = useState(true);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
@@ -43,6 +44,7 @@ export default function CreateListingsPage() {
   const [listings, setListings] = useState<any[]>([]);
   const vendorId = 2;
   const [locations, setLocations] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState<"PUBLISHED" | "DRAFT">("PUBLISHED");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -86,6 +88,7 @@ export default function CreateListingsPage() {
   };
 
   const [showAll, setShowAll] = useState(false);
+  const [listingFilter, setListingFilter] = useState<"EXPERIENCE" | "PRODUCT">("EXPERIENCE");
   const [categories, setCategories] = useState<any[]>([]);
 
   const sriLankaDistricts = [
@@ -117,6 +120,12 @@ export default function CreateListingsPage() {
       ? 0
       : formData.longDescription.trim().split(/\s+/).length;
 
+  const filteredListings = listings.filter(
+    (l) =>
+      l.listingType === listingFilter &&
+      l.visibilityStatus === statusFilter
+  );
+
   return (
     <main className="listings-page">
       <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -141,8 +150,19 @@ export default function CreateListingsPage() {
         </header>
         <div className="hero-tabs-wrapper">
           <div className="hero-tabs-card">
-            <button className="hero-tab active">Experiences</button>
-            <button className="hero-tab">Products</button>
+            <button
+              className={`hero-tab ${statusFilter === "PUBLISHED" ? "active" : ""}`}
+              onClick={() => setStatusFilter("PUBLISHED")}
+            >
+              Published
+            </button>
+
+            <button
+              className={`hero-tab ${statusFilter === "DRAFT" ? "active" : ""}`}
+              onClick={() => setStatusFilter("DRAFT")}
+            >
+              Draft
+            </button>
           </div>
         </div>
 
@@ -259,14 +279,54 @@ export default function CreateListingsPage() {
                       <button type="button" className="filter-btn">Filter</button>
                     </div>
                     <div className="status-toggle">
-                      <button className="status-btn active">Published</button>
-                      <button className="status-btn">Draft</button>
+                      <button
+                        className={`status-btn ${listingFilter === "EXPERIENCE" ? "active" : ""}`}
+                        onClick={() => setListingFilter("EXPERIENCE")}
+                      >
+                        Experiences
+                      </button>
+
+                      <button
+                        className={`status-btn ${listingFilter === "PRODUCT" ? "active" : ""}`}
+                        onClick={() => setListingFilter("PRODUCT")}
+                      >
+                        Products
+                      </button>
                     </div>
                   </div>
                 </div>
 
+                {listings.length > 0 && filteredListings.length === 0 && (
+                  <div className="empty-filter-state">
+                    <i className="fa-solid fa-box-open"></i>
+
+                    {listingFilter === "EXPERIENCE" ? (
+                      <>
+                        <h3>No experiences yet</h3>
+                        <p>Create your first experience to attract travelers.</p>
+                      </>
+                    ) : (
+                      <>
+                        <h3>No products yet</h3>
+                        <p>Add products to sell in the marketplace.</p>
+                      </>
+                    )}
+
+                    <button
+                      className="primary-button"
+                      onClick={() => {
+                        setEditingListing(null);
+                        setFormData(emptyForm);
+                        setShowModal(true);
+                      }}
+                    >
+                      Create Listing
+                    </button>
+                  </div>
+                )}
+
                 <div className="cards-grid" ref={listingsRef}>
-                  {(showAll ? listings : listings.slice(0, 2)).map((listing) => (
+                  {(showAll ? filteredListings : filteredListings.slice(0, 2)).map((listing) => (
                     <div className="listing-card-wrap" key={listing.id}>
                       <div className="modern-card">
                         <div className="card-image">
@@ -274,8 +334,8 @@ export default function CreateListingsPage() {
                             src={listing.media?.length > 0 ? listing.media[0].mediaUrl : "/vendor_management/card-1.jpeg"}
                             alt={listing.title}
                           />
-                          <span className={`status-badge ${listing.status === "DRAFT" ? "draft" : "active"}`}>
-                            {listing.status || "ACTIVE"}
+                          <span className={`status-badge ${listing.visibilityStatus === "DRAFT" ? "draft" : "active"}`}>
+                            {listing.visibilityStatus}
                           </span>
                           <span className="category-badge">
                             {listing.category?.categoryName || "Experience"}
@@ -321,6 +381,7 @@ export default function CreateListingsPage() {
                               onClick={() => {
                                 console.log("MEDIA:", listing.media);
                                 setEditingListing(listing);
+                                setIsPublished(listing.visibilityStatus === "PUBLISHED");
                                 const existingImage = listing.media?.length > 0 ? listing.media[0].mediaUrl : "";
                                 setFormData({
                                   title: listing.title || "",
@@ -406,6 +467,20 @@ export default function CreateListingsPage() {
 
                 <div className="form-card premium-card">
                   <div className="form-title">Basic Information</div>
+                  <div className="publish-switch-row">
+                    <label>Publish listing</label>
+
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={isPublished}
+                        onChange={(e) => setIsPublished(e.target.checked)}
+                      />
+                      <span className="slider"></span>
+                    </label>
+
+                    <span>{isPublished ? "Published" : "Draft"}</span>
+                  </div>
                   <div className="listing-type-toggle">
                     <div
                       className={`type-card ${formData.listingType === "EXPERIENCE" ? "active" : ""}`}
@@ -666,6 +741,10 @@ export default function CreateListingsPage() {
                       if (formData.capacity && formData.capacity.trim() !== "") formDataToSend.append("capacity", formData.capacity);
                       formDataToSend.append("tags", JSON.stringify(formData.tags));
                       formDataToSend.append(
+                        "visibilityStatus",
+                        isPublished ? "PUBLISHED" : "DRAFT"
+                      );
+                      formDataToSend.append(
                         "inclusions",
                         JSON.stringify(formData.inclusions)
                       );
@@ -698,6 +777,7 @@ export default function CreateListingsPage() {
                         );
                       }
                       setFormData(emptyForm);
+                      setIsPublished(true);
                       setEditingListing(null);
                       setShowModal(false);
                     } catch (error) {
@@ -715,6 +795,6 @@ export default function CreateListingsPage() {
           </div>
         )}
       </div>
-    </main>
+    </main >
   );
 }
