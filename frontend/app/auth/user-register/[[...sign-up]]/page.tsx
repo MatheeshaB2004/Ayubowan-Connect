@@ -75,144 +75,118 @@ export default function UserRegisterPage() {
   };
 
   return (
-    <div className="register-container">
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="hero-content">
-          <p className="welcome-text">Welcome</p>
-          <h1 className="main-heading">Join the community</h1>
-          <p className="hero-description">
-            Create your account to discover authentic experiences and support local artisans.
-          </p>
-          <div className="hero-buttons">
-            <Link href="/">
-              <button className="btn-secondary">Back to Home</button>
-            </Link>
-          </div>
+    <div className="flex-1 bg-gray-50 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
+        <div className="flex justify-center mb-6">
+          <img src="/logo.png" alt="Ayubowan Connect Logo" className="h-20 w-auto object-contain" />
         </div>
-      </section>
+        <h2 className="text-3xl font-extrabold text-gray-900">
+          Create your Traveler account
+        </h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Welcome! Please fill in the details to get started.
+        </p>
+      </div>
 
-      {/* Form Section */}
-      <section className="form-section">
-        <div className="form-container">
-          <div className="form-logo">Ayubowan Connect</div>
-          <div className="form-wrapper bg-white p-8 rounded-lg shadow-lg">
-            {!showDetailsForm ? (
-              <div className="clerk-form-wrapper">
-                <SignUp
-                  appearance={{
-                    elements: {
-                      rootBox: "mx-auto",
-                      card: "shadow-none p-0",
-                    },
-                  }}
-                  routing="path"
-                  path="/auth/user-register"
-                  signInUrl="/auth/login"
-                  afterSignUpUrl="/auth/user-register"
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {!showDetailsForm ? (
+            <div className="clerk-form-wrapper flex justify-center">
+              <SignUp
+                appearance={{
+                  elements: {
+                    rootBox: "w-full",
+                    card: "shadow-none p-0 w-full",
+                  },
+                }}
+                routing="path"
+                path="/auth/user-register"
+                signInUrl="/auth/login"
+                afterSignUpUrl="/auth/user-register"
+              />
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="details-form">
+              <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Complete Your Profile</h2>
+
+              <div className="form-group mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="fullName">Full Name</label>
+                <input
+                  type="text"
+                  id="fullName"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
                 />
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="details-form">
-                <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Complete Your Profile</h2>
-                
-                <div className="form-group mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="fullName">Full Name</label>
-                  <input
-                    type="text"
-                    id="fullName"
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                </div>
 
-                <div className="form-group mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="userType">I am a</label>
-                  <select
-                    id="userType"
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
-                    value={userType}
-                    onChange={(e) => setUserType(e.target.value)}
-                    required
-                  >
-                    <option value="TOURIST">Tourist / Guest</option>
-                    <option value="LOCAL">Local Resident</option>
-                  </select>
-                </div>
+              <div className="form-group mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="userType">I am a</label>
+                <select
+                  id="userType"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
+                  value={userType}
+                  onChange={(e) => setUserType(e.target.value)}
+                  required
+                >
+                  <option value="TOURIST">Tourist / Guest</option>
+                  <option value="LOCAL">Local Resident</option>
+                </select>
+              </div>
 
-                <div className="form-group mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="nationality">Nationality</label>
-                  <input
-                    type="text"
-                    id="nationality"
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
-                    value={nationality}
-                    onChange={(e) => setNationality(e.target.value)}
-                    placeholder="e.g. American, British, Sri Lankan"
-                    required
-                  />
-                </div>
+              <div className="form-group mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="nationality">Nationality</label>
+                <input
+                  type="text"
+                  id="nationality"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
+                  value={nationality}
+                  onChange={(e) => setNationality(e.target.value)}
+                  placeholder="e.g. American, British, Sri Lankan"
+                  required
+                />
+              </div>
 
-                <div className="form-group mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="dateOfBirth">Date of Birth</label>
-                  <input
-                    type="date"
-                    id="dateOfBirth"
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                  />
-                </div>
+              <div className="form-group mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="dateOfBirth">Date of Birth</label>
+                <input
+                  type="date"
+                  id="dateOfBirth"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                />
+              </div>
 
-                <div className="form-group mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="preferredLanguage">Preferred Language</label>
-                  <select
-                    id="preferredLanguage"
-                    className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
-                    value={preferredLanguage}
-                    onChange={(e) => setPreferredLanguage(e.target.value)}
-                  >
-                    <option value="English">English</option>
-                    <option value="Sinhala">Sinhala</option>
-                    <option value="Tamil">Tamil</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+              <div className="form-group mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="preferredLanguage">Preferred Language</label>
+                <select
+                  id="preferredLanguage"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-teal-500 focus:border-teal-500"
+                  value={preferredLanguage}
+                  onChange={(e) => setPreferredLanguage(e.target.value)}
+                >
+                  <option value="English">English</option>
+                  <option value="Sinhala">Sinhala</option>
+                  <option value="Tamil">Tamil</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
 
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-teal-600 text-white py-3 px-4 rounded hover:bg-teal-700 transition-colors disabled:opacity-50 font-medium"
-                  >
-                    {isSubmitting ? "Saving..." : "Complete Setup"}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
+              <div className="flex justify-end gap-3 mt-4">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-teal-600 text-white py-3 px-4 rounded hover:bg-teal-700 transition-colors disabled:opacity-50 font-medium"
+                >
+                  {isSubmitting ? "Saving..." : "Complete Setup"}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
-      </section>
-
-      {/* Ready to Begin Section */}
-      <section className="ready-section">
-        <div className="ready-content">
-          <h2 className="ready-title">Ready to begin</h2>
-          <p className="ready-description">
-            Explore Sri Lankan culture as a guest or sign in if you already have an account with us.
-          </p>
-          <div className="ready-buttons">
-            <Link href="/auth/login">
-              <button className="btn-login">Login</button>
-            </Link>
-            <Link href="/">
-              <button className="btn-home">Home</button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      </div>
     </div>
   );
 }

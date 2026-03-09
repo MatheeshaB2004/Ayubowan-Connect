@@ -99,32 +99,28 @@ export default function VendorRegisterPage() {
   };
 
   return (
-    <div className="vendor-register-container bg-gray-50 min-h-screen">
-      {/* Hero Section */}
-      <section className="vendor-hero bg-teal-800 text-white py-16 px-4 text-center">
-        <h1 className="text-4xl font-bold mb-4">Become a vendor</h1>
-        <p className="hero-subtitle text-teal-100 mb-8 max-w-2xl mx-auto">
-          Join our marketplace and share your expertise to visitors.
-          <br />
-          Join now and grow your business with us.
-        </p>
-        <div className="hero-buttons">
-          <Link href="/">
-            <button className="bg-white text-teal-800 px-6 py-2 rounded-lg font-medium hover:bg-teal-50 transition-colors">Back to Home</button>
-          </Link>
+    <div className="flex-1 bg-gray-50 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
+        <div className="flex justify-center mb-6">
+          <img src="/logo.png" alt="Ayubowan Connect Logo" className="h-20 w-auto object-contain" />
         </div>
-      </section>
+        <h2 className="text-3xl font-extrabold text-gray-900">
+          Create your Vendor account
+        </h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Welcome! Please fill in the details to get started.
+        </p>
+      </div>
 
-      {/* Registration Form Section */}
-      <section className="form-section py-12 px-4">
-        <div className="form-wrapper bg-white shadow-xl rounded-xl p-6 md:p-10 max-w-3xl mx-auto">
+      <div className="sm:mx-auto sm:w-full sm:max-w-3xl">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {!showVendorForm ? (
-            <div className="clerk-form-wrapper">
+            <div className="clerk-form-wrapper flex justify-center">
               <SignUp
                 appearance={{
                   elements: {
-                    rootBox: "mx-auto",
-                    card: "shadow-none p-0",
+                    rootBox: "w-full",
+                    card: "shadow-none p-0 w-full max-w-md mx-auto",
                   },
                 }}
                 routing="path"
@@ -309,7 +305,7 @@ export default function VendorRegisterPage() {
             </>
           )}
         </div>
-      </section>
+      </div>
     </div>
   );
 }
