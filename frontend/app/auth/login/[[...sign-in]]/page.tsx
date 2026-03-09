@@ -21,7 +21,9 @@ export default function LoginPage() {
       {/* Login Form Section */}
       <section className="form-section">
         <div className="form-container">
-          <div className="form-logo">Logo</div>
+          <div className="form-logo flex justify-center">
+            <img src="/logo.png" alt="Ayubowan Connect Logo" className="h-24 w-auto object-contain" />
+          </div>
 
           <div className="clerk-form-wrapper">
             <SignIn
