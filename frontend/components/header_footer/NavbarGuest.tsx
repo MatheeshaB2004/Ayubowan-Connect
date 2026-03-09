@@ -36,15 +36,15 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '', isSigned
         <Link href="/marketplace" className={`nav-link ${textColorClass}`}>Marketplace</Link>
         <Link href="/pro" className={`nav-link ${textColorClass}`}>Pro</Link>
         <Link href="/landing#team" onClick={(e) => handleScroll(e, 'team')} className={`nav-link ${textColorClass}`}>Team</Link>
-        
+
         <div className="relative group">
           <button className={`nav-link more-dropdown-btn ${textColorClass}`} suppressHydrationWarning>
-            more 
+            more
             <svg className="w-3 h-3 ml-1 transition-transform duration-200 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
             </svg>
           </button>
-          
+
           {/* Dropdown Menu */}
           <div className="dropdown-menu">
             <Link href="/landing#testimonials" onClick={(e) => handleScroll(e, 'testimonials')} className="dropdown-item w-full text-left block">Testimonials</Link>

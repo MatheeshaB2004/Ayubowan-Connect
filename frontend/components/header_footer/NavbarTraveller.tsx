@@ -1,16 +1,18 @@
 import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '../../context/AuthContext';
+import { useUser, UserButton } from '@clerk/nextjs';
 import { useCart } from '../../context/CartContext';
-import { ShoppingBag, User, LogOut } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 interface NavbarTravellerProps {
   textColorClass?: string;
 }
 
 const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }) => {
-  const { logout, user } = useAuth();
+  const { user } = useUser();
   const { cartCount } = useCart();
+
+  const displayName = user?.fullName || user?.firstName || 'Traveller';
 
   const hoverColorClass = textColorClass.includes('white') ? 'hover:text-emerald-400' : 'hover:text-lochinvar';
 
@@ -46,27 +48,12 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
         )}
       </Link>
 
-      {/* Profile & Logout */}
-      <div className="flex items-center gap-3 group relative cursor-pointer">
-        <div className={`flex items-center gap-2 ${textColorClass}`}>
-          <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold border border-teal-200">
-            {user?.name?.[0]?.toUpperCase() || <User size={16} />}
-          </div>
-          <span className="text-sm font-medium hidden lg:block max-w-[100px] truncate">{user?.name}</span>
-        </div>
-
-        {/* Dropdown for logout */}
-        <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-          <div className="p-2">
-            <button
-              onClick={logout}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2"
-            >
-              <LogOut size={14} />
-              Logout
-            </button>
-          </div>
-        </div>
+      {/* Profile: Clerk UserButton (has profile dashboard + sign out built in) */}
+      <div className="flex items-center gap-2">
+        <UserButton afterSignOutUrl="/" />
+        <span className={`text-sm font-medium hidden lg:block max-w-[100px] truncate ${textColorClass}`}>
+          {displayName}
+        </span>
       </div>
     </div>
   );

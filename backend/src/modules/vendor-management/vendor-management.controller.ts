@@ -7,6 +7,7 @@ import {
   Body,
   Req,
   Param,
+  Query,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
@@ -23,6 +24,34 @@ import { UpdateListingDto } from './dto/update-listing.dto';
 @Controller('vendor')
 export class VendorManagementController {
   constructor(private readonly vendorService: VendorManagementService) { }
+
+  /**
+   * Get vendor profile by Clerk userId
+   * GET /vendor/profile?userId=<clerkId>
+   */
+  @Get('profile')
+  async getVendorProfile(@Query('userId') userId: string) {
+    return this.vendorService.getVendorProfileByUserId(userId);
+  }
+
+  /**
+   * Update vendor profile by Clerk userId
+   * PUT /vendor/profile
+   */
+  @Put('profile')
+  async updateVendorProfile(@Body() body: any) {
+    return this.vendorService.updateVendorProfileByUserId(body);
+  }
+
+  /**
+   * Register a new vendor from Clerk signup flow
+   * POST /vendor/register
+   */
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  async registerVendor(@Body() body: any) {
+    return this.vendorService.registerVendorFromClerk(body);
+  }
 
   /**
    * Get all active categories (fixed list)
