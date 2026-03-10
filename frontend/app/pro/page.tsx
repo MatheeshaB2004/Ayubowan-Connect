@@ -5,14 +5,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import './Pro.css';
-import { 
-  ArrowRight, 
-  Globe, 
-  Map, 
-  BarChart3, 
-  Languages, 
-  Eye, 
-  Check, 
+
+import {
+  ArrowRight,
+  Globe,
+  Map,
+  BarChart3,
+  Eye,
+  Check,
   Image as ImageIcon,
   Box,
   Zap,
@@ -53,9 +53,9 @@ export default function ProPage() {
           {/* Traveler Card */}
           <div className="pro-card group">
             <div className="pro-card-image-container">
-              <Image 
-                src="/assets/pro/userpropic.png" 
-                alt="User Pro for travelers" 
+              <Image
+                src="/assets/pro/userpropic.png"
+                alt="User Pro for travelers"
                 fill
                 className="object-cover"
               />
@@ -63,8 +63,8 @@ export default function ProPage() {
             <div className="pro-card-content">
               <span className="pro-card-tag">Explorers</span>
               <h3 className="pro-card-title">User Pro for travelers</h3>
-              <p className="pro-card-desc">Plan trips with AI and translate on the go</p>
-              <button className="pro-card-btn" onClick={scrollToPricing}>
+              <p className="pro-card-desc">Plan trips with AI</p>
+              <button className="pro-card-btn" onClick={scrollToPricing} suppressHydrationWarning>
                 Choose <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
@@ -73,9 +73,9 @@ export default function ProPage() {
           {/* Vendor Card */}
           <div className="pro-card group">
             <div className="pro-card-image-container">
-              <Image 
-                src="/assets/pro/vendorpropic.png" 
-                alt="Vendor Pro for businesses" 
+              <Image
+                src="/assets/pro/vendorpropic.png"
+                alt="Vendor Pro for businesses"
                 fill
                 className="object-cover"
               />
@@ -84,7 +84,7 @@ export default function ProPage() {
               <span className="pro-card-tag">Creators</span>
               <h3 className="pro-card-title">Vendor Pro for businesses</h3>
               <p className="pro-card-desc">Track performance and reach more visitors</p>
-              <button className="pro-card-btn" onClick={scrollToPricing}>
+              <button className="pro-card-btn" onClick={scrollToPricing} suppressHydrationWarning>
                 Choose <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
@@ -100,22 +100,12 @@ export default function ProPage() {
             <h2 className="pro-feature-title">
               Travel smarter with User Pro
             </h2>
-            <button className="pro-feature-btn">
+            <button className="pro-feature-btn" suppressHydrationWarning>
               Upgrade <ArrowRight size={16} className="ml-2" />
             </button>
           </div>
-          
-          <div className="pro-feature-list-col">
-            <div className="pro-feature-item">
-              <div className="pro-feature-icon">
-                <Languages size={24} />
-              </div>
-              <div>
-                <h3 className="pro-feature-item-title">Translate with locals</h3>
-                <p className="pro-feature-item-desc">Speak Sinhala, Tamil or English instantly while exploring.</p>
-              </div>
-            </div>
 
+          <div className="pro-feature-list-col">
             <div className="pro-feature-item">
               <div className="pro-feature-icon">
                 <Zap size={24} />
@@ -147,11 +137,11 @@ export default function ProPage() {
             <h2 className="pro-feature-title">
               Build your business stronger
             </h2>
-            <button className="pro-feature-btn">
+            <button className="pro-feature-btn" suppressHydrationWarning>
               Upgrade <ArrowRight size={16} className="ml-2" />
             </button>
           </div>
-          
+
           <div className="pro-feature-list-col">
             <div className="pro-feature-item">
               <div className="pro-feature-icon">
@@ -160,16 +150,6 @@ export default function ProPage() {
               <div>
                 <h3 className="pro-feature-item-title">Analytics dashboard for your listings</h3>
                 <p className="pro-feature-item-desc">Watch views, inquiries and bookings in real time</p>
-              </div>
-            </div>
-
-            <div className="pro-feature-item">
-              <div className="pro-feature-icon">
-                <Languages size={24} />
-              </div>
-              <div>
-                <h3 className="pro-feature-item-title">Reach guests across three languages</h3>
-                <p className="pro-feature-item-desc">Translate listings into Sinhala, Tamil or English instantly</p>
               </div>
             </div>
 
@@ -192,17 +172,19 @@ export default function ProPage() {
           <span className="pro-section-tag">Pricing</span>
           <h2 className="pro-section-title">Choose your plan</h2>
           <p className="pro-section-desc mb-8">Pick monthly or yearly billing and start exploring today</p>
-          
+
           <div className="pro-pricing-toggle-container">
-            <button 
+            <button
               className={`pro-pricing-toggle-btn ${billingCycle === 'monthly' ? 'pro-pricing-toggle-btn-active' : 'pro-pricing-toggle-btn-inactive'}`}
               onClick={() => setBillingCycle('monthly')}
+              suppressHydrationWarning
             >
               Monthly
             </button>
-            <button 
+            <button
               className={`pro-pricing-toggle-btn ${billingCycle === 'yearly' ? 'pro-pricing-toggle-btn-active' : 'pro-pricing-toggle-btn-inactive'}`}
               onClick={() => setBillingCycle('yearly')}
+              suppressHydrationWarning
             >
               Yearly
             </button>
@@ -216,13 +198,13 @@ export default function ProPage() {
               <h3 className="pro-pricing-card-title">User Pro</h3>
               <p className="pro-pricing-card-subtitle">For travelers</p>
             </div>
-            
+
             <div className="pro-pricing-price-container">
               <span className="pro-pricing-price">LKR {billingCycle === 'monthly' ? '900' : '9000'}</span>
               <span className="pro-pricing-period">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
             </div>
 
-            <button className="pro-pricing-cta-btn">
+            <button className="pro-pricing-cta-btn" suppressHydrationWarning>
               Upgrade now
             </button>
 
@@ -231,10 +213,7 @@ export default function ProPage() {
                 <Check size={18} className="pro-pricing-check-icon" />
                 <span>AI itinerary planner</span>
               </li>
-              <li className="pro-pricing-feature-item">
-                <Check size={18} className="pro-pricing-check-icon" />
-                <span>Dual language translator</span>
-              </li>
+
             </ul>
           </div>
 
@@ -244,13 +223,13 @@ export default function ProPage() {
               <h3 className="pro-pricing-card-title">Vendor Pro</h3>
               <p className="pro-pricing-card-subtitle">For businesses</p>
             </div>
-            
+
             <div className="pro-pricing-price-container">
               <span className="pro-pricing-price">LKR {billingCycle === 'monthly' ? '2500' : '25000'}</span>
               <span className="pro-pricing-period">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
             </div>
 
-            <button className="pro-pricing-cta-btn">
+            <button className="pro-pricing-cta-btn" suppressHydrationWarning>
               Upgrade now
             </button>
 
@@ -259,10 +238,7 @@ export default function ProPage() {
                 <Check size={18} className="pro-pricing-check-icon" />
                 <span>Vendor analytics dashboard</span>
               </li>
-              <li className="pro-pricing-feature-item">
-                <Check size={18} className="pro-pricing-check-icon" />
-                <span>Dual language translator</span>
-              </li>
+
               <li className="pro-pricing-feature-item">
                 <Check size={18} className="pro-pricing-check-icon" />
                 <span>Priority listing placement</span>

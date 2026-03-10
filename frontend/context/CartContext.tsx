@@ -1,19 +1,7 @@
 'use client';
 
-import React, {
-    createContext,
-    useContext,
-    useState,
-    useEffect,
-    ReactNode,
-} from 'react';
-import { useAuth } from './AuthContext';
-
-/* =======================
-   Constants
-======================= */
-
-const DEMO_USER_ID = 12;
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useUser } from '@clerk/nextjs';
 
 /* =======================
    Types
@@ -65,13 +53,9 @@ const API_BASE =
    Provider
 ======================= */
 
-export const CartProvider: React.FC<{ children: ReactNode }> = ({
-    children,
-}) => {
-    const { user } = useAuth();
-
-    // 🔐 Demo fallback user
-    const activeUser = user ?? { id: DEMO_USER_ID };
+export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const { isSignedIn, user } = useUser();
+    const userId = user?.id ?? null;
 
     const [items, setItems] = useState<CartItem[]>([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -81,41 +65,50 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     ======================= */
 
     const fetchCart = async () => {
+        if (!isSignedIn || !userId) {
+            setItems([]);
+            return;
+        }
+
         try {
             const response = await fetch(`${API_BASE}/cart`, {
                 headers: {
-                    "x-user-id": "1",
+                    'x-user-id': userId,
                 },
             });
 
             if (!response.ok) {
-                console.error("Failed to fetch cart");
+                console.error('Failed to fetch cart');
                 return;
             }
 
             const data = await response.json();
             setItems(data.items || []);
         } catch (error) {
-            console.error("Fetch cart error:", error);
+            console.error('Fetch cart error:', error);
         }
     };
 
     useEffect(() => {
         fetchCart();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [isSignedIn, userId]);
 
     /* =======================
-       Actions
+       Add to Cart
     ======================= */
 
     const addToCart = async (listingId: number, quantity = 1) => {
+        if (!isSignedIn || !userId) {
+            alert('Please log in to add items to cart');
+            return;
+        }
+
         try {
             const response = await fetch(`${API_BASE}/cart`, {
-                method: "POST",
+                method: 'POST',
                 headers: {
-                    "Content-Type": "application/json",
-                    "x-user-id": "1", // demo user
+                    'Content-Type': 'application/json',
+                    'x-user-id': userId,
                 },
                 body: JSON.stringify({
                     listingId,
@@ -125,25 +118,29 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
 
             if (!response.ok) {
                 const text = await response.text();
-                console.error("Add to cart failed:", response.status, text);
+                console.error('Add to cart failed:', response.status, text);
                 return;
             }
 
-            // IMPORTANT
-            await fetchCart();   // refresh cart items
-
-            alert("Added to cart!");
+            await fetchCart();
+            alert('Added to cart!');
         } catch (error) {
-            console.error("Cart error:", error);
+            console.error('Cart error:', error);
         }
     };
 
+    /* =======================
+       Remove
+    ======================= */
+
     const removeFromCart = async (itemId: number) => {
+        if (!isSignedIn || !userId) return;
+
         try {
             await fetch(`${API_BASE}/cart/${itemId}`, {
                 method: 'DELETE',
                 headers: {
-                    'x-user-id': String(activeUser.id),
+                    'x-user-id': userId,
                 },
             });
 
@@ -153,12 +150,18 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
         }
     };
 
+    /* =======================
+       Clear
+    ======================= */
+
     const clearCart = async () => {
+        if (!isSignedIn || !userId) return;
+
         try {
             await fetch(`${API_BASE}/cart`, {
                 method: 'DELETE',
                 headers: {
-                    'x-user-id': String(activeUser.id),
+                    'x-user-id': userId,
                 },
             });
 
@@ -172,10 +175,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
        Derived values
     ======================= */
 
-    const cartCount = items.reduce(
-        (sum, item) => sum + item.quantity,
-        0
-    );
+    const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     const totalAmount = items.reduce(
         (sum, item) => sum + item.quantity * item.listing.priceMin,
@@ -183,10 +183,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
     );
 
     const toggleCart = () => setIsOpen((prev) => !prev);
-
-    /* =======================
-       Provider
-    ======================= */
 
     return (
         <CartContext.Provider

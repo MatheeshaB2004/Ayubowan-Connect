@@ -25,6 +25,7 @@ import {
 import { useParams } from 'next/navigation';
 import './ExperienceDetail.css';
 import ReviewSection from '../../review';
+import VendorLocationMap from '@/components/maps/VendorLocationMap';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import toast from "react-hot-toast";
@@ -224,19 +225,11 @@ export default function ExperienceDetailPage() {
     : listing.category?.categoryName
       ? [listing.category.categoryName]
       : [];
-  const subtitle = listing.shortDescription ?? '';
   const description = listing.longDescription ?? listing.shortDescription ?? '';
   const locationLabel = listing.location
     ? `${listing.location.city}, ${listing.location.district}, ${listing.location.province}`
     : 'Sri Lanka';
   const inclusions = normalizeInclusions(listing.inclusions);
-  const ratingRounded = Math.round(listing.ratingAverage || 0);
-  const statItems = [
-    { label: 'Reviews', value: listing.ratingCount },
-    { label: 'Average rating', value: listing.ratingAverage.toFixed(1) },
-    { label: 'Category', value: listing.category?.categoryName ?? '—' },
-    { label: 'Type', value: 'Experience' },
-  ];
 
   return (
     <div className="detail-page-container">
@@ -422,7 +415,7 @@ export default function ExperienceDetailPage() {
 
           {/* What's Included */}
           <section className="included-section">
-            <h2 className="section-title">What's Included</h2>
+            <h2 className="section-title">What&apos;s Included</h2>
             <div className="included-grid">
               {inclusions.length > 0 ? (
                 inclusions.map((item, idx) => (
@@ -559,58 +552,11 @@ export default function ExperienceDetailPage() {
             <h2 className="section-title">Location</h2>
             <div className="map-container" style={{ width: '100%', height: '450px', position: 'relative' }}>
               {listing.location?.latitude && listing.location?.longitude ? (
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${listing.location.latitude},${listing.location.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'block',
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <iframe
-                    width="100%"
-                    height="100%"
-                    style={{
-                      border: 0,
-                      display: 'block',
-                      pointerEvents: 'none',
-                    }}
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src={`https://maps.google.com/maps?q=${listing.location.latitude},${listing.location.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      backgroundColor: 'rgba(13, 148, 136, 0.95)',
-                      color: 'white',
-                      padding: '1rem 2rem',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      fontWeight: '600',
-                      fontSize: '1.1rem',
-                      opacity: 0,
-                      transition: 'opacity 0.3s',
-                      pointerEvents: 'none',
-                    }}
-                    className="map-click-hint"
-                  >
-                    <MapPin size={20} />
-                    Click to open in Google Maps
-                  </div>
-                </a>
+                <VendorLocationMap
+                  latitude={listing.location.latitude}
+                  longitude={listing.location.longitude}
+                  businessName={listing.vendor?.businessName || 'Vendor Location'}
+                />
               ) : (
                 <div style={{
                   width: '100%',
@@ -645,11 +591,13 @@ export default function ExperienceDetailPage() {
 
             <div className="booking-form">
               <div className="form-field">
-                <label className="field-label">
+                <label className="field-label" htmlFor="booking-date">
                   <Calendar size={16} />
                   Date
                 </label>
                 <input
+                  id="booking-date"
+                  title="Booking Date"
                   type="date"
                   className="field-input"
                   value={bookingForm.date}
@@ -658,8 +606,10 @@ export default function ExperienceDetailPage() {
               </div>
 
               <div className="form-field">
-                <label className="field-label">Time slot</label>
+                <label className="field-label" htmlFor="time-slot">Time slot</label>
                 <select
+                  id="time-slot"
+                  title="Time slot"
                   className="field-input"
                   defaultValue=""
                 >
@@ -671,8 +621,10 @@ export default function ExperienceDetailPage() {
 
               <div className="guests-selector">
                 <div className="guest-field">
-                  <label className="field-label">Adults</label>
+                  <label className="field-label" htmlFor="adult-guests">Adults</label>
                   <select
+                    id="adult-guests"
+                    title="Adult guests"
                     className="field-input"
                     value={bookingForm.guests}
                     onChange={(e) => setBookingForm({ ...bookingForm, guests: parseInt(e.target.value) })}
@@ -684,8 +636,8 @@ export default function ExperienceDetailPage() {
                 </div>
 
                 <div className="guest-field">
-                  <label className="field-label">Children</label>
-                  <select className="field-input" defaultValue="0">
+                  <label className="field-label" htmlFor="child-guests">Children</label>
+                  <select id="child-guests" title="Child guests" className="field-input" defaultValue="0">
                     {[0, 1, 2, 3, 4].map(num => (
                       <option key={num} value={num}>{num}</option>
                     ))}
@@ -713,7 +665,12 @@ export default function ExperienceDetailPage() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Reserve your experience</h3>
-              <button className="modal-close-btn" onClick={() => setIsBookingModalOpen(false)}>
+              <button 
+                className="modal-close-btn" 
+                onClick={() => setIsBookingModalOpen(false)}
+                title="Close modal"
+                aria-label="Close modal"
+              >
                 <X size={24} />
               </button>
             </div>
@@ -743,8 +700,11 @@ export default function ExperienceDetailPage() {
               ) : (
                 <form onSubmit={handleBookingSubmit}>
                   <div className="form-group">
-                    <label className="form-label">Full Name</label>
+                    <label className="form-label" htmlFor="booking-name">Full Name</label>
                     <input
+                      id="booking-name"
+                      title="Full Name"
+                      placeholder="Full Name"
                       type="text"
                       required
                       className="form-input"
@@ -754,8 +714,11 @@ export default function ExperienceDetailPage() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Email</label>
+                    <label className="form-label" htmlFor="booking-email">Email</label>
                     <input
+                      id="booking-email"
+                      title="Email"
+                      placeholder="Email"
                       type="email"
                       required
                       className="form-input"
@@ -765,8 +728,11 @@ export default function ExperienceDetailPage() {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Special Requests</label>
+                    <label className="form-label" htmlFor="booking-notes">Special Requests</label>
                     <textarea
+                      id="booking-notes"
+                      title="Special Requests"
+                      placeholder="Special Requests"
                       className="form-input"
                       rows={3}
                       value={bookingForm.notes}

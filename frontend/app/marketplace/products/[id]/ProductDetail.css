@@ -7,6 +7,7 @@
 /* Top Navigation */
 .top-navigation {
   background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(229, 231, 235, 0.8);
   padding: 1rem 0;
@@ -207,6 +208,7 @@
   width: 4rem;
   height: 4rem;
   background-color: rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-radius: 9999px;
   display: flex;
@@ -727,6 +729,7 @@
   font-size: 14px;
   font-weight: 700;
   transition: all 0.2s;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 

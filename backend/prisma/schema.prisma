@@ -49,6 +49,7 @@ model LocalTourist {
 model Vendor {
   id                    Int                  @id @default(autoincrement()) @map("vendor_id")
   userId                Int                  @unique @map("user_id")
+  clerkUserId           String?              @unique @map("clerk_user_id")
   businessName          String               @map("business_name")
   shortTagline          String?              @map("short_tagline")
   contactPhone          String?              @map("contact_phone")
