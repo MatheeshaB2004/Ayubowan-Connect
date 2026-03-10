@@ -103,6 +103,7 @@ export default function ChatWidget() {
                         </div>
                     </div>
                     <button
+                        suppressHydrationWarning
                         onClick={() => setIsOpen(false)}
                         className="chat-close-btn"
                         title="Close chat"
@@ -138,6 +139,7 @@ export default function ChatWidget() {
                 <div className="chat-input-area">
                     <div className="chat-input-row">
                         <input
+                            suppressHydrationWarning
                             type="text"
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
@@ -147,6 +149,7 @@ export default function ChatWidget() {
                             className="chat-input"
                         />
                         <button
+                            suppressHydrationWarning
                             onClick={sendMessage}
                             disabled={isLoading || !inputText.trim()}
                             className="chat-send-btn"
@@ -161,6 +164,7 @@ export default function ChatWidget() {
 
             {/* Floating Button */}
             <button
+                suppressHydrationWarning
                 onClick={() => setIsOpen(!isOpen)}
                 className="chat-toggle-btn"
                 aria-label="Toggle chat"
