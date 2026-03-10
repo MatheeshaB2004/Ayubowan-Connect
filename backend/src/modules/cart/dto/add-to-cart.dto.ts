@@ -1,12 +1,17 @@
-import { IsNotEmpty, IsNumber, Min } from 'class-validator';
+import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class AddToCartDto {
-  @IsNotEmpty()
-  @IsNumber()
-  listingId: number;
 
-  @IsNotEmpty()
-  @IsNumber()
+  @IsOptional()
+  @IsInt()
+  listingId?: number;
+
+  @IsOptional()
+  @IsInt()
+  bookingId?: number;
+
+  @IsInt()
   @Min(1)
   quantity: number;
+
 }
