@@ -12,73 +12,64 @@ interface AllEventsSectionProps {
   isGuest: boolean;
 }
 
-export function AllEventsSection({
-  events,
-  totalCount,
-  isGuest,
-}: AllEventsSectionProps) {
+export function AllEventsSection({ events, totalCount, isGuest }: AllEventsSectionProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const eventRefs = useRef<Record<number, HTMLDivElement | null>>({});
-  const [currentMonth, setCurrentMonth] = useState(() =>
+  const barRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const [currentMonth, setCurrentMonth] = useState(
     events.length > 0 ? getMonthYear(events[0].startDate) : ""
   );
 
   useEffect(() => {
-    const container = scrollRef.current;
-    if (!container || events.length === 0) return;
-
-    const handleScroll = () => {
-      const containerTop = container.getBoundingClientRect().top;
-      const threshold = containerTop + 80;
-
+    const el = scrollRef.current;
+    if (!el || events.length === 0) return;
+    const onScroll = () => {
+      const top = el.getBoundingClientRect().top + 60;
       let best: Event | null = null;
       let bestDist = Infinity;
-
       events.forEach((ev) => {
-        const el = eventRefs.current[ev.id];
-        if (!el) return;
-        const dist = Math.abs(el.getBoundingClientRect().top - threshold);
-        if (dist < bestDist) { bestDist = dist; best = ev; }
+        const ref = barRefs.current[ev.id];
+        if (!ref) return;
+        const d = Math.abs(ref.getBoundingClientRect().top - top);
+        if (d < bestDist) { bestDist = d; best = ev; }
       });
-
       if (best) setCurrentMonth(getMonthYear((best as Event).startDate));
     };
-
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
   }, [events]);
 
   return (
-    <section className="mb-12">
-      {/* Section header */}
+    <section className="mb-10">
+
+      {/* Section title */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-gray-900">All Events</h2>
+        <h2 className="text-xl font-bold text-gray-900">All Events</h2>
         <span className="text-sm text-gray-500">{totalCount} events found</span>
       </div>
 
-      {/* Sticky month indicator */}
-      <div className="sticky top-[65px] z-30 bg-gray-50 py-2.5 border-b-2 border-[#379683] mb-4">
-        <span className="text-[17px] font-semibold text-[#379683]">
-          {currentMonth}
-        </span>
+      {/* Sticky month label */}
+      <div className="sticky top-[64px] z-20 bg-[#f9fafb] pb-2 mb-1">
+        <div className="border-b-2 border-[#0d9488] pb-1">
+          <span className="text-base font-semibold text-[#0d9488]">{currentMonth}</span>
+        </div>
       </div>
 
-      {/* Guest notice */}
+      {/* Guest nudge */}
       {isGuest && (
-        <div className="flex items-center gap-3 bg-[#379683]/5 border border-[#379683]/20 rounded-xl px-4 py-3 mb-4 text-sm text-[#2d7a6a]">
+        <div className="flex items-center gap-3 bg-[#e8f5f2] border border-[#0d9488]/20 rounded-xl px-4 py-3 mb-4 text-sm text-gray-700">
           <span className="text-lg">🌿</span>
           <span>
-            <strong>Sign in</strong> to register for events and view full details.{" "}
-            <a href="/auth/login" className="underline font-semibold hover:text-[#379683]">
-              Log in here
+            <strong className="text-[#0d9488]">Sign in</strong> to register for events and view full details.{" "}
+            <a href="/auth/login" className="text-[#0d9488] underline font-semibold hover:text-[#0b7a70]">
+              Log in here →
             </a>
           </span>
         </div>
       )}
 
-      {/* List */}
+      {/* Event list */}
       {events.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400 bg-white rounded-xl border border-gray-100">
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-200 text-gray-400">
           <Calendar className="w-12 h-12 mb-3 text-gray-200" />
           <p className="font-medium text-gray-500">No events found</p>
           <p className="text-sm mt-1">Try adjusting your filters</p>
@@ -86,15 +77,15 @@ export function AllEventsSection({
       ) : (
         <div
           ref={scrollRef}
-          className="h-[580px] overflow-y-auto pr-1"
+          className="h-[560px] overflow-y-auto pr-1"
           style={{ scrollbarWidth: "thin", scrollbarColor: "#d1d5db transparent" }}
         >
-          {events.map((event) => (
+          {events.map((ev) => (
             <EventBar
-              key={event.id}
-              event={event}
+              key={ev.id}
+              event={ev}
               isGuest={isGuest}
-              innerRef={(el) => { eventRefs.current[event.id] = el; }}
+              innerRef={(el) => { barRefs.current[ev.id] = el; }}
             />
           ))}
         </div>

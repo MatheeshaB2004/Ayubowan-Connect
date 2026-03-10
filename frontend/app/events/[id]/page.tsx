@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
   ArrowLeft, Calendar, Clock, MapPin, Users,
@@ -88,7 +88,7 @@ export default function EventDetailPage() {
             <div className="relative">
               {event.imageUrl ? (
                 <div className="relative h-64 sm:h-80 overflow-hidden">
-                  <Image src={event.imageUrl} alt={event.title} fill className="object-cover" />
+                  <Image src={event.imageUrl} alt={event.title} fill className="w-full h-full object-cover" />
                   {/* Gradient overlay for text legibility */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </div>

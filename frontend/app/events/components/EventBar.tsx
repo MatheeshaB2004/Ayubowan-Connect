@@ -1,8 +1,8 @@
 "use client";
 
 import { Calendar, Clock, MapPin, Users, LogIn } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Event } from "../types/events";
 import { formatDateRange, formatPrice } from "../lib/utils";
 
