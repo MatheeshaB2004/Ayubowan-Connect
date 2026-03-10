@@ -55,7 +55,7 @@
 }
 
 /* Hero Section */
-.hero-section {
+.register-container .hero-section {
   background:
     linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
     url("/assets/hero/community.jpg") center/cover;
@@ -65,33 +65,33 @@
   color: white;
 }
 
-.hero-content {
+.register-container .hero-content {
   max-width: 800px;
   margin: 0 auto;
 }
 
-.welcome-text {
+.register-container .welcome-text {
   font-size: 1rem;
   margin-bottom: 1rem;
   font-weight: 300;
   letter-spacing: 0.5px;
 }
 
-.main-heading {
+.register-container .main-heading {
   font-size: 3rem;
   font-weight: 400;
   margin-bottom: 1.5rem;
   line-height: 1.2;
 }
 
-.hero-description {
+.register-container .hero-description {
   font-size: 1rem;
   margin-bottom: 2rem;
   line-height: 1.6;
   font-weight: 300;
 }
 
-.hero-buttons {
+.register-container .hero-buttons {
   display: flex;
   gap: 1rem;
   justify-content: center;
@@ -330,7 +330,6 @@
   justify-content: center;
 }
 
-.btn-login,
 .btn-home {
   padding: 0.75rem 2rem;
   font-size: 0.95rem;
@@ -339,18 +338,6 @@
   cursor: pointer;
   transition: all 0.3s;
   font-weight: 500;
-}
-
-.btn-login {
-  background-color: #3d9b8f;
-  color: white;
-}
-
-.btn-login:hover {
-  background-color: #358276;
-}
-
-.btn-home {
   background-color: #6b6b6b;
   color: white;
 }
@@ -385,7 +372,6 @@
 
   .btn-primary,
   .btn-secondary,
-  .btn-login,
   .btn-home {
     width: 100%;
   }

@@ -4,6 +4,33 @@ import React, { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import LocationPicker from "@/components/maps/LocationPicker";
+import "../../auth/login/login.css";
+
+// Sri Lankan Provinces
+const PROVINCES = [
+  "Western",
+  "Central",
+  "Southern",
+  "Northern",
+  "Eastern",
+  "North Western",
+  "North Central",
+  "Uva",
+  "Sabaragamuwa"
+];
+
+// Sri Lankan Districts by Province
+const DISTRICTS_BY_PROVINCE: { [key: string]: string[] } = {
+  "Western": ["Colombo", "Gampaha", "Kalutara"],
+  "Central": ["Kandy", "Matale", "Nuwara Eliya"],
+  "Southern": ["Galle", "Matara", "Hambantota"],
+  "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"],
+  "Eastern": ["Ampara", "Batticaloa", "Trincomalee"],
+  "North Western": ["Kurunegala", "Puttalam"],
+  "North Central": ["Anuradhapura", "Polonnaruwa"],
+  "Uva": ["Badulla", "Monaragala"],
+  "Sabaragamuwa": ["Ratnapura", "Kegalle"]
+};
 
 interface VendorProfile {
     businessName: string;
@@ -45,6 +72,16 @@ export default function VendorProfilePage() {
     const [editForm, setEditForm] = useState<VendorProfile>(profile);
     const [editLat, setEditLat] = useState<number | null>(null);
     const [editLng, setEditLng] = useState<number | null>(null);
+
+    // Available districts based on selected province
+    const availableDistricts = editForm.location?.province ? DISTRICTS_BY_PROVINCE[editForm.location.province] || [] : [];
+
+    // Reset district when province changes
+    useEffect(() => {
+        if (editForm.location?.province && editForm.location?.district && !availableDistricts.includes(editForm.location.district)) {
+            setLocField("district", "");
+        }
+    }, [editForm.location?.province]);
 
     const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
@@ -347,18 +384,33 @@ export default function VendorProfilePage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="district">District *</label>
-                                    <input id="district" type="text" required
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
-                                        value={editForm.location?.district || ""}
-                                        onChange={(e) => setLocField("district", e.target.value)} />
-                                </div>
-                                <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="province">Province *</label>
-                                    <input id="province" type="text" required
+                                    <select id="province" required
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                         value={editForm.location?.province || ""}
-                                        onChange={(e) => setLocField("province", e.target.value)} />
+                                        onChange={(e) => setLocField("province", e.target.value)}>
+                                        <option value="">Select Province</option>
+                                        {PROVINCES.map((prov) => (
+                                            <option key={prov} value={prov}>
+                                                {prov}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="district">District *</label>
+                                    <select id="district" required
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
+                                        value={editForm.location?.district || ""}
+                                        onChange={(e) => setLocField("district", e.target.value)}
+                                        disabled={!editForm.location?.province}>
+                                        <option value="">{editForm.location?.province ? "Select District" : "Select Province First"}</option>
+                                        {availableDistricts.map((dist) => (
+                                            <option key={dist} value={dist}>
+                                                {dist}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 

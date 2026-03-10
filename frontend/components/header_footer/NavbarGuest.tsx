@@ -25,16 +25,30 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '', isSigned
     }
   };
 
-  const buttonBorderClass = textColorClass.includes('white') ? 'border-white/30 text-white hover:bg-white/10' : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400';
+  // Determine button styles based on current page
+  const isOnLoginPage = pathname?.includes('/login');
+  const isOnRegisterPage = pathname?.includes('/register') || pathname?.includes('/sign-up');
+
+  // Active button gets teal, inactive (white) only shows on opposite auth page
+  const loginButtonClass = isOnRegisterPage ? 'btn-login-inactive' : 'btn-login';
+  const signupButtonClass = isOnLoginPage ? 'btn-signup-inactive' : 'btn-signup';
+
+  // Check if link is active
+  const isActive = (path: string) => {
+    if (path === '/') {
+      return pathname === '/' || pathname === '/landing';
+    }
+    return pathname?.startsWith(path);
+  };
 
   return (
     <div className="nav-guest-container">
       {/* Navigation Links - Centered Absolutely */}
       <div className="nav-links-center">
-        <Link href="/" className={`nav-link ${textColorClass}`}>Home</Link>
+        <Link href="/" className={`nav-link ${textColorClass} ${isActive('/') ? 'active' : ''}`}>Home</Link>
         <Link href="/landing#offer" onClick={(e) => handleScroll(e, 'offer')} className={`nav-link ${textColorClass}`}>Events</Link>
-        <Link href="/marketplace" className={`nav-link ${textColorClass}`}>Marketplace</Link>
-        <Link href="/pro" className={`nav-link ${textColorClass}`}>Pro</Link>
+        <Link href="/marketplace" className={`nav-link ${textColorClass} ${isActive('/marketplace') ? 'active' : ''}`}>Marketplace</Link>
+        <Link href="/pro" className={`nav-link ${textColorClass} ${isActive('/pro') ? 'active' : ''}`}>Pro</Link>
         <Link href="/landing#team" onClick={(e) => handleScroll(e, 'team')} className={`nav-link ${textColorClass}`}>Team</Link>
 
         <div className="relative group">
@@ -69,16 +83,16 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '', isSigned
             <UserButton afterSignOutUrl="/" />
           </div>
         ) : (
-          <div className="-mr-2 flex items-center">
+          <div className="flex items-center gap-3">
             <Link
               href="/auth/login"
-              className={`btn-login ${buttonBorderClass} inline-block text-center pt-1.5`}
+              className={loginButtonClass}
             >
               Log in
             </Link>
             <Link
               href="/auth/register"
-              className="btn-signup inline-block text-center pt-1.5 ml-2"
+              className={signupButtonClass}
             >
               Sign up
             </Link>
