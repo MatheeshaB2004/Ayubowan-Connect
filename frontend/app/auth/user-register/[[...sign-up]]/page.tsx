@@ -105,7 +105,6 @@ export default function UserRegisterPage() {
         const userId = completeSignUp.createdUserId;
         const fullName = `${firstName} ${lastName}`.trim();
 
-        // In a real app, send to an actual endpoint
         const payload = {
           userId: userId,
           fullName: fullName,
@@ -132,8 +131,6 @@ export default function UserRegisterPage() {
         // Set session active to log the user in
         await setActive({ session: sessionId });
 
-        // User metadata updating has to happen from backend ideally or client if permitted
-        // We will proceed with redirect. The post-login hook or actual user metadata update process should handle it
         router.push("/User_profile_manager");
 
       } else {

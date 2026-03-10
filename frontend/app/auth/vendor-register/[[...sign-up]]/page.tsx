@@ -38,8 +38,7 @@ export default function VendorRegisterPage() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const { isSignedIn, user } = useUser();
   
-  // currentStep replaces showVendorForm. 
-  // 1: Account, 2: Business, 3: Location, 4: Verification
+  // currentStep: 1 = Account, 2 = Business, 3 = Location, 4 = Verification
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

@@ -44,10 +44,8 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
       <Link href="/trips" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/trips') ? 'active' : ''}`}>My Trips</Link>
       <Link href="/User_profile_manager" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/User_profile_manager') ? 'active' : ''}`}>My Profile</Link>
 
-      {/* Divider */}
       <div className={`h-6 w-px ${textColorClass.includes('white') ? 'bg-white/30' : 'bg-gray-300'}`}></div>
 
-      {/* Cart Icon */}
       <Link href="/cart" className={`relative p-2 rounded-full hover:bg-black/5 transition ${textColorClass}`}>
         <ShoppingBag size={20} />
         {cartCount > 0 && (
@@ -57,7 +55,6 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
         )}
       </Link>
 
-      {/* Profile: Clerk UserButton (has profile dashboard + sign out built in) */}
       <div className="flex items-center gap-2">
         <UserButton afterSignOutUrl="/" />
         <span className={`text-sm font-medium hidden lg:block max-w-[100px] truncate ${textColorClass}`}>
