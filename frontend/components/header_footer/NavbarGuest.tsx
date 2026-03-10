@@ -27,7 +27,11 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '', isSigned
 
   // Determine button styles based on current page
   const isOnLoginPage = pathname?.includes('/login');
-  const isOnRegisterPage = pathname?.includes('/register') || pathname?.includes('/sign-up');
+  const isOnRegisterPage =
+    pathname?.includes('/register') ||
+    pathname?.includes('/sign-up') ||
+    pathname?.includes('/vendor-register') ||
+    pathname?.includes('/user-register');
 
   // Active button gets teal, inactive (white) only shows on opposite auth page
   const loginButtonClass = isOnRegisterPage ? 'btn-login-inactive' : 'btn-login';
