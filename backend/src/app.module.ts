@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthenticationModule } from './modules/authentication/authentication.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
 import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
 import { CartModule } from './modules/cart/cart.module';
@@ -18,6 +19,7 @@ import { EventsModule } from './modules/events/events.module';
       isGlobal: true,
     }),
     PrismaModule,
+    AuthenticationModule,
     CloudinaryModule,
     MarketplaceModule,
     VendorManagementModule,
@@ -25,7 +27,6 @@ import { EventsModule } from './modules/events/events.module';
     DashboardModule,
     EventsModule,
     ChatbotModule,
-    EventsModule
   ],
   controllers: [AppController, FilesController],
   providers: [AppService],

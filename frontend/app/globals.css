@@ -1,6 +1,20 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --lochinvar: #239b7f;
+  --font-serif: "Playfair Display", serif;
+  --font-arima: var(--font-arima);
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {

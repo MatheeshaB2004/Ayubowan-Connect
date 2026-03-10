@@ -1,14 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 
 interface NavbarGuestProps {
   textColorClass?: string;
+  isSignedIn?: boolean;
+  user?: any;
 }
 
-const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '' }) => {
+const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '', isSignedIn, user }) => {
   const pathname = usePathname();
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -57,9 +60,30 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '' }) => {
       </div>
 
       {/* Action Buttons */}
-      <div className="auth-buttons -mr-2">
-        <a href="#" onClick={(e) => e.preventDefault()} className={`btn-login ${buttonBorderClass} inline-block text-center pt-1.5`}>Log in</a>
-        <a href="#" onClick={(e) => e.preventDefault()} className="btn-signup inline-block text-center pt-1.5">Sign up</a>
+      <div className="auth-buttons">
+        {isSignedIn ? (
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard" className={`nav-link ${textColorClass}`}>
+              Dashboard
+            </Link>
+            <UserButton afterSignOutUrl="/" />
+          </div>
+        ) : (
+          <div className="-mr-2 flex items-center">
+            <Link
+              href="/auth/login"
+              className={`btn-login ${buttonBorderClass} inline-block text-center pt-1.5`}
+            >
+              Log in
+            </Link>
+            <Link
+              href="/auth/register"
+              className="btn-signup inline-block text-center pt-1.5 ml-2"
+            >
+              Sign up
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
