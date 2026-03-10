@@ -63,7 +63,7 @@ export default function ProPage() {
               <span className="pro-card-tag">Explorers</span>
               <h3 className="pro-card-title">User Pro for travelers</h3>
               <p className="pro-card-desc">Plan trips with AI</p>
-              <button className="pro-card-btn" onClick={scrollToPricing}>
+              <button className="pro-card-btn" onClick={scrollToPricing} suppressHydrationWarning>
                 Choose <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
@@ -83,7 +83,7 @@ export default function ProPage() {
               <span className="pro-card-tag">Creators</span>
               <h3 className="pro-card-title">Vendor Pro for businesses</h3>
               <p className="pro-card-desc">Track performance and reach more visitors</p>
-              <button className="pro-card-btn" onClick={scrollToPricing}>
+              <button className="pro-card-btn" onClick={scrollToPricing} suppressHydrationWarning>
                 Choose <ArrowRight size={16} className="ml-2" />
               </button>
             </div>
@@ -99,7 +99,7 @@ export default function ProPage() {
             <h2 className="pro-feature-title">
               Travel smarter with User Pro
             </h2>
-            <button className="pro-feature-btn">
+            <button className="pro-feature-btn" suppressHydrationWarning>
               Upgrade <ArrowRight size={16} className="ml-2" />
             </button>
           </div>
@@ -136,7 +136,7 @@ export default function ProPage() {
             <h2 className="pro-feature-title">
               Build your business stronger
             </h2>
-            <button className="pro-feature-btn">
+            <button className="pro-feature-btn" suppressHydrationWarning>
               Upgrade <ArrowRight size={16} className="ml-2" />
             </button>
           </div>
@@ -176,12 +176,14 @@ export default function ProPage() {
             <button
               className={`pro-pricing-toggle-btn ${billingCycle === 'monthly' ? 'pro-pricing-toggle-btn-active' : 'pro-pricing-toggle-btn-inactive'}`}
               onClick={() => setBillingCycle('monthly')}
+              suppressHydrationWarning
             >
               Monthly
             </button>
             <button
               className={`pro-pricing-toggle-btn ${billingCycle === 'yearly' ? 'pro-pricing-toggle-btn-active' : 'pro-pricing-toggle-btn-inactive'}`}
               onClick={() => setBillingCycle('yearly')}
+              suppressHydrationWarning
             >
               Yearly
             </button>
@@ -201,7 +203,7 @@ export default function ProPage() {
               <span className="pro-pricing-period">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
             </div>
 
-            <button className="pro-pricing-cta-btn">
+            <button className="pro-pricing-cta-btn" suppressHydrationWarning>
               Upgrade now
             </button>
 
@@ -226,7 +228,7 @@ export default function ProPage() {
               <span className="pro-pricing-period">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
             </div>
 
-            <button className="pro-pricing-cta-btn">
+            <button className="pro-pricing-cta-btn" suppressHydrationWarning>
               Upgrade now
             </button>
 
