@@ -2,11 +2,34 @@
 
 import React from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import "./register.css";
 
-export default function RoleSelectionPage() {
+function RoleSelectionContent() {
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
+      {error === "not_registered" && (
+        <div className="sm:mx-auto sm:w-full sm:max-w-3xl mb-6">
+          <div className="bg-red-50 border-2 border-red-400 rounded-lg p-5 flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <svg className="w-6 h-6 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-base font-bold text-red-900 mb-1">Registration Required</h3>
+              <p className="text-sm text-red-800">
+                You attempted to sign in, but you don&apos;t have a registered account on Ayubowan Connect yet. Please complete the registration process below to create your account.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Join Ayubowan Connect
@@ -65,5 +88,17 @@ export default function RoleSelectionPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RoleSelectionPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+      </div>
+    }>
+      <RoleSelectionContent />
+    </Suspense>
   );
 }

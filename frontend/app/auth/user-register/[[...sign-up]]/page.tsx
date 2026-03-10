@@ -62,10 +62,14 @@ export default function UserRegisterPage() {
         unsafeMetadata: {
           role: "user",
           touristStatus: "registered",
+          userType,
+          nationality,
+          dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : "",
+          preferredLanguage,
         },
       });
 
-      router.push("/dashboard");
+      router.push("/User_profile_manager");
     } catch (error) {
       console.error("User registration error:", error);
       alert("Failed to complete registration. Please try again.");

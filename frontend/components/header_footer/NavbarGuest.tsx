@@ -63,8 +63,8 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '', isSigned
       <div className="auth-buttons">
         {isSignedIn ? (
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className={`nav-link ${textColorClass}`}>
-              Dashboard
+            <Link href="/User_profile_manager" className={`nav-link ${textColorClass}`}>
+              My Profile
             </Link>
             <UserButton afterSignOutUrl="/" />
           </div>

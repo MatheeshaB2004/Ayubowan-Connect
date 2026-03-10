@@ -34,6 +34,7 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
       <Link href="/marketplace" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Marketplace</Link>
       <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Pro</Link>
       <Link href="/trips" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>My Trips</Link>
+      <Link href="/User_profile_manager" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>My Profile</Link>
 
       {/* Divider */}
       <div className={`h-6 w-px ${textColorClass.includes('white') ? 'bg-white/30' : 'bg-gray-300'}`}></div>

@@ -51,7 +51,7 @@ export default function VendorProfilePage() {
     useEffect(() => {
         if (!isLoaded) return;
         if (!isSignedIn) { router.push("/auth/login"); return; }
-        if (user?.unsafeMetadata?.role !== "vendor") { router.push("/dashboard"); return; }
+        if (user?.unsafeMetadata?.role !== "vendor") { router.push("/User_profile_manager"); return; }
 
         const clerkUserId = user.id;
 

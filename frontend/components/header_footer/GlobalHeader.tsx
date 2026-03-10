@@ -130,7 +130,7 @@ const GlobalHeader: React.FC = () => {
               <Link href="/marketplace" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Marketplace</Link>
               {isSignedIn ? (
                 <>
-                  <Link href="/dashboard" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
+                  <Link href="/User_profile_manager" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>My Profile</Link>
                 </>
               ) : (
                 <div className="mobile-menu-divider">
@@ -144,6 +144,7 @@ const GlobalHeader: React.FC = () => {
           {(activeRole === 'traveller' || activeRole === 'user') && (
             <>
               <Link href="/trips" className="mobile-link">My Trips</Link>
+              <Link href="/User_profile_manager" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>My Profile</Link>
               <Link href="/saved" className="mobile-link">Saved</Link>
               <Link href="/messages" className="mobile-link">Messages</Link>
             </>
@@ -151,7 +152,7 @@ const GlobalHeader: React.FC = () => {
 
           {activeRole === 'vendor' && (
             <>
-              <Link href="/dashboard" className="mobile-link">Dashboard</Link>
+              <Link href="/vendor/dashboard" className="mobile-link">Dashboard</Link>
               <Link href="/listings" className="mobile-link">My Listings</Link>
               <Link href="/orders" className="mobile-link">Orders</Link>
             </>

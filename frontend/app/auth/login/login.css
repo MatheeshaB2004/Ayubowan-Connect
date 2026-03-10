@@ -104,6 +104,16 @@
   align-items: center;
 }
 
+/* Hide Google OAuth button on login page */
+.clerk-form-wrapper button[data-provider="oauth_google"],
+.clerk-form-wrapper button[data-social="google"],
+.clerk-form-wrapper .cl-socialButtonsBlockButton,
+.clerk-form-wrapper [class*="socialButtons"],
+.clerk-form-wrapper [class*="dividerRow"] {
+  display: none !important;
+}
+
+
 .form-card {
   background: #d4e8e6;
   border-radius: 8px;
