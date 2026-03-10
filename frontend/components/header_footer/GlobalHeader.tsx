@@ -12,13 +12,18 @@ import "./Header.css";
 
 const GlobalHeader: React.FC = () => {
   const { isSignedIn, user } = useUser();
-  const { role } = useAuth();
+  const { role: contextRole } = useAuth(); // rename role to contextRole
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const isHome = pathname === "/" || pathname === "/landing";
+
+  // Derive the active role: Check Clerk user metadata first, then fallback to context role
+  const clerkRole = user?.unsafeMetadata?.role as string | undefined;
+  // If signed in but no role set yet, assume 'user' (traveller). Vendors always have role='vendor' set.
+  const activeRole = isSignedIn ? (clerkRole || 'user') : contextRole;
 
   useEffect(() => {
     setIsVisible(true);
@@ -73,12 +78,12 @@ const GlobalHeader: React.FC = () => {
           <div className="relative z-10 h-full flex items-center">
             <Link href="/" className="logo-container">
               {/* Image Logo: Visible when transparent (Top of Home) */}
-              <img 
-                src="/logo.png" 
-                alt="Ayubowan Connect" 
-                className={`logo-image ${isTransparent ? '' : 'hidden-logo'}`} 
+              <img
+                src="/logo.png"
+                alt="Ayubowan Connect"
+                className={`logo-image ${isTransparent ? '' : 'hidden-logo'}`}
               />
-              
+
               {/* Text Logo: Always visible but changes layout */}
               <div className={`brand-text-container ${isTransparent ? 'layout-stacked' : 'layout-inline'}`}>
                 <span className="brand-ayubowan">Ayubowan</span>
@@ -89,9 +94,9 @@ const GlobalHeader: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="desktop-nav">
-            {role === 'guest' && <NavbarGuest textColorClass={textColorClass} isSignedIn={isSignedIn} user={user} />}
-            {role === 'traveller' && <NavbarTraveller textColorClass={textColorClass} />}
-            {role === 'vendor' && <NavbarVendor textColorClass={textColorClass} />}
+            {activeRole === 'guest' && <NavbarGuest textColorClass={textColorClass} isSignedIn={isSignedIn} user={user} />}
+            {(activeRole === 'traveller' || activeRole === 'user') && <NavbarTraveller textColorClass={textColorClass} />}
+            {activeRole === 'vendor' && <NavbarVendor textColorClass={textColorClass} />}
           </div>
 
           {/* Mobile Menu Button */}
@@ -99,6 +104,7 @@ const GlobalHeader: React.FC = () => {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="mobile-toggle"
+              aria-label="Toggle mobile menu"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {isMobileMenuOpen ? (
@@ -115,41 +121,42 @@ const GlobalHeader: React.FC = () => {
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
         <div className="mobile-menu absolute top-full left-0 w-full z-50">
-          <span className="section-tag">Menu ({role})</span>
-             
-             {role === 'guest' && (
-                 <>
-                    <Link href="/experiences" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Experiences</Link>
-                    <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Events</Link>
-                    <Link href="/marketplace" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Marketplace</Link>
-                    {isSignedIn ? (
-                      <>
-                        <Link href="/dashboard" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
-                      </>
-                    ) : (
-                      <div className="mobile-menu-divider">
-                        <Link href="/auth/login" className="btn-login" style={{ color: '#374151', borderColor: '#d1d5db', display: 'block', textAlign: 'center', marginBottom: '8px' }}>Log in</Link>
-                        <Link href="/auth/register" className="btn-signup" style={{ display: 'block', textAlign: 'center' }}>Sign up</Link>
-                      </div>
-                    )}
-                 </>
-             )}
+          <span className="section-tag">Menu ({activeRole === 'user' ? 'traveller' : activeRole})</span>
 
-             {role === 'traveller' && (
-               <>
-                 <Link href="/trips" className="mobile-link">My Trips</Link>
-                 <Link href="/saved" className="mobile-link">Saved</Link>
-                 <Link href="/messages" className="mobile-link">Messages</Link>
-               </>
-             )}
+          {activeRole === 'guest' && (
+            <>
+              <Link href="/experiences" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Experiences</Link>
+              <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Events</Link>
+              <Link href="/marketplace" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Marketplace</Link>
+              {isSignedIn ? (
+                <>
+                  <Link href="/User_profile_manager" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>My Profile</Link>
+                </>
+              ) : (
+                <div className="mobile-menu-divider">
+                  <Link href="/auth/login" className="btn-login" style={{ color: '#374151', borderColor: '#d1d5db', display: 'block', textAlign: 'center', marginBottom: '8px' }}>Log in</Link>
+                  <Link href="/auth/register" className="btn-signup" style={{ display: 'block', textAlign: 'center' }}>Sign up</Link>
+                </div>
+              )}
+            </>
+          )}
 
-             {role === 'vendor' && (
-               <>
-                 <Link href="/dashboard" className="mobile-link">Dashboard</Link>
-                 <Link href="/listings" className="mobile-link">My Listings</Link>
-                 <Link href="/orders" className="mobile-link">Orders</Link>
-               </>
-             )}
+          {(activeRole === 'traveller' || activeRole === 'user') && (
+            <>
+              <Link href="/trips" className="mobile-link">My Trips</Link>
+              <Link href="/User_profile_manager" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>My Profile</Link>
+              <Link href="/saved" className="mobile-link">Saved</Link>
+              <Link href="/messages" className="mobile-link">Messages</Link>
+            </>
+          )}
+
+          {activeRole === 'vendor' && (
+            <>
+              <Link href="/vendor/dashboard" className="mobile-link">Dashboard</Link>
+              <Link href="/listings" className="mobile-link">My Listings</Link>
+              <Link href="/orders" className="mobile-link">Orders</Link>
+            </>
+          )}
         </div>
       )}
     </header>

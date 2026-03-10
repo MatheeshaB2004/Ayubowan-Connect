@@ -47,6 +47,7 @@ export default function RootLayout({
           />
         </head>
         <body
+          suppressHydrationWarning
           className={`${geistSans.variable} ${geistMono.variable} ${arima.variable} antialiased flex flex-col min-h-screen`}
         >
           <AuthProvider>

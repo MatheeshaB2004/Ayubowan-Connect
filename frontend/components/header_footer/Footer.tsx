@@ -204,11 +204,12 @@ const Footer: React.FC = () => {
             </p>
             <form className="newsletter-form">
               <input
+                suppressHydrationWarning
                 type="email"
                 placeholder="Email address here"
                 className="newsletter-input"
               />
-              <button type="submit" className="newsletter-btn">
+              <button suppressHydrationWarning type="submit" className="newsletter-btn">
                 Submit
               </button>
             </form>

@@ -1,18 +1,28 @@
 import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '../../context/AuthContext';
+import { usePathname } from 'next/navigation';
+import { useUser, UserButton } from '@clerk/nextjs';
 import { useCart } from '../../context/CartContext';
-import { ShoppingBag, User, LogOut } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 interface NavbarTravellerProps {
   textColorClass?: string;
 }
 
 const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }) => {
-  const { logout, user } = useAuth();
+  const { user } = useUser();
   const { cartCount } = useCart();
+  const pathname = usePathname();
+
+  const displayName = user?.fullName || user?.firstName || 'Traveller';
 
   const hoverColorClass = textColorClass.includes('white') ? 'hover:text-emerald-400' : 'hover:text-lochinvar';
+
+  // Helper function to check if link is active
+  const isActive = (path: string) => {
+    if (path === '/') return pathname === '/' || pathname === '/landing';
+    return pathname === path || pathname.startsWith(path + '/');
+  };
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
     if (typeof window !== 'undefined' && (window.location.pathname === '/landing' || window.location.pathname === '/')) {
@@ -27,16 +37,15 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
 
   return (
     <div className="traveller-nav flex items-center gap-6">
-      <Link href="/" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Home</Link>
+      <Link href="/" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/') ? 'active' : ''}`}>Home</Link>
       <Link href="/landing#offer" onClick={(e) => handleScroll(e, 'offer')} className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Events</Link>
-      <Link href="/marketplace" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Marketplace</Link>
-      <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Pro</Link>
-      <Link href="/trips" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>My Trips</Link>
+      <Link href="/marketplace" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/marketplace') ? 'active' : ''}`}>Marketplace</Link>
+      <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/pro') ? 'active' : ''}`}>Pro</Link>
+      <Link href="/trips" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/trips') ? 'active' : ''}`}>My Trips</Link>
+      <Link href="/User_profile_manager" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/User_profile_manager') ? 'active' : ''}`}>My Profile</Link>
 
-      {/* Divider */}
       <div className={`h-6 w-px ${textColorClass.includes('white') ? 'bg-white/30' : 'bg-gray-300'}`}></div>
 
-      {/* Cart Icon */}
       <Link href="/cart" className={`relative p-2 rounded-full hover:bg-black/5 transition ${textColorClass}`}>
         <ShoppingBag size={20} />
         {cartCount > 0 && (
@@ -46,27 +55,11 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
         )}
       </Link>
 
-      {/* Profile & Logout */}
-      <div className="flex items-center gap-3 group relative cursor-pointer">
-        <div className={`flex items-center gap-2 ${textColorClass}`}>
-          <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold border border-teal-200">
-            {user?.name?.[0]?.toUpperCase() || <User size={16} />}
-          </div>
-          <span className="text-sm font-medium hidden lg:block max-w-[100px] truncate">{user?.name}</span>
-        </div>
-
-        {/* Dropdown for logout */}
-        <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-          <div className="p-2">
-            <button
-              onClick={logout}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md flex items-center gap-2"
-            >
-              <LogOut size={14} />
-              Logout
-            </button>
-          </div>
-        </div>
+      <div className="flex items-center gap-2">
+        <UserButton afterSignOutUrl="/" />
+        <span className={`text-sm font-medium hidden lg:block max-w-[100px] truncate ${textColorClass}`}>
+          {displayName}
+        </span>
       </div>
     </div>
   );

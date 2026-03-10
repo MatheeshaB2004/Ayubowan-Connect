@@ -16,7 +16,6 @@ import {
 import { useParams } from 'next/navigation';
 import './ProductDetail.css';
 import ReviewSection from '../../review';
-import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 
 type ApiListing = {
@@ -149,7 +148,6 @@ export default function ProductDetailPage() {
   const images = mediaUrls.length > 0 ? mediaUrls : [heroImage];
   const includes = normalizeIncludes(listing.inclusions, listing.tags);
   const specs = normalizeSpecs(listing.specs);
-  const ratingRounded = Math.round(listing.ratingAverage || 0);
   const vendorName = listing.vendor?.businessName ?? 'Vendor';
   const locationLabel = listing.location
     ? `${listing.location.city}, ${listing.location.district}`
@@ -194,6 +192,8 @@ export default function ProductDetailPage() {
             onClick={prevImage}
             disabled={images.length <= 1}
             className="gallery-nav-btn-base gallery-prev"
+            title="Previous Image"
+            aria-label="Previous Image"
           >
             <ChevronLeft size={28} />
           </button>
@@ -201,6 +201,8 @@ export default function ProductDetailPage() {
             onClick={nextImage}
             disabled={images.length <= 1}
             className="gallery-nav-btn-base gallery-next"
+            title="Next Image"
+            aria-label="Next Image"
           >
             <ChevronRight size={28} />
           </button>
@@ -279,7 +281,7 @@ export default function ProductDetailPage() {
             <div className="includes-card">
               <h3 className="includes-header">
                 <ShieldCheck size={20} className="includes-header-icon" />
-                What's Included
+                What&apos;s Included
               </h3>
               <div className="includes-grid-modern">
                 {includes.map((item, idx) => (
