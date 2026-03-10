@@ -190,6 +190,9 @@ export default function UserRegisterPage() {
                 )}
 
                 <form onSubmit={handleSignUp} className="space-y-5">
+                  {/* Clerk CAPTCHA Widget Container */}
+                  <div id="clerk-captcha"></div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
