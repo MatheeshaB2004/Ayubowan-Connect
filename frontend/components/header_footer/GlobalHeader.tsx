@@ -15,13 +15,13 @@ const GlobalHeader: React.FC = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   const pathname = usePathname();
   const isHome = pathname === '/' || pathname === '/landing';
 
   // Always show header for now to debug
   useEffect(() => {
-    setIsVisible(true); 
+    setIsVisible(true);
   }, []);
 
   const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
@@ -67,7 +67,7 @@ const GlobalHeader: React.FC = () => {
 
   // Determine visual state
   const isTransparent = isHome && !isScrolled && !isMobileMenuOpen;
-  
+
   // Text color class for child navbars
   // If transparent (Home + Top), text is white. 
   // If solid (Scrolled or not Home), text is dark gray/lochinvar on hover
@@ -80,17 +80,17 @@ const GlobalHeader: React.FC = () => {
     <header className={headerClass}>
       <div className="container header-container relative">
         <div className="header-content">
-          
+
           {/* Logo */}
           <div className="relative z-10 h-full flex items-center">
             <Link href="/" className="logo-container">
               {/* Image Logo: Visible when transparent (Top of Home) */}
-              <img 
-                src="/logo.png" 
-                alt="Ayubowan Connect" 
-                className={`logo-image ${isTransparent ? '' : 'hidden-logo'}`} 
+              <img
+                src="/logo.png"
+                alt="Ayubowan Connect"
+                className={`logo-image ${isTransparent ? '' : 'hidden-logo'}`}
               />
-              
+
               {/* Text Logo: Always visible but changes layout */}
               <div className={`brand-text-container ${isTransparent ? 'layout-stacked' : 'layout-inline'}`}>
                 <span className="brand-ayubowan">Ayubowan</span>
@@ -101,9 +101,13 @@ const GlobalHeader: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="desktop-nav">
-            {role === 'guest' && <NavbarGuest textColorClass={textColorClass} />}
-            {role === 'traveller' && <NavbarTraveller textColorClass={textColorClass} />}
-            {role === 'vendor' && <NavbarVendor textColorClass={textColorClass} />}
+            {pathname.startsWith('/vendor') ? (
+              <NavbarVendor textColorClass={textColorClass} />
+            ) : role === 'traveller' ? (
+              <NavbarTraveller textColorClass={textColorClass} />
+            ) : (
+              <NavbarGuest textColorClass={textColorClass} />
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -128,34 +132,34 @@ const GlobalHeader: React.FC = () => {
       {isMobileMenuOpen && (
         <div className="mobile-menu absolute top-full left-0 w-full z-50">
           <span className="section-tag">Menu ({role})</span>
-             
-             {role === 'guest' && (
-                 <>
-                    <Link href="/experiences" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Experiences</Link>
-                    <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Events</Link>
-                    <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Marketplace</Link>
-                    <div className="mobile-menu-divider">
-                      <button className="btn-login" style={{ color: '#374151', borderColor: '#d1d5db' }}>Log in</button>
-                      <button className="btn-signup">Sign up</button>
-                    </div>
-                 </>
-             )}
 
-             {role === 'traveller' && (
-               <>
-                 <Link href="/trips" className="mobile-link">My Trips</Link>
-                 <Link href="/saved" className="mobile-link">Saved</Link>
-                 <Link href="/messages" className="mobile-link">Messages</Link>
-               </>
-             )}
+          {role === 'guest' && (
+            <>
+              <Link href="/experiences" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Experiences</Link>
+              <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Events</Link>
+              <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Marketplace</Link>
+              <div className="mobile-menu-divider">
+                <button className="btn-login" style={{ color: '#374151', borderColor: '#d1d5db' }}>Log in</button>
+                <button className="btn-signup">Sign up</button>
+              </div>
+            </>
+          )}
 
-             {role === 'vendor' && (
-               <>
-                 <Link href="/dashboard" className="mobile-link">Dashboard</Link>
-                 <Link href="/listings" className="mobile-link">My Listings</Link>
-                 <Link href="/orders" className="mobile-link">Orders</Link>
-               </>
-             )}
+          {role === 'traveller' && (
+            <>
+              <Link href="/trips" className="mobile-link">My Trips</Link>
+              <Link href="/saved" className="mobile-link">Saved</Link>
+              <Link href="/messages" className="mobile-link">Messages</Link>
+            </>
+          )}
+
+          {role === 'vendor' && (
+            <>
+              <Link href="/dashboard" className="mobile-link">Dashboard</Link>
+              <Link href="/listings" className="mobile-link">My Listings</Link>
+              <Link href="/orders" className="mobile-link">Orders</Link>
+            </>
+          )}
         </div>
       )}
     </header>
