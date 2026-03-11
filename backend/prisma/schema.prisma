@@ -49,6 +49,7 @@ model LocalTourist {
 model Vendor {
   id                    Int                  @id @default(autoincrement()) @map("vendor_id")
   userId                Int                  @unique @map("user_id")
+  clerkUserId           String?              @unique @map("clerk_user_id")
   businessName          String               @map("business_name")
   shortTagline          String?              @map("short_tagline")
   contactPhone          String?              @map("contact_phone")
@@ -62,6 +63,7 @@ model Vendor {
   isActive              Boolean              @default(true) @map("is_active")
   createdAt             DateTime             @default(now()) @map("created_at")
   updatedAt             DateTime             @updatedAt @map("updated_at")
+  quantity              Int                  @default(0)
   listings              Listing[]
   locations             VendorLocation[]
   goals                 Goal[]
@@ -117,6 +119,7 @@ model Listing {
   longDescription  String?             @map("long_description")
   priceMin         Float               @map("price_min")
   priceMax         Float?              @map("price_max")
+  stock            Int?                @map("stock")
   priceNote        String?             @map("price_note")
   duration         String?
   capacity         Int?
@@ -223,6 +226,9 @@ model AvailabilitySlot {
   startTime DateTime
   endTime   DateTime
 
+  maxGuests Int  @default(35)
+  bookedGuests Int @default(0)
+
   availability VendorAvailability @relation(fields: [availabilityId], references: [id])
 }
 
@@ -259,11 +265,15 @@ model Booking {
   vendorId       Int           @map("vendor_id")
   localTouristId Int           @map("local_tourist_id")
   listingId      Int           @map("listing_id")
+  slotId         Int?
   bookingDate    DateTime      @map("booking_date")
   status         BookingStatus @default(PENDING)
+
   guests         Int           @default(1)
   totalPrice     Float         @default(0) @map("total_price")
   notes          String?
+  approvedAt     DateTime?
+  rejectedAt     DateTime?
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
 
@@ -321,14 +331,15 @@ model Cart {
 model CartItem {
   id        Int      @id @default(autoincrement()) @map("cart_item_id")
   cartId    Int      @map("cart_id")
-  listingId Int      @map("listing_id")
+  listingId Int?     @map("listing_id")
+  bookingId Int?     @map("booking_id")
+
   quantity  Int      @default(1)
   addedAt   DateTime @default(now()) @map("added_at")
 
   cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
-  @@unique([cartId, listingId])
   @@map("cart_items")
 }
 
