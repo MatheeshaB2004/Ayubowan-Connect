@@ -1,0 +1,344 @@
+/* Login Page Styles */
+
+.login-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+}
+
+/* Header Styles */
+.login-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 4rem;
+  background: white;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-style: italic;
+}
+
+.nav-menu {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-menu a {
+  color: #333;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.3s;
+}
+
+.nav-menu a:hover {
+  color: #3d9b8f;
+}
+
+.more-dropdown {
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.dropdown-arrow {
+  font-size: 0.7rem;
+  margin-left: 0.3rem;
+}
+
+/* Hero Section */
+.login-container .hero-section {
+  text-align: center;
+  padding: 3rem 2rem 2rem;
+  background: white !important;
+}
+
+.login-container .main-heading {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.login-container .hero-description {
+  font-size: 1rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Form Section */
+.login-container .form-section {
+  flex: 1;
+  background: #e8f0f0;
+  padding: 3rem 2rem 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-container .form-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.login-container .form-logo {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  font-style: italic;
+  margin-bottom: 2rem;
+}
+
+.clerk-form-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Hide Google OAuth button on login page */
+.clerk-form-wrapper button[data-provider="oauth_google"],
+.clerk-form-wrapper button[data-social="google"],
+.clerk-form-wrapper .cl-socialButtonsBlockButton,
+.clerk-form-wrapper [class*="socialButtons"],
+.clerk-form-wrapper [class*="dividerRow"] {
+  display: none !important;
+}
+
+
+.form-card {
+  background: #d4e8e6;
+  border-radius: 8px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.form-heading {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  color: #1a1a1a;
+}
+
+.form-description {
+  text-align: center;
+  color: #555;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.password-label-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reset-link {
+  font-size: 0.85rem;
+  color: #3d9b8f;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.reset-link:hover {
+  color: #2d7b6f;
+  text-decoration: underline;
+}
+
+.form-input {
+  padding: 0.875rem;
+  border: 1px solid #b8d4d1;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  background: #e8f5f3;
+  transition:
+    border-color 0.3s,
+    background-color 0.3s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3d9b8f;
+  background: white;
+}
+
+.sign-in-button {
+  padding: 0.875rem;
+  background: #3d9b8f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 0.5rem;
+}
+
+.sign-in-button:hover {
+  background: #2d7b6f;
+}
+
+.google-button {
+  padding: 0.875rem;
+  background: #e8f5f3;
+  color: #333;
+  border: 1px solid #b8d4d1;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.google-button:hover {
+  background: #d4e8e6;
+}
+
+.google-icon {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.create-account-text {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 0.5rem;
+}
+
+.create-account-link {
+  color: #3d9b8f;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.create-account-link:hover {
+  color: #2d7b6f;
+  text-decoration: underline;
+}
+
+.copyright {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .login-header {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+  }
+
+  .nav-menu {
+    gap: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .main-heading {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .main-heading {
+    font-size: 1.75rem;
+  }
+
+  .hero-description {
+    font-size: 0.9rem;
+  }
+}
+
+/* Custom Select Dropdown Styling */
+select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+select:hover {
+  border-color: #0d9488;
+}
+
+select:focus {
+  border-color: #0d9488;
+  outline: none;
+  ring: 2px;
+  ring-color: #0d9488;
+}
+
+select option {
+  padding: 0.5rem;
+  background-color: white;
+  color: #1f2937;
+}
+
+select option:hover,
+select option:focus {
+  background-color: #ccf0ed !important;
+  background: #ccf0ed !important;
+  color: #0d9488 !important;
+}
+
+select option:checked {
+  background-color: #0d9488 !important;
+  background: #0d9488 !important;
+  color: white !important;
+}
+
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background-color: #f3f4f6;
+}

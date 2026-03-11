@@ -15,8 +15,165 @@ export class VendorManagementService {
   ) { }
 
   /**
-   * Get all active categories that vendors can choose from
+   * Get vendor profile by Clerk userId
    */
+  async getVendorProfileByUserId(clerkUserId: string) {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId },
+      include: {
+        locations: {
+          where: { isMainLocation: true },
+          take: 1,
+        },
+      },
+    });
+
+    if (!vendor) throw new NotFoundException('Vendor not found');
+
+    const location = vendor.locations[0] || null;
+
+    return {
+      businessName: vendor.businessName,
+      shortTagline: vendor.shortTagline,
+      contactPhone: vendor.contactPhone,
+      establishedYear: vendor.establishedYear,
+      location: location ? {
+        addressLine1: location.addressLine1,
+        addressLine2: location.addressLine2,
+        city: location.city,
+        district: location.district,
+        province: location.province,
+        postalCode: location.postalCode,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      } : null,
+    };
+  }
+
+  /**
+   * Update vendor profile by Clerk userId
+   */
+  async updateVendorProfileByUserId(body: any) {
+    const { clerkUserId, businessName, shortTagline, contactPhone, establishedYear, location } = body;
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId },
+      include: { locations: { where: { isMainLocation: true }, take: 1 } },
+    });
+
+    if (!vendor) throw new NotFoundException('Vendor not found');
+
+    await this.prisma.vendor.update({
+      where: { clerkUserId },
+      data: {
+        ...(businessName && { businessName }),
+        ...(shortTagline !== undefined && { shortTagline }),
+        ...(contactPhone && { contactPhone }),
+        ...(establishedYear && { establishedYear: parseInt(establishedYear) }),
+      },
+    });
+
+    if (location) {
+      const existingLocation = vendor.locations[0];
+      if (existingLocation) {
+        await this.prisma.vendorLocation.update({
+          where: { id: existingLocation.id },
+          data: {
+            addressLine1: location.addressLine1,
+            addressLine2: location.addressLine2 || null,
+            city: location.city,
+            district: location.district,
+            province: location.province,
+            postalCode: location.postalCode || null,
+            latitude: location.latitude || null,
+            longitude: location.longitude || null,
+          },
+        });
+      } else {
+        await this.prisma.vendorLocation.create({
+          data: {
+            vendorId: vendor.id,
+            addressLine1: location.addressLine1,
+            addressLine2: location.addressLine2 || null,
+            city: location.city,
+            district: location.district,
+            province: location.province,
+            postalCode: location.postalCode || null,
+            latitude: location.latitude || null,
+            longitude: location.longitude || null,
+            isMainLocation: true,
+          },
+        });
+      }
+    }
+
+    return { message: 'Profile updated successfully' };
+  }
+
+  /**
+   * Register a vendor via Clerk (creates a Vendor record linked by clerkUserId)
+   */
+  async registerVendorFromClerk(body: any) {
+    const { userId: clerkUserId, businessName, shortTagline, contactPhone, establishedYear, location } = body;
+
+    if (!clerkUserId || !businessName) {
+      throw new BadRequestException('userId and businessName are required');
+    }
+
+    // Check if vendor already registered
+    const existing = await this.prisma.vendor.findUnique({ where: { clerkUserId } });
+    if (existing) {
+      // Idempotent: if already registered, just return success
+      return { message: 'Already registered', vendorId: existing.id };
+    }
+
+    // We need a backend User record — create a placeholder one if needed
+    // (The Vendor table requires a userId FK to users table)
+    // Use clerkUserId as a unique email placeholder so there's no conflict
+    let backendUser = await this.prisma.user.findFirst({ where: { email: `clerk_${clerkUserId}@placeholder.local` } });
+    if (!backendUser) {
+      backendUser = await this.prisma.user.create({
+        data: {
+          fullName: businessName,
+          email: `clerk_${clerkUserId}@placeholder.local`,
+          passwordHash: 'clerk-managed',
+          role: 'USER',
+        },
+      });
+    }
+
+    const vendor = await this.prisma.vendor.create({
+      data: {
+        userId: backendUser.id,
+        clerkUserId,
+        businessName,
+        shortTagline: shortTagline || null,
+        contactPhone: contactPhone || null,
+        establishedYear: establishedYear ? parseInt(establishedYear) : null,
+      },
+    });
+
+    if (location) {
+      await this.prisma.vendorLocation.create({
+        data: {
+          vendorId: vendor.id,
+          addressLine1: location.addressLine1,
+          addressLine2: location.addressLine2 || null,
+          city: location.city,
+          district: location.district,
+          province: location.province,
+          postalCode: location.postalCode || null,
+          latitude: location.latitude || null,
+          longitude: location.longitude || null,
+          isMainLocation: true,
+        },
+      });
+    }
+
+    return { message: 'Vendor registered successfully', vendorId: vendor.id };
+  }
+
+
   async getAvailableCategories() {
     const categories = await this.prisma.listingCategory.findMany({
       where: { isActive: true },

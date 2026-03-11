@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import { useUser } from '@clerk/nextjs';
 
 type CartItem = {
     id: number;
@@ -39,12 +39,13 @@ export const useCart = () => {
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { user } = useAuth();
+    const { isSignedIn, user } = useUser();
+    const userId = user?.id ?? null;
     const [items, setItems] = useState<CartItem[]>([]);
     const [isOpen, setIsOpen] = useState(false);
 
     const fetchCart = async () => {
-        if (!user) {
+        if (!isSignedIn || !userId) {
             setItems([]);
             return;
         }
@@ -52,7 +53,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const response = await fetch(`${API_BASE}/cart`, {
                 headers: {
-                    'x-user-id': user.id,
+                    'x-user-id': userId,
                 },
             });
             if (response.ok) {
@@ -66,10 +67,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     useEffect(() => {
         fetchCart();
-    }, [user]);
+    }, [isSignedIn, userId]);
 
     const addToCart = async (listingId: number, quantity: number) => {
-        if (!user) {
+        if (!isSignedIn || !userId) {
             alert('Please log in to add items to cart');
             return;
         }
@@ -79,7 +80,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-user-id': user.id,
+                    'x-user-id': userId,
                 },
                 body: JSON.stringify({ listingId, quantity }),
             });
@@ -96,13 +97,13 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const removeFromCart = async (itemId: number) => {
-        if (!user) return;
+        if (!isSignedIn || !userId) return;
 
         try {
             await fetch(`${API_BASE}/cart/${itemId}`, {
                 method: 'DELETE',
                 headers: {
-                    'x-user-id': user.id,
+                    'x-user-id': userId,
                 },
             });
             await fetchCart();
