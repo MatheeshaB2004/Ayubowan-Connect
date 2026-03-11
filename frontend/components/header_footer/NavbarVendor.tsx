@@ -13,11 +13,10 @@ const NavbarVendor: React.FC<NavbarVendorProps> = ({ textColorClass = '' }) => {
 
   return (
     <div className="vendor-nav">
-      <Link href="/dashboard" className={`nav-link ${textColorClass} ${hoverColorClass}`}>Dashboard</Link>
+      <Link href="/" className={`nav-link ${textColorClass} ${hoverColorClass}`}>Home</Link>
+      <Link href="/vendor/freeDashboad" className={`nav-link ${textColorClass} ${hoverColorClass}`}>Dashboard</Link>
       <Link href="/listings" className={`nav-link ${textColorClass} ${hoverColorClass}`}>My Listings</Link>
-      <Link href="/orders" className={`nav-link ${textColorClass} ${hoverColorClass}`}>Orders</Link>
-      <Link href="/create-listing" className="create-listing-btn">Create Listing</Link>
-      <Link href="/events" className={`nav-link ${textColorClass}`}>Events</Link>
+      <Link href="/events" className={`nav-link ${textColorClass} ${hoverColorClass}`}>Events</Link>
       
       <div className="vendor-divider">
          <span className={`vendor-name ${textColorClass}`}>{user?.name}</span>

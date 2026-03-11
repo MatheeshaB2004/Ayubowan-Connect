@@ -28,10 +28,11 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
   return (
     <div className="traveller-nav flex items-center gap-6">
       <Link href="/" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Home</Link>
-      <Link href="/events" onClick={(e) => handleScroll(e, 'offer')} className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Events</Link>
+      <Link href="/dashboard" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Dashboard</Link>
       <Link href="/marketplace" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Marketplace</Link>
+      <Link href="/events" onClick={(e) => handleScroll(e, 'offer')} className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Events</Link>
       <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Pro</Link>
-      <Link href="/trips" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>My Trips</Link>
+      <Link href="/payments" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Payments</Link>
 
       {/* Divider */}
       <div className={`h-6 w-px ${textColorClass.includes('white') ? 'bg-white/30' : 'bg-gray-300'}`}></div>
