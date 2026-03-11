@@ -1408,4 +1408,82 @@ export class DashboardService {
     });
   }
 
+  async getVendorBookings(userId: number) {
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId }
+    });
+
+    if (!vendor) throw new Error("Vendor not found");
+
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        vendorId: vendor.id
+      },
+      include: {
+        listing: {
+          select: {
+            title: true
+          }
+        },
+        localTourist: {
+          include: {
+            user: {
+              select: {
+                fullName: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+
+    const slotIds = bookings
+      .map(b => b.slotId)
+      .filter((id): id is number => id !== null);
+
+    const slots = await this.prisma.availabilitySlot.findMany({
+      where: {
+        id: { in: slotIds }
+      }
+    });
+
+    const slotMap = Object.fromEntries(
+      slots.map(s => [s.id, s])
+    );
+
+    return bookings.map(b => ({
+      ...b,
+      slot: b.slotId ? slotMap[b.slotId] : null
+    }));
+
+  }
+
+  async acceptBooking(id: number) {
+
+    return this.prisma.booking.update({
+      where: { id },
+      data: {
+        status: "CONFIRMED",
+        approvedAt: new Date()
+      }
+    });
+
+  }
+
+  async rejectBooking(id: number) {
+
+    return this.prisma.booking.update({
+      where: { id },
+      data: {
+        status: "REJECTED",
+        rejectedAt: new Date()
+      }
+    });
+
+  }
+
 }

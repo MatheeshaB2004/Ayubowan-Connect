@@ -1829,3 +1829,16 @@ transition:0.2s;
 left:26px;
 }
 
+.publish-toast {
+  background: #0f766e !important; /* teal */
+  color: white !important;
+  font-weight: 500;
+  border-radius: 10px;
+}
+
+.draft-toast {
+  background: #334155 !important; /* slate */
+  color: white !important;
+  border-radius: 10px;
+}
+

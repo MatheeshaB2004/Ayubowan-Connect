@@ -338,8 +338,10 @@ model CartItem {
 
   cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
   listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
+  
+  @@unique([cartId, listingId])
   @@map("cart_items")
+  
 }
 
 model Event {

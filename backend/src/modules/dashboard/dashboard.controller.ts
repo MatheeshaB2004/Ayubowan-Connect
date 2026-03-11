@@ -171,6 +171,21 @@ export class DashboardController {
     return this.service.deleteReply(body.reviewId)
 
   }
+
+  @Get("bookings")
+  getBookings(@Query("userId") userId: string) {
+    return this.service.getVendorBookings(Number(userId));
+  }
+
+  @Patch("booking/accept/:id")
+  acceptBooking(@Param("id") id: string) {
+    return this.service.acceptBooking(Number(id));
+  }
+
+  @Patch("booking/reject/:id")
+  rejectBooking(@Param("id") id: string) {
+    return this.service.rejectBooking(Number(id));
+  }
 }
 
 

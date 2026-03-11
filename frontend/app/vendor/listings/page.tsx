@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import "./page.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function CreateListingsPage() {
 
@@ -762,6 +764,16 @@ export default function CreateListingsPage() {
                         return;
                       }
                       console.log("Saved:", data);
+
+                      if (isPublished) {
+                        toast.success(`"${formData.title}" is now published!`, {
+                          className: "publish-toast"
+                        });
+                      } else {
+                        toast.info(`"${formData.title}" saved as draft.`, {
+                          className: "publish-toast"
+                        });
+                      }
                       if (!editingListing) {
                         setListings((prev) => [
                           { ...data, media: formData.imagePreview ? [{ mediaUrl: formData.imagePreview }] : [] },
@@ -795,6 +807,7 @@ export default function CreateListingsPage() {
           </div>
         )}
       </div>
+      <ToastContainer position="top-right" autoClose={3000} />
     </main >
   );
 }

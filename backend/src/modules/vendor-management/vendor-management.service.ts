@@ -241,6 +241,7 @@ export class VendorManagementService {
         ...(dto.categoryId && { categoryId: dto.categoryId }),
         ...(dto.addressId && { addressId: dto.addressId }),
         ...(dto.listingType && { listingType: dto.listingType }),
+        ...(dto.visibilityStatus && { visibilityStatus: dto.visibilityStatus }),
         ...(dto.title && { title: dto.title }),
         ...(dto.shortDescription && { shortDescription: dto.shortDescription }),
         ...(dto.longDescription !== undefined && {
