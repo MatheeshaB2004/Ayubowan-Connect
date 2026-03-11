@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 const categories = [
-  { icon: "🍳", label: "Cooking", href: "/marketplace?cat=cooking" },
+  { icon: "🥘", label: "Cooking", href: "/marketplace?cat=cooking" },
   { icon: "🎨", label: "Arts & Crafts", href: "/marketplace?cat=arts" },
   { icon: "🎵", label: "Cultural", href: "/marketplace?cat=cultural" },
-  { icon: "🍵", label: "Food & Beverage", href: "/marketplace?cat=food" },
-  { icon: "📸", label: "Photography", href: "/marketplace?cat=photography" },
-  { icon: "🧘", label: "Workshops", href: "/marketplace?cat=workshops" },
+  { icon: "🧶", label: "Textiles & Handicrafts", href: "/marketplace?cat=textiles" },
+  { icon: "🎭", label: "Traditional Artisanship", href: "/marketplace?cat=artisanship" },
+  { icon: "🧘", label: "Events & Workshops", href: "/marketplace?cat=workshops" },
 ];
 
 export default function CategorySection() {
