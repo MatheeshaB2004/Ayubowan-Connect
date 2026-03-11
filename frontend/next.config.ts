@@ -10,11 +10,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'tourgossips.com', // Sri Lankan masks image
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'images.unsplash.com',
         pathname: '/**',
       },

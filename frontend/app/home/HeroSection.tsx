@@ -6,23 +6,23 @@ import { Search, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 const heroSlides = [
   {
     id: 1,
-    image: "https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=1200&q=80",
-    alt: "Sri Lankan cooking experience",
+    src: "/assets/home/mask.png",
+    alt: "Traditional Mask making experience",
   },
   {
     id: 2,
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80",
-    alt: "Traditional batik art workshop",
+    src: "/assets/home/pottery.png",
+    alt: "Traditional pottery making experience",
   },
   {
     id: 3,
-    image: "https://images.unsplash.com/photo-1613758947717-7e5bbf9c1b3d?w=1200&q=80",
-    alt: "Kandyan dance cultural experience",
+    src: "/assets/home/batik.png",
+    alt: "Traditional batik art experience",
   },
   {
     id: 4,
-    image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=1200&q=80",
-    alt: "Pottery making workshop",
+    src: "/assets/home/cooking.png",
+    alt: "Sri Lankan cooking experience",
   },
 ];
 
@@ -37,7 +37,8 @@ export default function HeroSection() {
       if (isTransitioning) return;
       setIsTransitioning(true);
       setCurrent((index + heroSlides.length) % heroSlides.length);
-      setTimeout(() => setIsTransitioning(false), 500);
+      
+      setTimeout(() => setIsTransitioning(false), 5000);
     },
     [isTransitioning]
   );
@@ -46,12 +47,12 @@ export default function HeroSection() {
   const next = useCallback(() => goTo(current + 1), [current, goTo]);
 
   useEffect(() => {
-    const timer = setInterval(next, 4000);
+    const timer = setInterval(next, 7000); 
     return () => clearInterval(timer);
   }, [next]);
 
   return (
-    <section className="w-full bg-[#f9fafb]">
+    <section className="py-1 bg-[#f9fafb]">
       {/* Heading */}
       <div className="text-center pt-12 pb-6 px-4">
         <p className="text-sm font-semibold uppercase tracking-widest mb-2 text-[#0d9488]">
@@ -73,21 +74,23 @@ export default function HeroSection() {
           {heroSlides.map((slide, i) => (
             <div
               key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-500 ${
+              style={{ transitionDuration: '5000ms' }}
+              className={`absolute inset-0 transition-opacity ease-in-out ${
                 i === current ? "opacity-100 z-10" : "opacity-0 z-0"
               }`}
             >
               <Image
-                src={slide.image}
+                src={slide.src}
                 alt={slide.alt}
                 fill
                 className="w-full h-full object-cover"
+                priority={i === 0}
               />
               <div className="absolute inset-0 bg-black/25" />
             </div>
           ))}
 
-          {/* Left Arrow */}
+          {/* Navigation Arrows */}
           <button
             onClick={prev}
             className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all hover:scale-105"
@@ -96,7 +99,6 @@ export default function HeroSection() {
             <ChevronLeft size={20} />
           </button>
 
-          {/* Right Arrow */}
           <button
             onClick={next}
             className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all hover:scale-105"
@@ -105,7 +107,7 @@ export default function HeroSection() {
             <ChevronRight size={20} />
           </button>
 
-          {/* Dot indicators */}
+          {/* Indicators */}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2">
             {heroSlides.map((_, i) => (
               <button
