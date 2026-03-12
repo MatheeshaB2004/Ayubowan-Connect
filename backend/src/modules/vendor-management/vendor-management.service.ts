@@ -18,7 +18,7 @@ export class VendorManagementService {
    * Get vendor profile by Clerk userId
    */
   async getVendorProfileByUserId(clerkUserId: string) {
-    const vendor = await this.prisma.vendor.findUnique({
+    const vendor = await this.prisma.vendor.findFirst({
       where: { clerkUserId },
       include: {
         locations: {

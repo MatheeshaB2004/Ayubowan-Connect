@@ -1,5 +1,6 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class DashboardService {
@@ -435,6 +436,7 @@ export class DashboardService {
 
     return result;
   }
+
 
   async getTopListings(userId: number, period: string) {
 
@@ -1263,12 +1265,20 @@ export class DashboardService {
       }
 
       for (const slot of d.slots) {
+        const [startH, startM] = slot.start.split(":").map(Number);
+        const [endH, endM] = slot.end.split(":").map(Number);
+
+        const start = new Date(d.date);
+        start.setUTCHours(startH, startM, 0, 0);
+
+        const end = new Date(d.date);
+        end.setUTCHours(endH, endM, 0, 0);
 
         await this.prisma.availabilitySlot.create({
           data: {
             availabilityId: availabilityRecord.id,
-            startTime: new Date(`${d.date}T${slot.start}`),
-            endTime: new Date(`${d.date}T${slot.end}`)
+            startTime: start,
+            endTime: end
           }
         });
 
@@ -1428,11 +1438,7 @@ export class DashboardService {
         },
         localTourist: {
           include: {
-            user: {
-              select: {
-                fullName: true
-              }
-            }
+            user: true
           }
         }
       },
@@ -1441,28 +1447,97 @@ export class DashboardService {
       }
     });
 
+    // collect slot ids
     const slotIds = bookings
       .map(b => b.slotId)
       .filter((id): id is number => id !== null);
 
+    // fetch slots
     const slots = await this.prisma.availabilitySlot.findMany({
       where: {
         id: { in: slotIds }
+      },
+      select: {
+        id: true,
+        startTime: true,
+        endTime: true,
+        maxGuests: true,
+        bookedGuests: true
       }
     });
 
+    // create slot map
     const slotMap = Object.fromEntries(
       slots.map(s => [s.id, s])
     );
 
-    return bookings.map(b => ({
-      ...b,
-      slot: b.slotId ? slotMap[b.slotId] : null
-    }));
+    // map bookings
+    return bookings.map(b => {
 
+      const slot = b.slotId ? slotMap[b.slotId] : null;
+
+      return {
+        ...b,
+        slot: slot
+          ? {
+            date: slot.startTime.toISOString().slice(0, 10),
+            startTime: slot.startTime.toISOString().slice(11, 16),
+            endTime: slot.endTime.toISOString().slice(11, 16),
+            maxGuests: slot.maxGuests,
+            bookedGuests: slot.bookedGuests,
+            remaining: slot.maxGuests - slot.bookedGuests,
+            isFull: slot.bookedGuests >= slot.maxGuests
+          }
+          : null
+      };
+    });
   }
-
   async acceptBooking(id: number) {
+
+    const booking = await this.prisma.booking.findUnique({
+      where: { id }
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    if (booking.status !== "PENDING") {
+      throw new Error("Booking already processed");
+    }
+
+    if (booking.slotId) {
+
+      await this.prisma.$transaction(async (tx) => {
+
+        const slot = await tx.availabilitySlot.findUnique({
+          where: { id: booking.slotId! }
+        });
+
+        if (!slot) {
+          throw new Error("Slot not found");
+        }
+
+        if (slot.bookedGuests >= slot.maxGuests) {
+          throw new BadRequestException("Slot already full");
+        }
+
+        if (slot.bookedGuests + booking.guests > slot.maxGuests) {
+          throw new BadRequestException("Slot capacity exceeded");
+        }
+
+        await tx.availabilitySlot.update({
+          where: { id: slot.id },
+          data: {
+            bookedGuests: {
+              increment: booking.guests
+            }
+          }
+        });
+
+      });
+
+    }
 
     return this.prisma.booking.update({
       where: { id },
@@ -1476,11 +1551,44 @@ export class DashboardService {
 
   async rejectBooking(id: number) {
 
+    const booking = await this.prisma.booking.findUnique({
+      where: { id }
+    });
+
+    if (!booking) throw new Error("Booking not found");
+
+    if (booking.status !== "PENDING") {
+      throw new Error("Booking already processed");
+    }
+
     return this.prisma.booking.update({
       where: { id },
       data: {
         status: "REJECTED",
-        rejectedAt: new Date()
+        approvedAt: new Date()
+      }
+    });
+
+  }
+
+  async completeBooking(id: number) {
+
+    const booking = await this.prisma.booking.findUnique({
+      where: { id }
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    if (booking.status !== "CONFIRMED") {
+      throw new Error("Only confirmed bookings can be completed");
+    }
+
+    return this.prisma.booking.update({
+      where: { id },
+      data: {
+        status: "COMPLETED"
       }
     });
 

@@ -186,6 +186,11 @@ export class DashboardController {
   rejectBooking(@Param("id") id: string) {
     return this.service.rejectBooking(Number(id));
   }
+
+  @Patch("booking/complete/:id")
+  completeBooking(@Param("id") id: string) {
+    return this.service.completeBooking(Number(id));
+  }
 }
 
 

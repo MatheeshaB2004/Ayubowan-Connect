@@ -100,38 +100,7 @@ export default function Dashboard() {
 
     const [replyText, setReplyText] = useState("");
     const [selectedReview, setSelectedReview] = useState(null);
-    const [bookings, setBookings] = useState([
-        {
-            id: 1,
-            name: "John Martinez",
-            property: "Downtown Loft",
-            nights: 3,
-            dates: "Dec 15-18",
-            price: 450,
-            avatar: "https://i.pravatar.cc/150?img=11",
-            status: "incoming",
-        },
-        {
-            id: 2,
-            name: "Emma Thompson",
-            property: "Luxury Villa",
-            nights: 5,
-            dates: "Dec 20-25",
-            price: 1250,
-            avatar: "https://i.pravatar.cc/150?img=5",
-            status: "incoming",
-        },
-        {
-            id: 3,
-            name: "Marcus Cole",
-            property: "Oceanview Retreat",
-            nights: 2,
-            dates: "Nov 10-12",
-            price: 600,
-            avatar: "https://i.pravatar.cc/150?img=3",
-            status: "completed",
-        },
-    ]);
+    const [bookings, setBookings] = useState<any[]>([])
 
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -139,6 +108,64 @@ export default function Dashboard() {
     const firstDay = new Date(year, month, 1).getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
 
+    const fetchBookings = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/bookings?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+            console.error("Invalid API response:", data);
+            return;
+        }
+
+        console.log("API RESPONSE:", data);
+
+        const mapped = data.map((b: any) => {
+
+            const start = b.slot?.startTime || null;
+            const end = b.slot?.endTime || null;
+            const date = b.slot?.date || null;
+
+
+            return {
+                id: b.id,
+                name: b.localTourist?.user?.fullName || "Guest",
+                property: b.listing?.title || "Listing",
+                nights: 1,
+                price: b.totalPrice || 0,
+                guests: b.guests,
+                avatar: "https://i.pravatar.cc/150",
+
+                slot: b.slot
+                    ? {
+                        date: date,
+                        start: start,
+                        end: end,
+                        maxGuests: b.slot.maxGuests,
+                        bookedGuests: b.slot.bookedGuests
+                    }
+                    : null,
+
+
+                status:
+                    b.status === "PENDING"
+                        ? "incoming"
+                        : b.status === "CONFIRMED"
+                            ? "accepted"
+                            : b.status === "COMPLETED"
+                                ? "completed"
+                                : "rejected"
+            };
+
+        });
+        setBookings(mapped)
+    };
+
+    useEffect(() => {
+        fetchBookings();
+    }, []);
     useEffect(() => {
 
         const interval = setInterval(async () => {
@@ -267,16 +294,50 @@ export default function Dashboard() {
         fetchListings();
     }, []);
 
-    const handleAccept = (id: number) => {
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "accepted" } : b));
+    const handleAccept = async (id: number) => {
+
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/booking/accept/${id}`,
+            { method: "PATCH" }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            toast.error(data.message || "Slot is already full", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b"
+                }
+            });
+            return;
+        }
+
+        toast.success("Booking accepted!", {
+            style: {
+                background: "#dcfce7",
+                color: "#166534"
+            }
+        });
+
+        fetchBookings();
     };
 
-    const handleDecline = (id: number) => {
-        setBookings(prev => prev.filter(b => b.id !== id));
+    const handleDecline = async (id: number) => {
+
+        await fetch(`http://localhost:3001/dashboard/vendor/booking/reject/${id}`, {
+            method: "PATCH"
+        });
+
+        fetchBookings(); // reload
     };
 
-    const handleMarkDone = (id: number) => {
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "completed" } : b));
+    const handleMarkDone = async (id: number) => {
+        await fetch(`http://localhost:3001/dashboard/vendor/booking/complete/${id}`, {
+            method: "PATCH"
+        });
+
+        fetchBookings(); // reload
     };
 
     const toggleDate = (day: number) => {
@@ -379,10 +440,14 @@ export default function Dashboard() {
     };
 
     const filteredBookings = bookings.filter(b => {
+
+        if (b.status === "rejected") return false;
+
         if (activeTab === "All") return true;
         if (activeTab === "Incoming") return b.status === "incoming";
         if (activeTab === "Accepted") return b.status === "accepted";
         if (activeTab === "Completed") return b.status === "completed";
+
         return true;
     });
 
@@ -512,7 +577,16 @@ export default function Dashboard() {
                                             <img src={b.avatar} alt={b.name} className="request-avatar" />
                                             <div className="request-info">
                                                 <h4>{b.name}</h4>
-                                                <p>{b.property} • {b.nights} nights</p>
+                                                <p>
+                                                    {b.property} • {b.slot ? `${b.slot.date}  ${b.slot.start} - ${b.slot.end}` : "No slot"}
+                                                    {" • Guests: "} {b.guests}
+                                                    {b.slot && ` (${b.slot.bookedGuests}/${b.slot.maxGuests})`}
+                                                </p>
+                                                {b.slot?.isFull && (
+                                                    <span style={{ color: "red", fontWeight: "bold", fontSize: "12px" }}>
+                                                        SLOT FULL
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="request-actions">
@@ -520,7 +594,13 @@ export default function Dashboard() {
                                             <div className="action-buttons">
                                                 {b.status === "incoming" && (
                                                     <>
-                                                        <button className="btn-accept" onClick={() => handleAccept(b.id)}>Accept</button>
+                                                        <button
+                                                            className="btn-accept"
+                                                            disabled={b.slot?.isFull}
+                                                            onClick={() => handleAccept(b.id)}
+                                                        >
+                                                            Accept
+                                                        </button>
                                                         <button className="btn-decline" onClick={() => handleDecline(b.id)}>Decline</button>
                                                     </>
                                                 )}
