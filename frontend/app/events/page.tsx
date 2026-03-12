@@ -1,52 +1,171 @@
-import { getEvents } from "@/lib/api/events";
-import CalendarClient from "@/app/events/components/CalendarClient";
+"use client";
 
-export const dynamic = 'force-dynamic';
+import { useState, useEffect, useCallback } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { EventFilters } from "./components/EventFilters";
+import { AllEventsSection } from "./components/AllEventsSection";
+import { VendorEventsSection } from "./components/VendorEventsSection";
+import { UserRegisteredEvents } from "./components/UserRegisteredEvents";
+import {
+  fetchAllEvents,
+  fetchVendorEvents,
+  fetchUserRegisteredEvents,
+} from "./lib/api/events";
+import { Event } from "./types/events";
 
-export default async function EventsPage() {
-  let events: Awaited<ReturnType<typeof getEvents>> = [];
-  let error = null;
+export default function EventsPage() {
+  const [search, setSearch]     = useState("");
+  const [category, setCategory] = useState("all");
+  const [location, setLocation] = useState("all");
 
-  try {
-    events = await getEvents();
-  } catch (e) {
-    console.error("Failed to fetch events:", e);
-    error = "Failed to load events. Please try again later.";
-  }
+  const [allEvents, setAllEvents]       = useState<Event[]>([]);
+  const [vendorEvents, setVendorEvents] = useState<Event[]>([]);
+  const [userEvents, setUserEvents]     = useState<Event[]>([]);
+  const [loading, setLoading]           = useState(true);
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
-            <svg 
-              className="w-8 h-8 text-red-500" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-slate-900 mb-2">
-            Unable to Load Calendar
-          </h2>
-          <p className="text-slate-600 mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
-          >
-            Retry
-          </button>
+  // AuthContext: { user, role, isAuthenticated, loginAsTraveller, loginAsVendor, logout }
+  // role: 'traveller' | 'vendor' | 'guest'
+  const { role } = useAuth();
+
+  const isGuest  = role === "guest" || !role;
+  const isVendor = role === "vendor";
+  const isUser   = role === "traveller";
+
+  // JWT read — store under "accessToken" key when you wire real login
+  const getToken = () =>
+    typeof window !== "undefined" ? (localStorage.getItem("accessToken") ?? "") : "";
+
+  const loadAllEvents = useCallback(async () => {
+    try {
+      const data = await fetchAllEvents({
+        search:   search   || undefined,
+        category: category !== "all" ? category : undefined,
+        location: location !== "all" ? location : undefined,
+      });
+      setAllEvents(data);
+    } catch (err) {
+      console.error("Failed to load events:", err);
+      setAllEvents([]);
+    }
+  }, [search, category, location]);
+
+  const loadVendorEvents = useCallback(async () => {
+    if (!isVendor) return;
+    try {
+      const data = await fetchVendorEvents(getToken());
+      setVendorEvents(data);
+    } catch (err) {
+      console.error("Failed to load vendor events:", err);
+      setVendorEvents([]);
+    }
+  }, [isVendor]);
+
+  const loadUserEvents = useCallback(async () => {
+    if (!isUser) return;
+    try {
+      const data = await fetchUserRegisteredEvents(getToken());
+      setUserEvents(data);
+    } catch (err) {
+      console.error("Failed to load user events:", err);
+      setUserEvents([]);
+    }
+  }, [isUser]);
+
+  // Initial load
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      await Promise.all([loadAllEvents(), loadVendorEvents(), loadUserEvents()]);
+      setLoading(false);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced filter re-fetch
+  useEffect(() => {
+    const t = setTimeout(loadAllEvents, search ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [search, category, location, loadAllEvents]);
+
+  return (
+    <div className="min-h-screen bg-[#f9fafb]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Cultural Events Calendar
+          </h1>
+          <p className="text-gray-500 mt-1.5 text-sm">
+            Discover and participate in authentic Sri Lankan cultural experiences
+          </p>
         </div>
-      </div>
-    );
-  }
 
-  return <CalendarClient initialEvents={events} />;
+        {/* Filters */}
+        <EventFilters
+          search={search} category={category} location={location}
+          onSearchChange={setSearch}
+          onCategoryChange={setCategory}
+          onLocationChange={setLocation}
+        />
+
+        {/* All Events */}
+        {loading ? <AllEventsSkeleton /> : (
+          <AllEventsSection
+            events={allEvents}
+            totalCount={allEvents.length}
+            isGuest={isGuest}
+          />
+        )}
+
+        {/* Vendor section */}
+        {isVendor && (
+          <VendorEventsSection
+            events={vendorEvents}
+            token={getToken()}
+            onEventCreated={() => { loadVendorEvents(); loadAllEvents(); }}
+          />
+        )}
+
+        {/* Traveller section */}
+        {isUser && (
+          <UserRegisteredEvents
+            events={userEvents}
+            onRegistrationChange={loadUserEvents}
+          />
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+function AllEventsSkeleton() {
+  return (
+    <section className="mb-10">
+      <div className="flex items-center justify-between mb-4">
+        <div className="h-7 w-32 bg-gray-200 rounded-lg animate-pulse" />
+        <div className="h-4 w-24 bg-gray-100 rounded-lg animate-pulse" />
+      </div>
+      <div className="h-0.5 bg-gray-200 rounded mb-4" />
+      <div className="space-y-3">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-200 p-4 flex gap-4 animate-pulse">
+            <div className="w-[110px] h-[78px] bg-gray-100 rounded-lg flex-shrink-0" />
+            <div className="flex-1 space-y-2 py-1">
+              <div className="h-5 bg-gray-100 rounded w-2/3" />
+              <div className="h-3 bg-gray-100 rounded w-1/3" />
+              <div className="flex gap-4 mt-3">
+                {[...Array(4)].map((_, j) => <div key={j} className="h-3 bg-gray-100 rounded w-20" />)}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 items-end flex-shrink-0">
+              <div className="h-7 w-16 bg-gray-100 rounded-md" />
+              <div className="h-8 w-24 bg-gray-100 rounded-lg" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
