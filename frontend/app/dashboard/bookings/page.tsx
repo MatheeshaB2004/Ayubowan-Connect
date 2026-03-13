@@ -14,7 +14,7 @@ type Booking = {
   listingId: number;
   bookingDate: string;
   guests: number;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'COMPLETED';
   totalPrice: number;
   listing: {
     title: string;
@@ -119,7 +119,7 @@ export default function BookingsPage() {
                     </td>
                     <td className="py-4 px-6">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                        ${booking.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                        ${booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
                           booking.status === 'REJECTED' ? 'bg-red-100 text-red-800' :
                             'bg-yellow-100 text-yellow-800'}`}
                       >
@@ -130,7 +130,7 @@ export default function BookingsPage() {
                       {booking.status === 'PENDING' && (
                         <span className="text-sm text-gray-500 italic">Waiting for vendor approval</span>
                       )}
-                      {booking.status === 'APPROVED' && (
+                      {booking.status === 'CONFIRMED' && (
                         <button
                           onClick={() => handlePayNow(booking.id)}
                           className="btn-book-now text-sm px-4 py-2"

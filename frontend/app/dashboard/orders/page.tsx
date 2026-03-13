@@ -16,67 +16,46 @@ type Order = {
   status: 'PAID' | 'COMPLETED';
 };
 
-/* ── Mock data used when the /orders endpoint is not yet available ── */
+/* ── Mock fallback – used ONLY when the API is completely unreachable ── */
 const MOCK_ORDERS: Order[] = [
-  {
-    id: 1023,
-    itemName: 'Pottery Workshop',
-    vendorName: 'Lanka Crafts',
-    orderDate: '2026-03-21',
-    amount: 45,
-    status: 'PAID',
-  },
-  {
-    id: 1024,
-    itemName: 'Batik Fabric',
-    vendorName: 'Art Village',
-    orderDate: '2026-03-22',
-    amount: 18,
-    status: 'PAID',
-  },
-  {
-    id: 1025,
-    itemName: 'Spice Garden Tour',
-    vendorName: 'Hill Country Spices',
-    orderDate: '2026-03-10',
-    amount: 30,
-    status: 'COMPLETED',
-  },
+  { id: 1023, itemName: 'Pottery Workshop', vendorName: 'Lanka Crafts', orderDate: '2026-03-21', amount: 45, status: 'PAID' },
+  { id: 1024, itemName: 'Batik Fabric', vendorName: 'Art Village', orderDate: '2026-03-22', amount: 18, status: 'PAID' },
+  { id: 1025, itemName: 'Spice Garden Tour', vendorName: 'Hill Country Spices', orderDate: '2026-03-10', amount: 30, status: 'COMPLETED' },
 ];
 
 export default function OrdersPage() {
   const { isSignedIn, user, isLoaded } = useUser();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [usedMock, setUsedMock] = useState(false);
 
   useEffect(() => {
-    if (!isLoaded) return;
-
-    if (!isSignedIn || !user) {
-      setIsLoading(false);
+    if (!isLoaded || !user) {
+      if (isLoaded && !isSignedIn) setIsLoading(false);
       return;
     }
 
     const fetchOrders = async () => {
+      console.log('Orders API URL:', `${API_BASE}/orders`);
+      console.log('User ID:', user.id);
       try {
         const response = await fetch(`${API_BASE}/orders`, {
-          headers: {
-            'x-user-id': user.id,
-          },
+          headers: { 'x-user-id': user.id },
         });
+
         if (response.ok) {
           const data = await response.json();
-          setOrders(data || []);
+          setOrders(data ?? []);
+          setUsedMock(false);
         } else {
+          console.error('Server returned an error:', response.status);
           toast.error('Failed to load orders');
-          // Fall back to mock data so the page still renders
-          setOrders(MOCK_ORDERS);
         }
       } catch (error) {
-        console.error('Error fetching orders:', error);
-        toast.error('Failed to load orders');
-        // Fall back to mock data so the page still renders
+        console.error('Network or fetch error:', error);
+        toast.error('Network error. Falling back to sample data.');
         setOrders(MOCK_ORDERS);
+        setUsedMock(true);
       } finally {
         setIsLoading(false);
       }
@@ -85,27 +64,52 @@ export default function OrdersPage() {
     fetchOrders();
   }, [isSignedIn, user, isLoaded]);
 
-  /* ── Loading state ── */
+  /* ── Loading ── */
   if (!isLoaded || isLoading) {
-    return <div className="p-8 text-center text-gray-500">Loading orders...</div>;
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="flex items-center justify-center py-20 text-gray-400 text-base">
+          <svg className="animate-spin h-5 w-5 mr-3 text-[#0d9488]" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+          Loading orders…
+        </div>
+      </div>
+    );
   }
 
-  /* ── Unauthenticated state ── */
+  /* ── Unauthenticated ── */
   if (!isSignedIn) {
-    return <div className="p-8 text-center text-gray-500">Please sign in to view your orders.</div>;
+    return (
+      <div className="max-w-6xl mx-auto p-6 text-center text-gray-500 py-20">
+        Please sign in to view your orders.
+      </div>
+    );
   }
 
   return (
     <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-3xl font-bold text-gray-900 mb-8 tracking-tight">My Orders</h1>
 
+      {usedMock && (
+        <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-700">
+          Showing sample data — the orders API is currently unavailable.
+        </div>
+      )}
+
       {orders.length === 0 ? (
         /* ── Empty state ── */
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+            <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+          </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders yet</h2>
           <p className="text-gray-500 mb-6">You have no completed orders yet.</p>
           <Link href="/marketplace">
-            <button className="btn-primary rounded-lg px-6 py-3 font-semibold text-white transition-all shadow-sm">
+            <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
               Browse Marketplace
             </button>
           </Link>
@@ -127,7 +131,7 @@ export default function OrdersPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
                     <td className="py-4 px-6 text-sm text-gray-500 font-mono">
                       #{order.id.toString().padStart(6, '0')}
                     </td>
@@ -144,7 +148,7 @@ export default function OrdersPage() {
                       })}
                     </td>
                     <td className="py-4 px-6 text-sm text-gray-900 font-semibold">
-                      ${order.amount.toLocaleString()}
+                      LKR {order.amount.toLocaleString()}
                     </td>
                     <td className="py-4 px-6">
                       <span
