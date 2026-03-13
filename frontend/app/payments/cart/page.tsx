@@ -56,7 +56,7 @@ export default function CartPage() {
             </p>
 
             <Link href="/marketplace">
-              <button className="btn-primary rounded-lg px-6 py-3 transition-all shadow-sm">
+              <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
                 Browse Marketplace
               </button>
             </Link>
@@ -145,7 +145,7 @@ export default function CartPage() {
               </div>
 
               <Link href="/payments/checkout">
-                <button className="btn-primary w-full rounded-lg px-6 py-3.5 shadow-sm transition-all">
+                <button className="w-full rounded-xl bg-[#0d9488] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
                   Proceed to Checkout
                 </button>
               </Link>

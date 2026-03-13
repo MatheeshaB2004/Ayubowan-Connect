@@ -4,11 +4,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
+import { useUser } from '@clerk/nextjs';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart();
   const router = useRouter();
+  const { user } = useUser();
 
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -46,14 +50,55 @@ export default function CheckoutPage() {
 
     if (!cardName) newErrors.cardName = 'Cardholder name is required';
     if (cardNumber.length < 16) newErrors.cardNumber = 'Card number must be 16 digits';
-    if (!expiry.match(/^\d{2}\/\d{2}$/)) newErrors.expiry = 'Expiry must be in MM/YY format';
+    if (!expiry.match(/^\d{2}\/\d{2}$/)) {
+      newErrors.expiry = 'Expiry must be in MM/YY format';
+    } else {
+      // Validate expiry date is not in the past
+      const [monthStr, yearStr] = expiry.split('/');
+      const expiryMonth = parseInt(monthStr, 10);
+      const expiryYear = 2000 + parseInt(yearStr, 10);
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1; // 1-indexed
+      const currentYear = now.getFullYear();
+
+      if (expiryMonth < 1 || expiryMonth > 12) {
+        newErrors.expiry = 'Month must be between 01 and 12';
+      } else if (expiryYear < currentYear) {
+        newErrors.expiry = 'Card has expired';
+      } else if (expiryYear === currentYear && expiryMonth < currentMonth) {
+        newErrors.expiry = 'Card has expired';
+      }
+    }
     if (cvv.length !== 3) newErrors.cvv = 'CVV must be exactly 3 digits';
 
     setErrors(newErrors);
 
-    if (Object.keys(newErrors).length > 0) return;
+    if (Object.keys(newErrors).length > 0) {
+      // Show a toast for the first error found
+      const firstError = Object.values(newErrors)[0];
+      if (firstError) toast.error(firstError);
+      return;
+    }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    if (user) {
+      const bookingItems = items.filter(item => item.bookingId);
+      for (const item of bookingItems) {
+        try {
+          await fetch(`${API_BASE}/bookings/${item.bookingId}/status`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-user-id': user.id,
+            },
+            body: JSON.stringify({ status: 'COMPLETED' })
+          });
+        } catch (err) {
+          console.error('Failed to update booking status', err);
+        }
+      }
+    }
 
     await clearCart();
 
@@ -61,7 +106,7 @@ export default function CheckoutPage() {
   };
 
   const inputBase =
-    'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/30';
+    'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#0d9488] focus:outline-none focus:ring-2 focus:ring-[#0d9488]/30';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
@@ -70,12 +115,12 @@ export default function CheckoutPage() {
         {/* Back to Cart */}
         <Link
           href="/payments/cart"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-green-700 transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] mb-6"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
-          ← Back to Cart
+          Back to Cart
         </Link>
 
         {/* Header */}
@@ -162,7 +207,7 @@ export default function CheckoutPage() {
                 }}
               />
               {errors.cardName && (
-                <p className="text-sm text-red-600">{errors.cardName}</p>
+                <p className="mt-1 text-sm text-red-600">{errors.cardName}</p>
               )}
             </div>
 
@@ -182,7 +227,7 @@ export default function CheckoutPage() {
                 }}
               />
               {errors.cardNumber && (
-                <p className="text-sm text-red-600">{errors.cardNumber}</p>
+                <p className="mt-1 text-sm text-red-600">{errors.cardNumber}</p>
               )}
             </div>
 
@@ -204,7 +249,7 @@ export default function CheckoutPage() {
                   }}
                 />
                 {errors.expiry && (
-                  <p className="text-sm text-red-600">{errors.expiry}</p>
+                  <p className="mt-1 text-sm text-red-600">{errors.expiry}</p>
                 )}
               </div>
 
@@ -223,7 +268,7 @@ export default function CheckoutPage() {
                   }}
                 />
                 {errors.cvv && (
-                  <p className="text-sm text-red-600">{errors.cvv}</p>
+                  <p className="mt-1 text-sm text-red-600">{errors.cvv}</p>
                 )}
               </div>
 
@@ -232,9 +277,9 @@ export default function CheckoutPage() {
             {/* Pay Button */}
             <button
               onClick={handlePay}
-              className="btn-primary w-full rounded-lg px-6 py-3.5 shadow-sm transition-all"
+              className="w-full rounded-xl bg-[#0d9488] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
             >
-              Pay Now
+              Pay Now — LKR {totalAmount.toLocaleString()}
             </button>
 
           </div>

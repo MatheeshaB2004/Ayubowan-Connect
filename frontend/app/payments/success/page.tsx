@@ -45,11 +45,20 @@ export default function PaymentSuccessPage() {
           Thank you for shopping with us!
         </p>
 
-        <Link href="/marketplace">
-          <button className="btn-primary w-full rounded-lg px-6 py-3 shadow-sm transition-all">
-            Continue Shopping
-          </button>
-        </Link>
+        {/* Actions */}
+        <div className="flex flex-col gap-3">
+          <Link href="/dashboard/orders">
+            <button className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+              View My Orders
+            </button>
+          </Link>
+
+          <Link href="/marketplace">
+            <button className="w-full rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98]">
+              Continue Shopping
+            </button>
+          </Link>
+        </div>
 
       </div>
 
