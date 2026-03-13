@@ -25,7 +25,7 @@ type CartContextType = {
     items: CartItem[];
     cartCount: number;
     totalAmount: number;
-    addToCart: (listingId: number, quantity: number) => Promise<void>;
+    addToCart: (listingId: number | null, quantity?: number, bookingId?: number) => Promise<void>;
     removeFromCart: (itemId: number) => Promise<void>;
     clearCart: () => Promise<void>;
     refreshCart: () => Promise<void>;
@@ -98,23 +98,24 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
        Add to Cart
     ======================= */
 
-    const addToCart = async (listingId: number, quantity = 1) => {
+    const addToCart = async (listingId: number | null, quantity = 1, bookingId?: number) => {
         if (!isSignedIn || !userId) {
             toast.error('Please log in to add items to cart');
             return;
         }
 
         try {
+            const bodyPayload: any = { quantity };
+            if (listingId !== null) bodyPayload.listingId = listingId;
+            if (bookingId !== undefined) bodyPayload.bookingId = bookingId;
+
             const response = await fetch(`${API_BASE}/cart`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-user-id': userId,
                 },
-                body: JSON.stringify({
-                    listingId,
-                    quantity,
-                }),
+                body: JSON.stringify(bodyPayload),
             });
 
             if (!response.ok) {
