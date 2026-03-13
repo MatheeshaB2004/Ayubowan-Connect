@@ -50,6 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           <AuthProvider>
             <CartProvider>
+              <Toaster position="top-center" />
               <GlobalHeader />
               <main className="flex-grow pt-20">
                 {children}
