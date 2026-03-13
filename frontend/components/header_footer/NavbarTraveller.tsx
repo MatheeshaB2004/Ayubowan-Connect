@@ -34,7 +34,7 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
 
       <div className={`h-6 w-px ${textColorClass.includes('white') ? 'bg-white/30' : 'bg-gray-300'}`}></div>
 
-      <Link href="/cart" className={`relative p-2 rounded-full hover:bg-black/5 transition ${textColorClass}`}>
+      <Link href="/payments/cart" className={`relative p-2 rounded-full hover:bg-black/5 transition ${textColorClass}`}>
         <ShoppingBag size={20} />
         {cartCount > 0 && (
           <span className="absolute top-0 right-0 h-4 w-4 flex items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold">
