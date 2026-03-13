@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useUser } from '@clerk/nextjs';
+import toast from 'react-hot-toast';
 
 /* =======================
    Types
@@ -99,7 +100,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const addToCart = async (listingId: number, quantity = 1) => {
         if (!isSignedIn || !userId) {
-            alert('Please log in to add items to cart');
+            toast.error('Please log in to add items to cart');
             return;
         }
 
@@ -123,7 +124,6 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
 
             await fetchCart();
-            alert('Added to cart!');
         } catch (error) {
             console.error('Cart error:', error);
         }
