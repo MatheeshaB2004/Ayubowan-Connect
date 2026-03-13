@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Headers, Get } from '@nestjs/common';
+import { Controller, Post, Body, Headers, Get, Patch, Param } from '@nestjs/common';
 import { BookingService } from './booking.service';
 
 @Controller('bookings')
@@ -18,5 +18,14 @@ export class BookingController {
     @Headers('x-user-id') userId: string
   ) {
     return this.bookingService.getUserBookings(userId);
+  }
+
+  @Patch(':id/status')
+  async updateBookingStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string },
+    @Headers('x-user-id') userId: string
+  ) {
+    return this.bookingService.updateBookingStatus(Number(id), body.status, userId);
   }
 }

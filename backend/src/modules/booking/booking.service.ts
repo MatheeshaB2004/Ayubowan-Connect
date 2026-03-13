@@ -110,6 +110,21 @@ export class BookingService {
     }
   }
 
+  async updateBookingStatus(bookingId: number, status: string, rawUserId: string) {
+    const userId = await this.resolveUserId(rawUserId);
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId }
+    });
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.localTouristId !== userId) {
+      throw new BadRequestException('Not authorized');
+    }
+    return this.prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: status as any }
+    });
+  }
+
   async getUserBookings(rawUserId: string) {
     const userId = await this.resolveUserId(rawUserId);
 
