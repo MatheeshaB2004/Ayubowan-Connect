@@ -22,7 +22,7 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import './ExperienceDetail.css';
 import ReviewSection from '../../review';
 import VendorLocationMap from '@/components/maps/VendorLocationMap';
@@ -70,6 +70,7 @@ const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 export default function ExperienceDetailPage() {
   const { isSignedIn, user } = useUser();
   const params = useParams();
+  const router = useRouter();
   const idStr = Array.isArray(params?.id) ? params?.id[0] : params?.id;
 
   const [listing, setListing] = useState<ApiListing | null>(null);
@@ -128,10 +129,11 @@ export default function ExperienceDetailPage() {
   }, [listing?.id]);
 
   const availableTimeSlots = React.useMemo(() => {
-    if (!listing?.availability) return [];
+    if (!listing?.availability || listing.availability.trim() === '' || listing.availability === '[]') return ["09:00", "14:00"];
     try {
       const parsed = JSON.parse(listing.availability);
       if (Array.isArray(parsed)) {
+        if (parsed.length === 0) return ["09:00", "14:00"];
         if (typeof parsed[0] === 'string') return parsed;
         if (parsed[0]?.time) return parsed.map((p: any) => p.time);
         if (parsed[0]?.start) return parsed.map((p: any) => `${p.start} - ${p.end}`);
@@ -174,16 +176,21 @@ export default function ExperienceDetailPage() {
         },
         body: JSON.stringify({
           listingId: listing?.id,
-          bookingDate: bookingForm.date,
-          guests: bookingForm.participants,
+          date: bookingForm.date,
+          participants: bookingForm.participants,
+          name: bookingForm.name,
+          email: bookingForm.email,
           notes: bookingForm.time ? `Time: ${bookingForm.time}\n${bookingForm.notes}` : bookingForm.notes,
         }),
       });
 
       if (response.ok) {
-        setIsBookingSubmitted(true);
         toast.success('Booking request sent!');
+        setIsBookingModalOpen(false);
+        router.push('/dashboard/bookings');
       } else {
+        const errorText = await response.text();
+        console.error("Booking API error:", response.status, errorText);
         toast.error('Failed to submit booking request.');
       }
     } catch (error) {
@@ -625,7 +632,7 @@ export default function ExperienceDetailPage() {
                 />
               </div>
 
-              {availableTimeSlots.length > 0 && (
+              {availableTimeSlots.length > 0 ? (
                 <div className="form-field">
                   <label className="field-label" htmlFor="time-slot">Time slot</label>
                   <select
@@ -640,6 +647,13 @@ export default function ExperienceDetailPage() {
                       <option key={idx} value={slot}>{slot}</option>
                     ))}
                   </select>
+                </div>
+              ) : (
+                <div className="form-field">
+                  <label className="field-label">Time slot</label>
+                  <div className="p-3 mt-1 bg-gray-50 border border-gray-200 rounded text-gray-500 italic text-sm">
+                    No available time slots
+                  </div>
                 </div>
               )}
 
