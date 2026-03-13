@@ -1077,8 +1077,14 @@
   margin-top: 0.5rem;
 }
 
-.btn-book-now:hover {
+.btn-book-now:hover:not(:disabled) {
   background-color: #2d7a6a;
+}
+
+.btn-book-now:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+  color: #9ca3af;
 }
 
 .btn-add-cart {

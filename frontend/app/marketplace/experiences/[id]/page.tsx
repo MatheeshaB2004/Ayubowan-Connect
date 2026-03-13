@@ -26,7 +26,7 @@ import { useParams } from 'next/navigation';
 import './ExperienceDetail.css';
 import ReviewSection from '../../review';
 import VendorLocationMap from '@/components/maps/VendorLocationMap';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@clerk/nextjs';
 import toast from "react-hot-toast";
 
 type ApiListing = {
@@ -56,6 +56,7 @@ type ApiListing = {
     contactEmail?: string | null;
     contactPhone?: string | null;
   };
+  availability?: string;
 };
 
 type InclusionItem = {
@@ -67,7 +68,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001'
 const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 
 export default function ExperienceDetailPage() {
-  const { user } = useAuth();
+  const { isSignedIn, user } = useUser();
   const params = useParams();
   const idStr = Array.isArray(params?.id) ? params?.id[0] : params?.id;
 
@@ -82,6 +83,7 @@ export default function ExperienceDetailPage() {
     name: '',
     email: '',
     date: '',
+    time: '',
     participants: 1,
     notes: '',
   });
@@ -125,13 +127,27 @@ export default function ExperienceDetailPage() {
     setCurrentImageIndex(0);
   }, [listing?.id]);
 
-
-
-
+  const availableTimeSlots = React.useMemo(() => {
+    if (!listing?.availability) return [];
+    try {
+      const parsed = JSON.parse(listing.availability);
+      if (Array.isArray(parsed)) {
+        if (typeof parsed[0] === 'string') return parsed;
+        if (parsed[0]?.time) return parsed.map((p: any) => p.time);
+        if (parsed[0]?.start) return parsed.map((p: any) => `${p.start} - ${p.end}`);
+      }
+      return [listing.availability];
+    } catch {
+      if (listing.availability.includes(',')) {
+        return listing.availability.split(',').map((s: string) => s.trim());
+      }
+      return [listing.availability];
+    }
+  }, [listing?.availability]);
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) {
+    if (!isSignedIn || !user) {
       toast.error("Please log in to book this experience");
       return;
     }
@@ -160,7 +176,7 @@ export default function ExperienceDetailPage() {
           listingId: listing?.id,
           bookingDate: bookingForm.date,
           guests: bookingForm.participants,
-          notes: bookingForm.notes,
+          notes: bookingForm.time ? `Time: ${bookingForm.time}\n${bookingForm.notes}` : bookingForm.notes,
         }),
       });
 
@@ -603,24 +619,29 @@ export default function ExperienceDetailPage() {
                   title="Booking Date"
                   type="date"
                   className="field-input"
+                  min={new Date().toISOString().split('T')[0]}
                   value={bookingForm.date}
                   onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
                 />
               </div>
 
-              <div className="form-field">
-                <label className="field-label" htmlFor="time-slot">Time slot</label>
-                <select
-                  id="time-slot"
-                  title="Time slot"
-                  className="field-input"
-                  defaultValue=""
-                >
-                  <option value="">Select time</option>
-                  <option value="morning">Morning (9:00 AM)</option>
-                  <option value="afternoon">Afternoon (2:00 PM)</option>
-                </select>
-              </div>
+              {availableTimeSlots.length > 0 && (
+                <div className="form-field">
+                  <label className="field-label" htmlFor="time-slot">Time slot</label>
+                  <select
+                    id="time-slot"
+                    title="Time slot"
+                    className="field-input"
+                    value={bookingForm.time}
+                    onChange={(e) => setBookingForm({ ...bookingForm, time: e.target.value })}
+                  >
+                    <option value="">Select time</option>
+                    {availableTimeSlots.map((slot: string, idx: number) => (
+                      <option key={idx} value={slot}>{slot}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="form-field">
                 <label className="field-label" htmlFor="booking-participants">
@@ -640,14 +661,10 @@ export default function ExperienceDetailPage() {
 
               <button
                 className="btn-book-now"
-                style={{ backgroundColor: '#16a34a', color: 'white', borderRadius: '0.5rem' }}
+                disabled={!bookingForm.date || bookingForm.participants < 1}
                 onClick={() => {
-                  if (!bookingForm.date) {
-                    toast.error('Please select a date');
-                    return;
-                  }
-                  if (bookingForm.participants < 1) {
-                    toast.error('At least 1 participant is required');
+                  if (availableTimeSlots.length > 0 && !bookingForm.time) {
+                    toast.error('Please select a time slot');
                     return;
                   }
                   setIsBookingModalOpen(true);
@@ -690,7 +707,7 @@ export default function ExperienceDetailPage() {
                     The vendor will confirm your booking within 24 hours.
                   </p>
                   <button
-                    className="w-full rounded-lg bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700"
+                    className="btn-primary w-full"
                     onClick={() => {
                       setIsBookingModalOpen(false);
                       setIsBookingSubmitted(false);
@@ -742,7 +759,7 @@ export default function ExperienceDetailPage() {
                     />
                   </div>
 
-                  <button type="submit" className="w-full rounded-lg bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700">
+                  <button type="submit" className="btn-primary w-full">
                     Send Booking Request
                   </button>
                 </form>
