@@ -27,7 +27,6 @@ import './ExperienceDetail.css';
 import ReviewSection from '../../review';
 import VendorLocationMap from '@/components/maps/VendorLocationMap';
 import { useAuth } from '@/context/AuthContext';
-import { useCart } from '@/context/CartContext';
 import toast from "react-hot-toast";
 
 type ApiListing = {
@@ -69,7 +68,6 @@ const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 
 export default function ExperienceDetailPage() {
   const { user } = useAuth();
-  const { addToCart } = useCart();
   const params = useParams();
   const idStr = Array.isArray(params?.id) ? params?.id[0] : params?.id;
 
@@ -164,16 +162,7 @@ export default function ExperienceDetailPage() {
     }
   };
 
-  const handleAddToCart = async () => {
-    if (!listing) return;
 
-    try {
-      await addToCart(listing.id, 1);
-      toast.success("Item added to cart");
-    } catch {
-      toast.error("Could not add item to cart");
-    }
-  };
 
 
   if (isLoading) {
@@ -665,8 +654,8 @@ export default function ExperienceDetailPage() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Reserve your experience</h3>
-              <button 
-                className="modal-close-btn" 
+              <button
+                className="modal-close-btn"
                 onClick={() => setIsBookingModalOpen(false)}
                 title="Close modal"
                 aria-label="Close modal"
