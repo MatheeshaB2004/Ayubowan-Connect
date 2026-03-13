@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -68,6 +68,7 @@ export default function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const addedRef = useRef(false);
 
   useEffect(() => {
     if (!idStr) return;
@@ -295,6 +296,7 @@ export default function ProductDetailPage() {
                 onClick={async () => {
                   if (!listing) return;
                   await addToCart(listing.id, quantity);
+                  addedRef.current = true;
                   toast.success('Added to cart!');
                 }}
               >
@@ -305,7 +307,9 @@ export default function ProductDetailPage() {
                 style={{ flex: 1 }}
                 onClick={async () => {
                   if (!listing) return;
-                  await addToCart(listing.id, quantity);
+                  if (!addedRef.current) {
+                    await addToCart(listing.id, quantity);
+                  }
                   router.push('/payments/cart');
                 }}
               >

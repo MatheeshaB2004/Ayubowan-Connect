@@ -82,7 +82,7 @@ export default function ExperienceDetailPage() {
     name: '',
     email: '',
     date: '',
-    guests: 1,
+    participants: 1,
     notes: '',
   });
   const [isBookingSubmitted, setIsBookingSubmitted] = useState(false);
@@ -136,6 +136,19 @@ export default function ExperienceDetailPage() {
       return;
     }
 
+    if (!bookingForm.name.trim()) {
+      toast.error('Please enter your name');
+      return;
+    }
+    if (!bookingForm.email.trim()) {
+      toast.error('Please enter your email');
+      return;
+    }
+    if (bookingForm.participants < 1) {
+      toast.error('At least 1 participant is required');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/bookings`, {
         method: 'POST',
@@ -146,19 +159,20 @@ export default function ExperienceDetailPage() {
         body: JSON.stringify({
           listingId: listing?.id,
           bookingDate: bookingForm.date,
-          guests: bookingForm.guests,
+          guests: bookingForm.participants,
           notes: bookingForm.notes,
         }),
       });
 
       if (response.ok) {
         setIsBookingSubmitted(true);
+        toast.success('Booking request sent!');
       } else {
-        alert('Failed to submit booking request.');
+        toast.error('Failed to submit booking request.');
       }
     } catch (error) {
       console.error('Booking error:', error);
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.');
     }
   };
 
@@ -608,40 +622,39 @@ export default function ExperienceDetailPage() {
                 </select>
               </div>
 
-              <div className="guests-selector">
-                <div className="guest-field">
-                  <label className="field-label" htmlFor="adult-guests">Adults</label>
-                  <select
-                    id="adult-guests"
-                    title="Adult guests"
-                    className="field-input"
-                    value={bookingForm.guests}
-                    onChange={(e) => setBookingForm({ ...bookingForm, guests: parseInt(e.target.value) })}
-                  >
-                    {[1, 2, 3, 4, 5, 6].map(num => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="guest-field">
-                  <label className="field-label" htmlFor="child-guests">Children</label>
-                  <select id="child-guests" title="Child guests" className="field-input" defaultValue="0">
-                    {[0, 1, 2, 3, 4].map(num => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                </div>
+              <div className="form-field">
+                <label className="field-label" htmlFor="booking-participants">
+                  <Users size={16} />
+                  Participants
+                </label>
+                <input
+                  id="booking-participants"
+                  title="Participants"
+                  type="number"
+                  min={1}
+                  className="field-input"
+                  value={bookingForm.participants}
+                  onChange={(e) => setBookingForm({ ...bookingForm, participants: Math.max(1, parseInt(e.target.value) || 1) })}
+                />
               </div>
 
               <button
                 className="btn-book-now"
-                onClick={() => setIsBookingModalOpen(true)}
+                style={{ backgroundColor: '#16a34a', color: 'white', borderRadius: '0.5rem' }}
+                onClick={() => {
+                  if (!bookingForm.date) {
+                    toast.error('Please select a date');
+                    return;
+                  }
+                  if (bookingForm.participants < 1) {
+                    toast.error('At least 1 participant is required');
+                    return;
+                  }
+                  setIsBookingModalOpen(true);
+                }}
               >
                 Book Now
               </button>
-
-
 
             </div>
           </div>
@@ -677,7 +690,7 @@ export default function ExperienceDetailPage() {
                     The vendor will confirm your booking within 24 hours.
                   </p>
                   <button
-                    className="btn-primary w-full"
+                    className="w-full rounded-lg bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700"
                     onClick={() => {
                       setIsBookingModalOpen(false);
                       setIsBookingSubmitted(false);
@@ -729,7 +742,7 @@ export default function ExperienceDetailPage() {
                     />
                   </div>
 
-                  <button type="submit" className="btn-primary w-full">
+                  <button type="submit" className="w-full rounded-lg bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700">
                     Send Booking Request
                   </button>
                 </form>
