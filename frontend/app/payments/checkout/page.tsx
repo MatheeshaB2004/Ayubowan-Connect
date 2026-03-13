@@ -102,8 +102,8 @@ export default function CheckoutPage() {
 
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${item.listing.listingType === 'EXPERIENCE'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'bg-green-100 text-green-700'
+                      ? 'bg-purple-100 text-purple-700'
+                      : 'bg-green-100 text-green-700'
                       }`}>
                       {item.listing.listingType}
                     </span>
@@ -232,7 +232,7 @@ export default function CheckoutPage() {
             {/* Pay Button */}
             <button
               onClick={handlePay}
-              className="w-full rounded-lg bg-green-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700"
+              className="w-full rounded-lg bg-[#0d9488] px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#0f766e]"
             >
               Pay Now
             </button>
