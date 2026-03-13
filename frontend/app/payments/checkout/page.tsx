@@ -232,7 +232,7 @@ export default function CheckoutPage() {
             {/* Pay Button */}
             <button
               onClick={handlePay}
-              className="w-full rounded-lg bg-[#0d9488] px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#0f766e]"
+              className="btn-primary w-full rounded-lg px-6 py-3.5 shadow-sm transition-all"
             >
               Pay Now
             </button>

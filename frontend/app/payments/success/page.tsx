@@ -46,7 +46,7 @@ export default function PaymentSuccessPage() {
         </p>
 
         <Link href="/marketplace">
-          <button className="w-full rounded-lg bg-[#0d9488] px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#0f766e]">
+          <button className="btn-primary w-full rounded-lg px-6 py-3 shadow-sm transition-all">
             Continue Shopping
           </button>
         </Link>
