@@ -11,6 +11,7 @@ import { FilesController } from './files.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventsModule } from './modules/events/events.module';
+import { BookingModule } from './modules/booking/booking.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { EventsModule } from './modules/events/events.module';
     DashboardModule,
     EventsModule,
     ChatbotModule,
+    BookingModule,
   ],
 })
 export class AppModule {}
