@@ -13,10 +13,11 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import './ProductDetail.css';
 import ReviewSection from '../../review';
 import { useCart } from '@/context/CartContext';
+import toast from 'react-hot-toast';
 
 type ApiListing = {
   id: number;
@@ -59,12 +60,14 @@ const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 export default function ProductDetailPage() {
   const { addToCart } = useCart();
   const params = useParams();
+  const router = useRouter();
   const idStr = Array.isArray(params?.id) ? params?.id[0] : params?.id;
 
   const [listing, setListing] = useState<ApiListing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     if (!idStr) return;
@@ -264,15 +267,50 @@ export default function ProductDetailPage() {
             <div className="price-main-display">
               LKR {listing.priceMin.toLocaleString()}
             </div>
-            <div className="pricing-actions">
+
+            <p className="text-sm text-green-600 font-medium mt-2">✓ In Stock</p>
+
+            {/* Quantity selector */}
+            <div className="flex items-center gap-3 mt-4">
+              <span className="text-sm font-medium text-gray-700">Qty:</span>
+              <button
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                className="px-3 py-1 border rounded hover:bg-gray-100 transition"
+              >
+                -
+              </button>
+              <span className="text-base font-semibold min-w-[1.5rem] text-center">{quantity}</span>
+              <button
+                onClick={() => setQuantity(quantity + 1)}
+                className="px-3 py-1 border rounded hover:bg-gray-100 transition"
+              >
+                +
+              </button>
+            </div>
+
+            <div className="pricing-actions" style={{ marginTop: '1rem' }}>
               <button
                 className="add-to-cart-btn"
                 style={{ flex: 1 }}
-                onClick={() => listing && addToCart(listing.id, 1)}
+                onClick={async () => {
+                  if (!listing) return;
+                  await addToCart(listing.id, quantity);
+                  toast.success('Added to cart!');
+                }}
               >
                 Add to cart
               </button>
-              <button className="buy-now-btn" style={{ flex: 1 }}>Buy now</button>
+              <button
+                className="buy-now-btn"
+                style={{ flex: 1 }}
+                onClick={async () => {
+                  if (!listing) return;
+                  await addToCart(listing.id, quantity);
+                  router.push('/payments/cart');
+                }}
+              >
+                Buy now
+              </button>
             </div>
           </div>
 
