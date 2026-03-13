@@ -12,6 +12,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventsModule } from './modules/events/events.module';
 import { BookingModule } from './modules/booking/booking.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { BookingModule } from './modules/booking/booking.module';
     EventsModule,
     ChatbotModule,
     BookingModule,
+    OrdersModule,
   ],
 })
 export class AppModule {}
