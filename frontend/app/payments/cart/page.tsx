@@ -56,7 +56,7 @@ export default function CartPage() {
             </p>
 
             <Link href="/marketplace">
-              <button className="rounded-lg bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700 hover:shadow-md">
+              <button className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6 py-3 rounded-lg shadow-sm transition-all">
                 Browse Marketplace
               </button>
             </Link>
@@ -105,8 +105,8 @@ export default function CartPage() {
 
                           <div className="flex items-center gap-3 mt-2">
                             <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${item.listing.listingType === 'EXPERIENCE'
-                                ? 'bg-purple-50 text-purple-700'
-                                : 'bg-green-50 text-green-700'
+                              ? 'bg-purple-50 text-purple-700'
+                              : 'bg-green-50 text-green-700'
                               }`}>
                               {item.listing.listingType === 'EXPERIENCE' ? 'Experience' : 'Product'}
                             </span>
@@ -145,7 +145,7 @@ export default function CartPage() {
               </div>
 
               <Link href="/payments/checkout">
-                <button className="w-full rounded-lg bg-green-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-green-700 hover:shadow-md">
+                <button className="w-full rounded-lg bg-[#0d9488] px-6 py-3.5 text-base font-semibold text-white shadow-sm transition-all hover:bg-[#0f766e] hover:shadow-md">
                   Proceed to Checkout
                 </button>
               </Link>
