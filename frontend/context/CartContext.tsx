@@ -12,6 +12,7 @@ export type CartItem = {
     id: number;
     listingId: number;
     quantity: number;
+    bookingId?: number;
     listing: {
         title: string;
         priceMin: number;
