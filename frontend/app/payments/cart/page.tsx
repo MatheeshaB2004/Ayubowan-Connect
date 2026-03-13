@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCart } from '@/context/CartContext';
+import { useCart, CartItem } from '@/context/CartContext';
 
 export default function CartPage() {
   const { items, removeFromCart } = useCart();
@@ -11,6 +11,16 @@ export default function CartPage() {
     (sum, item) => sum + item.quantity * item.listing.priceMin,
     0
   );
+
+  // Group items by vendor
+  const groupedByVendor: Record<string, CartItem[]> = {};
+  items.forEach((item) => {
+    const vendorName = item.listing.vendor?.businessName ?? 'Unknown Vendor';
+    if (!groupedByVendor[vendorName]) {
+      groupedByVendor[vendorName] = [];
+    }
+    groupedByVendor[vendorName].push(item);
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
@@ -53,67 +63,77 @@ export default function CartPage() {
           </div>
         ) : (
           <>
-            {/* ── Cart Items ── */}
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6 mb-6">
-              <div className="divide-y divide-gray-100">
-                {items.map((item) => {
-                  const imageUrl =
-                    item.listing.media?.[0]?.mediaUrl ||
-                    '/assets/photos/B4.webp';
+            {/* ── Cart Items Grouped by Vendor ── */}
+            {Object.entries(groupedByVendor).map(([vendorName, vendorItems]) => (
+              <div key={vendorName} className="bg-white rounded-xl shadow-md border border-gray-100 p-6 mb-6">
 
-                  return (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-4 py-5 first:pt-0 last:pb-0"
-                    >
-                      {/* Image */}
-                      <div className="flex-shrink-0 overflow-hidden rounded-lg">
-                        <Image
-                          src={imageUrl}
-                          alt={item.listing.title}
-                          width={110}
-                          height={80}
-                          className="object-cover rounded-lg"
-                        />
-                      </div>
+                {/* Vendor Header */}
+                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-green-700 text-sm font-bold">{vendorName.charAt(0)}</span>
+                  </div>
+                  <h2 className="text-base font-semibold text-gray-800">{vendorName}</h2>
+                </div>
 
-                      {/* Details */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-gray-900 truncate">
-                          {item.listing.title}
-                        </h3>
+                <div className="divide-y divide-gray-100">
+                  {vendorItems.map((item) => {
+                    const imageUrl =
+                      item.listing.media?.[0]?.mediaUrl ||
+                      '/assets/photos/B4.webp';
 
-                        <p className="text-sm text-gray-500 mt-1">
-                          Vendor: {item.listing.vendor.businessName}
-                        </p>
-
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="inline-flex items-center bg-green-50 text-green-700 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                            {item.listing.listingType === 'EXPERIENCE' ? 'Experience' : 'Product'}
-                          </span>
-
-                          <span className="text-sm text-gray-500">
-                            Qty: {item.quantity}
-                          </span>
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-4 py-5 first:pt-0 last:pb-0"
+                      >
+                        {/* Image */}
+                        <div className="flex-shrink-0 overflow-hidden rounded-lg">
+                          <Image
+                            src={imageUrl}
+                            alt={item.listing.title}
+                            width={110}
+                            height={80}
+                            className="object-cover rounded-lg"
+                          />
                         </div>
 
-                        <p className="text-base font-bold text-gray-900 mt-2">
-                          LKR {item.listing.priceMin.toLocaleString()}
-                        </p>
-                      </div>
+                        {/* Details */}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-semibold text-gray-900 truncate">
+                            {item.listing.title}
+                          </h3>
 
-                      {/* Remove Button */}
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-3 py-1 transition-colors"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  );
-                })}
+                          <div className="flex items-center gap-3 mt-2">
+                            <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${item.listing.listingType === 'EXPERIENCE'
+                                ? 'bg-purple-50 text-purple-700'
+                                : 'bg-green-50 text-green-700'
+                              }`}>
+                              {item.listing.listingType === 'EXPERIENCE' ? 'Experience' : 'Product'}
+                            </span>
+
+                            <span className="text-sm text-gray-500">
+                              Qty: {item.quantity}
+                            </span>
+                          </div>
+
+                          <p className="text-base font-bold text-gray-900 mt-2">
+                            LKR {(item.listing.priceMin * item.quantity).toLocaleString()}
+                          </p>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-3 py-1 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            ))}
 
             {/* ── Total Section ── */}
             <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">

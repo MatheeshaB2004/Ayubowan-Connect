@@ -67,20 +67,16 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
       <div className="max-w-2xl mx-auto">
 
-        {/* Back Button */}
+        {/* Back to Cart */}
         <Link
-          href="/marketplace"
-          className="text-sm text-gray-600 hover:text-green-700 transition-colors mb-4 inline-block"
+          href="/payments/cart"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-green-700 transition-colors mb-6"
         >
-          ← Back to Marketplace
-        </Link>
-
-        <button
-          onClick={() => router.push('/payments/cart')}
-          className="mb-6 text-sm text-gray-600 hover:text-green-700 transition-colors block"
-        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
           ← Back to Cart
-        </button>
+        </Link>
 
         {/* Header */}
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center tracking-tight">
@@ -104,11 +100,16 @@ export default function CheckoutPage() {
                     {item.listing.title}
                   </p>
 
-                  <p className="text-sm text-gray-500">
-                    Type: {item.listing.listingType}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${item.listing.listingType === 'EXPERIENCE'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-green-100 text-green-700'
+                      }`}>
+                      {item.listing.listingType}
+                    </span>
+                  </div>
 
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 mt-1">
                     Qty: {item.quantity}
                   </p>
 
