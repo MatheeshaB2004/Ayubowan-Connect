@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ListingType, Prisma } from '@prisma/client';
+import { ListingType, Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import {
@@ -324,8 +324,31 @@ export class MarketplaceService {
 
   async createReview(
     createReviewDto: CreateReviewDto,
-    userId: number,
   ): Promise<ReviewResponseDto> {
+    // Resolve user by email sent from the frontend (logged-in Clerk user)
+    let resolvedUserId = 1; // fallback for unauthenticated requests
+    if (createReviewDto.userEmail) {
+      let user = await this.prisma.user.findUnique({
+        where: { email: createReviewDto.userEmail },
+      });
+      if (!user) {
+        // Auto-create a User row for Clerk-authenticated users who don't
+        // yet have a backend record. Use provided name or derive from email.
+        const displayName =
+          createReviewDto.userName?.trim() ||
+          createReviewDto.userEmail.split('@')[0];
+        user = await this.prisma.user.create({
+          data: {
+            fullName: displayName,
+            email: createReviewDto.userEmail,
+            passwordHash: 'clerk-managed',
+            role: UserRole.USER,
+          },
+        });
+      }
+      resolvedUserId = user.id;
+    }
+
     // Check if listing exists
     const listing = await this.prisma.listing.findUnique({
       where: { id: createReviewDto.listingId },
@@ -347,7 +370,7 @@ export class MarketplaceService {
       const newReview = await tx.review.create({
         data: {
           listingId: createReviewDto.listingId,
-          userId: userId,
+          userId: resolvedUserId,
           rating: createReviewDto.rating,
           comment: createReviewDto.comment,
         },

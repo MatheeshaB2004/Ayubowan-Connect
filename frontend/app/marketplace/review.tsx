@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Camera, ShieldCheck, Star, X } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import './review.css';
 
 type ReviewMedia = {
@@ -38,6 +39,7 @@ type ReviewSectionProps = {
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
 export default function ReviewSection({ listingId, ratingAverage, onListingUpdate }: ReviewSectionProps) {
+  const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -158,6 +160,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
           rating: reviewRating,
           comment: reviewForm.comment,
           mediaUrls,
+          ...(user?.email ? { userEmail: user.email, userName: user.name } : {}),
         }),
       });
 
