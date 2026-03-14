@@ -10,16 +10,25 @@ import toast from 'react-hot-toast';
 
 export type CartItem = {
     id: number;
-    listingId: number;
+    listingId: number | null;
     quantity: number;
     bookingId?: number;
-    listing: {
+    listing?: {
         title: string;
         priceMin: number;
         listingType: 'PRODUCT' | 'EXPERIENCE';
         media: Array<{ mediaUrl: string }>;
         vendor: { businessName: string };
-    };
+    } | null;
+    booking?: {
+        listing: {
+            title: string;
+            priceMin: number;
+            listingType?: 'PRODUCT' | 'EXPERIENCE';
+            media?: Array<{ mediaUrl: string }>;
+            vendor?: { businessName: string };
+        };
+    } | null;
 };
 
 type CartContextType = {
@@ -180,7 +189,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
     const totalAmount = items.reduce(
-        (sum, item) => sum + item.quantity * item.listing.priceMin,
+        (sum, item) => {
+            const price = item.listing?.priceMin ?? item.booking?.listing?.priceMin ?? 0;
+            return sum + (item.quantity * price);
+        },
         0
     );
 
