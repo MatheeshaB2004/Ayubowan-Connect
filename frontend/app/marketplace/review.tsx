@@ -306,7 +306,20 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
 
         <div className="review-form-card">
           <h3 className="review-form-title">Write a Review</h3>
-          {isSubmitted ? (
+          {!user ? (
+            <div className="flex flex-col items-center gap-4 py-8 text-center">
+              <ShieldCheck size={48} className="text-[#0d9488]" />
+              <p className="text-gray-600 text-sm">
+                You need to be signed in to leave a review.
+              </p>
+              <a
+                href="/auth/login"
+                className="inline-block bg-[#0d9488] text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-[#0b7a70] transition-colors"
+              >
+                Sign in to write a review
+              </a>
+            </div>
+          ) : isSubmitted ? (
             <div className="review-success">
               <ShieldCheck size={56} className="review-success-icon" />
               <h4 className="review-success-title">Thank you for your review!</h4>
