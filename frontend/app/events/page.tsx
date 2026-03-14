@@ -25,9 +25,9 @@ export default function EventsPage() {
 
   // AuthContext: { user, role, isAuthenticated, loginAsTraveller, loginAsVendor, logout }
   // role: 'traveller' | 'vendor' | 'guest'
-  const { role } = useAuth();
+  const { role, authReady } = useAuth();
 
-  const isGuest  = role === "guest" || !role;
+  const isGuest  = authReady && (role === "guest" || !role);
   const isVendor = role === "vendor";
   const isUser   = role === "traveller";
 

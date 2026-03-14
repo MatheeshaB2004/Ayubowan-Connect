@@ -72,7 +72,7 @@ const MOCK_ATTENDEES: Attendee[] = [
 export default function EventDetailPage() {
   const { id }    = useParams<{ id: string }>();
   const router    = useRouter();
-  const { role }  = useAuth();
+  const { role, authReady }  = useAuth();
 
   const [event, setEvent]       = useState<Event | null>(null);
   const [loading, setLoading]   = useState(true);
@@ -99,12 +99,12 @@ export default function EventDetailPage() {
   const getToken = () =>
     typeof window !== "undefined" ? (localStorage.getItem("accessToken") ?? "") : "";
 
-  // Redirect guests immediately
+  // Redirect guests only after auth state is confirmed (wait for Clerk to load)
   useEffect(() => {
-    if (isGuest) {
+    if (authReady && isGuest) {
       router.replace(`/auth/login?redirect=/events/${id}`);
     }
-  }, [isGuest, id, router]);
+  }, [authReady, isGuest, id, router]);
 
   const loadEvent = useCallback(async () => {
     if (!id) return;
@@ -135,7 +135,7 @@ export default function EventDetailPage() {
   };
 
   // ── Loading ──────────────────────────────────────────────────────────────
-  if (isGuest) return null; // redirecting
+  if (!authReady || (authReady && isGuest)) return null; // waiting for auth or redirecting
 
   if (loading) return (
     <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">
