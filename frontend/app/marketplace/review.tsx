@@ -45,6 +45,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
   const [totalReviews, setTotalReviews] = useState(0);
   const [showAllReviews, setShowAllReviews] = useState(false);
 
+  // Write-new-review state
   const [reviewRating, setReviewRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [reviewForm, setReviewForm] = useState({ comment: '' });
@@ -52,6 +53,20 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
   const [reviewMediaPreviews, setReviewMediaPreviews] = useState<string[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // My existing review state
+  const [myReview, setMyReview] = useState<Review | null | undefined>(undefined); // undefined = loading
+  const [isEditing, setIsEditing] = useState(false);
+  const [editRating, setEditRating] = useState(0);
+  const [editHoverRating, setEditHoverRating] = useState(0);
+  const [editComment, setEditComment] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Edit-form media state
+  const [editExistingMedia, setEditExistingMedia] = useState<ReviewMedia[]>([]);
+  const [editNewFiles, setEditNewFiles] = useState<File[]>([]);
+  const [editNewPreviews, setEditNewPreviews] = useState<string[]>([]);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string>('');
@@ -92,6 +107,95 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
     };
   }, [reviewMediaPreviews]);
 
+  useEffect(() => {
+    return () => {
+      editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [editNewPreviews]);
+
+  // Fetch the current user's existing review for this listing
+  useEffect(() => {
+    if (!listingId || !user?.email) { setMyReview(null); return; }
+    fetch(`${API_BASE}/marketplace/${listingId}/my-review?userEmail=${encodeURIComponent(user.email)}`)
+      .then((r) => r.json())
+      .then((data) => setMyReview(data ?? null))
+      .catch(() => setMyReview(null));
+  }, [listingId, user?.email]);
+
+  const openEdit = () => {
+    if (!myReview) return;
+    setEditRating(myReview.rating);
+    setEditComment(myReview.comment);
+    setEditExistingMedia(myReview.media ?? []);
+    setEditNewFiles([]);
+    setEditNewPreviews([]);
+    setIsEditing(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!myReview || !user?.email || !editRating || !editComment.trim()) return;
+    setIsUpdating(true);
+    try {
+      let newUrls: string[] = [];
+      if (editNewFiles.length > 0) {
+        const formData = new FormData();
+        editNewFiles.forEach((file) => formData.append('files', file));
+        const uploadRes = await fetch(`${API_BASE}/marketplace/upload-review-media`, {
+          method: 'POST',
+          body: formData,
+        });
+        if (!uploadRes.ok) throw new Error('Failed to upload media');
+        const uploadData = await uploadRes.json();
+        newUrls = uploadData.urls || [];
+      }
+
+      const mediaUrls = [
+        ...editExistingMedia.map((m) => m.mediaUrl),
+        ...newUrls,
+      ];
+
+      const res = await fetch(`${API_BASE}/marketplace/reviews/${myReview.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userEmail: user.email, rating: editRating, comment: editComment, mediaUrls }),
+      });
+      if (!res.ok) throw new Error();
+      const updated: Review = await res.json();
+      setMyReview(updated);
+      setReviews((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+      editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
+      setEditNewFiles([]);
+      setEditNewPreviews([]);
+      setIsEditing(false);
+    } catch {
+      alert('Failed to update review. Please try again.');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!myReview || !user?.email) return;
+    if (!window.confirm('Delete your review? This cannot be undone.')) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(
+        `${API_BASE}/marketplace/reviews/${myReview.id}?userEmail=${encodeURIComponent(user.email)}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) throw new Error();
+      setMyReview(null);
+      setReviews((prev) => prev.filter((r) => r.id !== myReview.id));
+      setTotalReviews((n) => Math.max(0, n - 1));
+      if (onListingUpdate) await loadReviews();
+    } catch {
+      alert('Failed to delete review. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleMediaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const totalFiles = reviewMediaFiles.length + files.length;
@@ -120,6 +224,34 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
     URL.revokeObjectURL(reviewMediaPreviews[index]);
     setReviewMediaFiles((prev) => prev.filter((_, i) => i !== index));
     setReviewMediaPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const editTotalCount = editExistingMedia.length + editNewFiles.length;
+  const editInputId = `edit-media-input-${listingId}`;
+
+  const handleEditRemoveExisting = (index: number) => {
+    setEditExistingMedia((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleEditNewFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = 5 - editTotalCount;
+    if (files.length > remaining) {
+      alert(`You can only add ${remaining} more photo(s)/video(s) (max 5 total)`);
+      return;
+    }
+    const validFiles = files.filter((f) => f.type.startsWith('image/') || f.type.startsWith('video/'));
+    if (validFiles.length !== files.length) alert('Only image and video files are allowed');
+    const newPreviews = validFiles.map((f) => URL.createObjectURL(f));
+    setEditNewFiles((prev) => [...prev, ...validFiles]);
+    setEditNewPreviews((prev) => [...prev, ...newPreviews]);
+    e.target.value = '';
+  };
+
+  const handleEditRemoveNew = (index: number) => {
+    URL.revokeObjectURL(editNewPreviews[index]);
+    setEditNewFiles((prev) => prev.filter((_, i) => i !== index));
+    setEditNewPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -168,8 +300,9 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
         throw new Error('Failed to submit review');
       }
 
+      const newReview: Review = await response.json();
+      setMyReview(newReview);
       reviewMediaPreviews.forEach((url) => URL.revokeObjectURL(url));
-      setIsSubmitted(true);
       setReviewForm({ comment: '' });
       setReviewRating(0);
       setReviewMediaFiles([]);
@@ -251,7 +384,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
                 <div key={review.id} className="review-card">
                   <div className="review-card-header">
                     <div className="reviewer-info">
-                      <div className="reviewer-avatar">{review.userName[0]}</div>
+                      <div className="reviewer-avatar">{(review.userName || '?')[0]}</div>
                       <div>
                         <h4 className="reviewer-name">{review.userName}</h4>
                         <p className="review-date">
@@ -307,6 +440,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
         <div className="review-form-card">
           <h3 className="review-form-title">Write a Review</h3>
           {!user ? (
+            /* ── Guest: prompt to log in ── */
             <div className="flex flex-col items-center gap-4 py-8 text-center">
               <ShieldCheck size={48} className="text-[#0d9488]" />
               <p className="text-gray-600 text-sm">
@@ -319,6 +453,138 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
                 Sign in to write a review
               </a>
             </div>
+          ) : myReview && !isEditing ? (
+            /* ── User's existing review: view with edit/delete ── */
+            <div>
+              <div className="review-card" style={{ boxShadow: '0 0 0 2px #0d9488' }}>
+                <div className="review-card-header">
+                  <div className="reviewer-info">
+                    <div className="reviewer-avatar">{(myReview.userName || '?')[0]}</div>
+                    <div>
+                      <h4 className="reviewer-name">{myReview.userName || 'You'} <span className="text-xs text-[#0d9488] font-normal">(Your review)</span></h4>
+                      <p className="review-date">{new Date(myReview.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map((s) => (
+                      <Star key={s} size={14} fill={myReview.rating >= s ? '#fbbf24' : 'none'} className={myReview.rating >= s ? 'text-yellow-400' : 'text-gray-300'} />
+                    ))}
+                  </div>
+                </div>
+                <p className="review-comment">{myReview.comment}</p>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={openEdit}
+                  className="flex-1 text-sm font-semibold text-[#0d9488] border border-[#0d9488] rounded-lg px-4 py-2 hover:bg-[#0d9488] hover:text-white transition-colors"
+                >
+                  Edit Review
+                </button>
+                <button
+                  onClick={handleDeleteReview}
+                  disabled={isDeleting}
+                  className="flex-1 text-sm font-semibold text-red-600 border border-red-300 rounded-lg px-4 py-2 hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete Review'}
+                </button>
+              </div>
+            </div>
+          ) : myReview && isEditing ? (
+            /* ── Edit form ── */
+            <form onSubmit={handleEditSubmit}>
+              <div className="review-form-group">
+                <label className="review-form-label">Your Rating</label>
+                <div className="review-star-input">
+                  {[1,2,3,4,5].map((star) => (
+                    <button key={star} type="button"
+                      onClick={() => setEditRating(star)}
+                      onMouseEnter={() => setEditHoverRating(star)}
+                      onMouseLeave={() => setEditHoverRating(0)}
+                      className="review-star-button"
+                    >
+                      <Star size={32}
+                        fill={(editHoverRating || editRating) >= star ? '#fbbf24' : 'none'}
+                        className={(editHoverRating || editRating) >= star ? 'review-star-active' : 'review-star-inactive'}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="review-form-group">
+                <label className="review-form-label">Your Review</label>
+                <textarea
+                  className="review-form-textarea"
+                  rows={4}
+                  placeholder="Share your experience..."
+                  value={editComment}
+                  onChange={(e) => setEditComment(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="review-form-group">
+                <label className="review-form-label">Photos / Videos ({editTotalCount}/5)</label>
+                {/* Existing media */}
+                {(editExistingMedia.length > 0 || editNewFiles.length > 0) && (
+                  <div className="review-preview-grid">
+                    {editExistingMedia.map((media, index) => (
+                      <div key={`existing-${media.id}`} className="review-preview-item">
+                        {media.mediaType === 'IMAGE' ? (
+                          <img src={media.mediaUrl} alt={`Photo ${index + 1}`} className="review-preview-media" />
+                        ) : (
+                          <video src={media.mediaUrl} className="review-preview-media" />
+                        )}
+                        <button type="button" onClick={() => handleEditRemoveExisting(index)} className="review-preview-remove">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    {editNewPreviews.map((preview, index) => (
+                      <div key={`new-${index}`} className="review-preview-item">
+                        {editNewFiles[index]?.type.startsWith('image/') ? (
+                          <img src={preview} alt={`New photo ${index + 1}`} className="review-preview-media" />
+                        ) : (
+                          <video src={preview} className="review-preview-media" />
+                        )}
+                        <button type="button" onClick={() => handleEditRemoveNew(index)} className="review-preview-remove">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={handleEditNewFileChange}
+                  style={{ display: 'none' }}
+                  id={editInputId}
+                  disabled={editTotalCount >= 5}
+                />
+                <label
+                  htmlFor={editInputId}
+                  className={`review-upload-label ${editTotalCount >= 5 ? 'disabled' : ''}`}
+                >
+                  <Camera size={20} />
+                  {editTotalCount >= 5 ? 'Max 5 reached' : 'Add Photos/Videos'}
+                </label>
+              </div>
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary flex-1" disabled={isUpdating}>
+                  {isUpdating ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button type="button" onClick={() => {
+                  editNewPreviews.forEach((url) => URL.revokeObjectURL(url));
+                  setEditNewFiles([]);
+                  setEditNewPreviews([]);
+                  setIsEditing(false);
+                }}
+                  className="flex-1 text-sm font-semibold text-gray-600 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           ) : isSubmitted ? (
             <div className="review-success">
               <ShieldCheck size={56} className="review-success-icon" />
@@ -492,7 +758,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
                   <div key={review.id} className="review-card">
                     <div className="review-card-header">
                       <div className="reviewer-info">
-                        <div className="reviewer-avatar">{review.userName[0]}</div>
+                        <div className="reviewer-avatar">{(review.userName || '?')[0]}</div>
                         <div>
                           <h4 className="reviewer-name">{review.userName}</h4>
                           <p className="review-date">

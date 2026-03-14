@@ -2,12 +2,15 @@ import {
   Controller,
   Get,
   Post,
+  Put,
+  Delete,
   Body,
   Param,
   ParseIntPipe,
   Query,
   UseInterceptors,
   UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ListingType } from '@prisma/client';
@@ -73,6 +76,40 @@ export class MarketplaceController {
   @Post('reviews')
   createReview(@Body() createReviewDto: CreateReviewDto) {
     return this.marketplaceService.createReview(createReviewDto);
+  }
+
+  @Get(':id/my-review')
+  getMyReview(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('userEmail') userEmail: string,
+  ) {
+    if (!userEmail) throw new BadRequestException('userEmail is required');
+    return this.marketplaceService.getUserReviewForListing(id, userEmail);
+  }
+
+  @Put('reviews/:id')
+  updateReview(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { userEmail: string; rating: number; comment: string; mediaUrls?: string[] },
+  ) {
+    if (!body.userEmail) throw new BadRequestException('userEmail is required');
+    return this.marketplaceService.updateReview(
+      id,
+      body.userEmail,
+      body.rating,
+      body.comment,
+      body.mediaUrls,
+    );
+  }
+
+  @Delete('reviews/:id')
+  async deleteReview(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('userEmail') userEmail: string,
+  ) {
+    if (!userEmail) throw new BadRequestException('userEmail is required');
+    await this.marketplaceService.deleteReview(id, userEmail);
+    return { success: true };
   }
 
   @Post('upload-review-media')
