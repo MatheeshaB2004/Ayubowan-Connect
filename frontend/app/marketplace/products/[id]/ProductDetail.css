@@ -984,6 +984,32 @@
   gap: 0.5rem;
 }
 
+.reviews-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.reviews-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.reviews-icon {
+  color: #0d9488;
+}
+
+.product-review-wrapper .review-section {
+  margin-top: 0;
+}
+
+.product-review-wrapper .review-header {
+  margin-bottom: 0.5rem;
+}
+
 /* Footer Spacing */
 .footer-spacer {
   margin-bottom: 4rem;

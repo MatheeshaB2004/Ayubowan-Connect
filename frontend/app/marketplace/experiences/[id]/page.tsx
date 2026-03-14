@@ -219,7 +219,7 @@ export default function ExperienceDetailPage() {
     : listing.category?.categoryName
       ? [listing.category.categoryName]
       : [];
-  const description = listing.longDescription ?? listing.shortDescription ?? '';
+  const overview = listing.shortDescription ?? '';
   const locationLabel = listing.location
     ? `${listing.location.city}, ${listing.location.district}, ${listing.location.province}`
     : 'Sri Lanka';
@@ -368,7 +368,7 @@ export default function ExperienceDetailPage() {
           {/* Experience Overview */}
           <section className="overview-section">
             <h2 className="section-title">Experience Overview</h2>
-            <p className="section-text">{description}</p>
+            <p className="section-text">{overview}</p>
 
             <div className="experience-flow">
               <div className="flow-step">
@@ -408,57 +408,39 @@ export default function ExperienceDetailPage() {
           </section>
 
           {/* What's Included */}
-          <section className="included-section">
-            <h2 className="section-title">What&apos;s Included</h2>
-            <div className="included-grid">
-              {inclusions.length > 0 ? (
-                inclusions.map((item, idx) => (
+          {inclusions.length > 0 && (
+            <section className="included-section">
+              <h2 className="section-title">What's Included</h2>
+
+              <div className="included-grid">
+                {inclusions.map((item, idx) => (
                   <div key={idx} className="included-item">
                     <div className="included-icon included">
                       {getInclusionIcon(item.title)}
                     </div>
+
                     <div>
                       <h4>{item.title}</h4>
-                      <p>{item.description}</p>
+                      {item.description && <p>{item.description}</p>}
                     </div>
                   </div>
-                ))
-              ) : (
-                <>
-                  <div className="included-item">
-                    <div className="included-icon included">✓</div>
-                    <span>All carving tools</span>
-                  </div>
-                  <div className="included-item">
-                    <div className="included-icon excluded">✕</div>
-                    <span>Hotel transport</span>
-                  </div>
-                  <div className="included-item">
-                    <div className="included-icon included">✓</div>
-                    <span>Block of wood</span>
-                  </div>
-                  <div className="included-item">
-                    <div className="included-icon excluded">✕</div>
-                    <span>Lunch</span>
-                  </div>
-                  <div className="included-item">
-                    <div className="included-icon included">✓</div>
-                    <span>Tea & refreshments</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Cultural Story */}
-          <section className="cultural-story-section">
-            <h2 className="section-title">Cultural Story</h2>
-            <div className="story-card">
-              <p className="story-text">
-                Masks are significant in Sri Lankan culture. Sri Lankan culture of masks and renews its even when mask. In mandam significance it is armos it chances and makurs of the culture corune, and the coocurtanity of Sri Lankans are importantlylated as envelopemnt economical traditionalwencommunity and cultural marks.
-              </p>
-            </div>
-          </section>
+          {listing.longDescription && (
+            <section className="cultural-story-section">
+              <h2 className="section-title">Cultural Story</h2>
+
+              <div className="story-card">
+                <p className="story-text">
+                  {listing.longDescription}
+                </p>
+              </div>
+            </section>
+          )}
 
           {/* Vendor Details Section */}
           <section className="host-section">
@@ -663,8 +645,8 @@ export default function ExperienceDetailPage() {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Reserve your experience</h3>
-              <button 
-                className="modal-close-btn" 
+              <button
+                className="modal-close-btn"
                 onClick={() => setIsBookingModalOpen(false)}
                 title="Close modal"
                 aria-label="Close modal"

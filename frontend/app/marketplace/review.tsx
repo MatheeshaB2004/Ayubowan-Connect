@@ -34,11 +34,12 @@ type ReviewSectionProps = {
   listingId: number;
   ratingAverage: number;
   onListingUpdate?: React.Dispatch<React.SetStateAction<any>>;
+  hideTitle?: boolean;
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
-export default function ReviewSection({ listingId, ratingAverage, onListingUpdate }: ReviewSectionProps) {
+export default function ReviewSection({ listingId, ratingAverage, onListingUpdate, hideTitle }: ReviewSectionProps) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -196,7 +197,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
     <>
       <section className="review-section">
         <div className="review-header">
-          <h2 className="section-title">Reviews</h2>
+          {!hideTitle && <h2 className="section-title">Reviews</h2>}
           {reviews.length > 3 && (
             <button
               onClick={() => setShowAllReviews(true)}

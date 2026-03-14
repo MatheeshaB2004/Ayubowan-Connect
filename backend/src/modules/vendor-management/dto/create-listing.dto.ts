@@ -70,6 +70,11 @@ export class CreateListingDto {
   @IsOptional()
   capacity?: number;
 
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  stock?: number;
+
   @IsString()
   @IsOptional()
   availability?: string;

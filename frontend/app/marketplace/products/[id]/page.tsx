@@ -294,50 +294,19 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Specifications */}
-          <div className="specs-card">
-            <h2 className="specs-title">
-              Product Specifications
-            </h2>
-            <div className="specs-grid">
-              {specs.composition && (
-                <div className="spec-item">
-                  <h4 className="spec-label">
-                    Composition
-                  </h4>
-                  <p className="spec-value">
-                    {specs.composition}
-                  </p>
-                </div>
-              )}
-              {specs.dimensions && (
-                <div className="spec-item">
-                  <h4 className="spec-label">
-                    Dimensions
-                  </h4>
-                  <p className="spec-value">
-                    {specs.dimensions}
-                  </p>
-                </div>
-              )}
-              {specs.care && (
-                <div className="spec-item">
-                  <h4 className="spec-label">
-                    Care Instructions
-                  </h4>
-                  <p className="spec-value">
-                    {specs.care}
-                  </p>
-                </div>
-              )}
+          <div className="product-review-wrapper">
+            <div className="reviews-header">
+              <Star size={20} className="reviews-icon" />
+              <h2 className="reviews-title">Customer Reviews</h2>
             </div>
-          </div>
 
-          <ReviewSection
-            listingId={listing.id}
-            ratingAverage={listing.ratingAverage}
-            onListingUpdate={setListing}
-          />
+            <ReviewSection
+              listingId={listing.id}
+              ratingAverage={listing.ratingAverage}
+              onListingUpdate={setListing}
+              hideTitle
+            />
+          </div>
         </div>
 
         {/* Right Column: Vendor Info */}
