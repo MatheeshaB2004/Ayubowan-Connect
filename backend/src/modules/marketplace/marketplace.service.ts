@@ -325,27 +325,25 @@ export class MarketplaceService {
   async createReview(
     createReviewDto: CreateReviewDto,
   ): Promise<ReviewResponseDto> {
-    // Resolve user by email sent from the frontend (logged-in Clerk user)
+    // Resolve user by email sent from the frontend (logged-in Clerk user).
+    // Upsert so the stored fullName stays in sync with Clerk profile changes.
     let resolvedUserId = 1; // fallback for unauthenticated requests
     if (createReviewDto.userEmail) {
-      let user = await this.prisma.user.findUnique({
+      const displayName =
+        createReviewDto.userName?.trim() ||
+        createReviewDto.userEmail.split('@')[0];
+      const user = await this.prisma.user.upsert({
         where: { email: createReviewDto.userEmail },
+        create: {
+          fullName: displayName,
+          email: createReviewDto.userEmail,
+          passwordHash: 'clerk-managed',
+          role: UserRole.USER,
+        },
+        update: {
+          fullName: displayName,
+        },
       });
-      if (!user) {
-        // Auto-create a User row for Clerk-authenticated users who don't
-        // yet have a backend record. Use provided name or derive from email.
-        const displayName =
-          createReviewDto.userName?.trim() ||
-          createReviewDto.userEmail.split('@')[0];
-        user = await this.prisma.user.create({
-          data: {
-            fullName: displayName,
-            email: createReviewDto.userEmail,
-            passwordHash: 'clerk-managed',
-            role: UserRole.USER,
-          },
-        });
-      }
       resolvedUserId = user.id;
     }
 
