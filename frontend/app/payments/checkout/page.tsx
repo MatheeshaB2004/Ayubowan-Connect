@@ -83,19 +83,54 @@ export default function CheckoutPage() {
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     if (user) {
-      const bookingItems = items.filter(item => item.bookingId);
-      for (const item of bookingItems) {
+      for (const item of items) {
         try {
-          await fetch(`${API_BASE}/bookings/${item.bookingId}/status`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-user-id': user.id,
-            },
-            body: JSON.stringify({ status: 'COMPLETED' })
-          });
+          if (item.bookingId) {
+            // Experience booking already exists — mark as COMPLETED
+            await fetch(`${API_BASE}/bookings/${item.bookingId}/status`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': user.id,
+              },
+              body: JSON.stringify({ status: 'COMPLETED' }),
+            });
+            console.log(`Updated booking ${item.bookingId} to COMPLETED`);
+          } else {
+            // Product/regular item — create a new CONFIRMED booking
+            const res = await fetch(`${API_BASE}/bookings`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': user.id,
+              },
+              body: JSON.stringify({
+                listingId: item.listingId,
+                date: new Date().toISOString(),
+                participants: item.quantity,
+                notes: 'Paid via checkout',
+              }),
+            });
+
+            if (res.ok) {
+              const booking = await res.json();
+              console.log(`Created booking ${booking.id} for listing ${item.listingId}`);
+
+              // Immediately mark as CONFIRMED (paid)
+              await fetch(`${API_BASE}/bookings/${booking.id}/status`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'x-user-id': user.id,
+                },
+                body: JSON.stringify({ status: 'CONFIRMED' }),
+              });
+            } else {
+              console.error('Failed to create booking:', await res.text());
+            }
+          }
         } catch (err) {
-          console.error('Failed to update booking status', err);
+          console.error('Checkout booking error:', err);
         }
       }
     }
