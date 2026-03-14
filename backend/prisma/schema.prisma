@@ -199,6 +199,7 @@ model Review {
   listing   Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, listingId])
   @@index([listingId])
   @@index([userId])
   @@map("reviews")
@@ -339,7 +340,6 @@ model CartItem {
 
   cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
   listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  
   @@unique([cartId, listingId])
   @@map("cart_items")
   

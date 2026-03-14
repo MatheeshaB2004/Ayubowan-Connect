@@ -24,24 +24,12 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
     return pathname === path || pathname.startsWith(path + '/');
   };
 
-  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, id: string) => {
-    if (typeof window !== 'undefined' && (window.location.pathname === '/landing' || window.location.pathname === '/')) {
-      e.preventDefault();
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-        window.history.pushState(null, '', `/landing#${id}`);
-      }
-    }
-  };
-
   return (
     <div className="traveller-nav flex items-center gap-6">
       <Link href="/" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/') ? 'active' : ''}`}>Home</Link>
-      <Link href="/landing#offer" onClick={(e) => handleScroll(e, 'offer')} className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass}`}>Events</Link>
       <Link href="/marketplace" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/marketplace') ? 'active' : ''}`}>Marketplace</Link>
+      <Link href="/events" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/events') ? 'active' : ''}`}>Events</Link>
       <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/pro') ? 'active' : ''}`}>Pro</Link>
-      <Link href="/trips" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/trips') ? 'active' : ''}`}>My Trips</Link>
       <Link href="/User_profile_manager" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/User_profile_manager') ? 'active' : ''}`}>My Profile</Link>
 
       <div className={`h-6 w-px ${textColorClass.includes('white') ? 'bg-white/30' : 'bg-gray-300'}`}></div>
