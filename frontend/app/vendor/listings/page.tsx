@@ -17,6 +17,7 @@ export default function CreateListingsPage() {
   const [formError, setFormError] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [isPublished, setIsPublished] = useState(true);
+  const [vendorCapacity, setVendorCapacity] = useState("");
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
@@ -48,11 +49,13 @@ export default function CreateListingsPage() {
   const [locations, setLocations] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<"PUBLISHED" | "DRAFT">("PUBLISHED");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+  const [capacityLocked, setCapacityLocked] = useState(false);
 
   useEffect(() => {
     fetchListings();
     fetchLocations();
     fetchCategories();
+    fetchCapacity();
   }, []);
 
   useEffect(() => {
@@ -76,6 +79,56 @@ export default function CreateListingsPage() {
       setLocations(data);
     } catch (error) {
       console.error("Location fetch error:", error);
+    }
+  };
+
+  const fetchCapacity = async () => {
+    try {
+
+      const res = await fetch(
+        `http://localhost:3001/vendor/${vendorId}/capacity`
+      );
+
+      const data = await res.json();
+
+      if (data.capacity) {
+        setVendorCapacity(data.capacity.toString());
+        setCapacityLocked(true);
+      }
+
+    } catch (error) {
+      console.error("Capacity fetch error", error);
+    }
+  };
+
+  const saveVendorCapacity = async () => {
+    try {
+
+      const res = await fetch(
+        `http://localhost:3001/vendor/${vendorId}/capacity`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            capacity: Number(vendorCapacity)
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        toast.error("Failed to update capacity");
+        return;
+      }
+
+      toast.success("Capacity updated successfully", {
+        className: "publish-toast"
+      });
+      await fetchListings();
+
+    } catch {
+      toast.error("Failed to update capacity");
     }
   };
 
@@ -231,6 +284,48 @@ export default function CreateListingsPage() {
                 <p className="section-description">
                   Launch your unique Sri Lankan cultural experience and connect with travelers. Well-detailed listings get more engagement and visibility.
                 </p>
+                <div className="capacity-inline">
+
+                  <div className="capacity-inline-left">
+                    <i className="fa-solid fa-user-group"></i>
+                    <div>
+                      <strong>Guest Capacity</strong>
+
+                      <span className="capacity-note">
+                        Max guests per time slot • Applies to all experiences
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="capacity-inline-right">
+                    <input
+                      type="number"
+                      min="1"
+                      value={vendorCapacity}
+                      disabled={capacityLocked}
+                      onChange={(e) => setVendorCapacity(e.target.value)}
+                    />
+
+                    {capacityLocked ? (
+                      <button
+                        onClick={() => setCapacityLocked(false)}
+                        className="capacity-edit-btn"
+                      >
+                        Edit
+                      </button>
+                    ) : (
+                      <button
+                        onClick={async () => {
+                          await saveVendorCapacity();
+                          setCapacityLocked(true);
+                        }}
+                      >
+                        Save
+                      </button>
+                    )}
+                  </div>
+
+                </div>
                 <ul className="feature-list">
                   <li><i className="fa-solid fa-check"></i> Title</li>
                   <li><i className="fa-solid fa-check"></i> Category</li>
@@ -357,10 +452,18 @@ export default function CreateListingsPage() {
                               {listing.shortDescription}
                             </p>
                           )}
-                          {listing.capacity > 0 && (
+                          {listing.listingType === "EXPERIENCE" && (
                             <div className="card-capacity">
-                              <i className="fa-solid fa-users"></i>
-                              <span>Up to {listing.capacity} people</span>
+                              <i className="fa-solid fa-user-group"></i>
+                              <span>Maximum guests: {vendorCapacity}</span>
+                            </div>
+                          )}
+
+
+                          {listing.listingType === "PRODUCT" && listing.stock !== null && (
+                            <div className="card-capacity">
+                              <i className="fa-solid fa-box"></i>
+                              <span>Stock available: {listing.stock}</span>
                             </div>
                           )}
                           <div className="meta-row light">
@@ -391,9 +494,9 @@ export default function CreateListingsPage() {
                                   listingType: listing.listingType || "EXPERIENCE",
                                   minPrice: listing.priceMin?.toString() || "",
                                   maxPrice: listing.priceMax?.toString() || "",
-                                  capacity: listing.capacity?.toString() || "",
                                   longDescription: listing.longDescription || "",
                                   shortDescription: listing.shortDescription || "",
+                                  capacity: listing.stock?.toString() || "",
                                   imageName: existingImage,
                                   imagePreview: existingImage,
                                   tags: listing.tags || [],
@@ -486,7 +589,13 @@ export default function CreateListingsPage() {
                   <div className="listing-type-toggle">
                     <div
                       className={`type-card ${formData.listingType === "EXPERIENCE" ? "active" : ""}`}
-                      onClick={() => setFormData({ ...formData, listingType: "EXPERIENCE" })}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          listingType: "EXPERIENCE",
+                          capacity: ""
+                        })
+                      }
                     >
                       <i className="fa-solid fa-person-walking"></i>
                       <span>Experience</span>
@@ -557,17 +666,25 @@ export default function CreateListingsPage() {
                         onChange={(e) => setFormData({ ...formData, maxPrice: e.target.value })}
                       />
                     </div>
-                  </div>
-                  <div className="form-group" style={{ marginTop: 16 }}>
-                    <label>Capacity (max people)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 10"
-                      required
-                      min="1"
-                      value={formData.capacity}
-                      onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    />
+                    <div className="form-group">
+                      <label>Product Quantity</label>
+
+                      <input
+                        type="number"
+                        placeholder="e.g. 50"
+                        value={formData.capacity}
+                        disabled={formData.listingType === "EXPERIENCE"}
+                        onChange={(e) =>
+                          setFormData({ ...formData, capacity: e.target.value })
+                        }
+                      />
+
+                      {formData.listingType === "EXPERIENCE" && (
+                        <small className="field-note">
+                          Quantity is only used for products.
+                        </small>
+                      )}
+                    </div>
                   </div>
                   <div className="form-group" style={{ marginTop: 16 }}>
                     <label>Tags (max 3, one word each)</label>
@@ -689,7 +806,7 @@ export default function CreateListingsPage() {
                       {formData.shortDescription.length}/{SHORT_DESC_MAX}
                     </div>
                     <div style={{ height: 12 }} />
-                    <div className="form-title">Full Listing Description *</div>
+                    <div className="form-title">Add Cultural Story</div>
                     <textarea
                       rows={6}
                       placeholder="Describe your listing in detail..."
@@ -716,7 +833,7 @@ export default function CreateListingsPage() {
                   className="btn-primary"
                   disabled={submitting}
                   onClick={async () => {
-                    if (!formData.title || !formData.categoryId || !formData.minPrice || !formData.maxPrice || !formData.capacity) {
+                    if (!formData.title || !formData.categoryId || !formData.minPrice || !formData.maxPrice) {
                       setFormError("Please fill all required fields");
                       return;
                     }
@@ -740,8 +857,14 @@ export default function CreateListingsPage() {
                       if (formData.longDescription) formDataToSend.append("longDescription", formData.longDescription);
                       formDataToSend.append("priceMin", formData.minPrice);
                       formDataToSend.append("priceMax", formData.maxPrice);
-                      if (formData.capacity && formData.capacity.trim() !== "") formDataToSend.append("capacity", formData.capacity);
-                      formDataToSend.append("tags", JSON.stringify(formData.tags));
+                      if (
+                        formData.listingType === "PRODUCT" &&
+                        formData.capacity &&
+                        formData.capacity.trim() !== ""
+                      ) {
+                        formDataToSend.append("stock", formData.capacity);
+                      }
+
                       formDataToSend.append(
                         "visibilityStatus",
                         isPublished ? "PUBLISHED" : "DRAFT"

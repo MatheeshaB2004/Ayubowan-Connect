@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Toaster, toast } from "react-hot-toast";
 import Link from "next/link";
 import "./page.css";
+import { useUser } from "@clerk/nextjs";
 
 type Ratings = {
     avgRating: number
@@ -12,6 +13,12 @@ type Ratings = {
 }
 
 export default function Dashboard() {
+    const { user, isLoaded } = useUser();
+
+    //console.log("CLERK ID:", user?.id);
+    const userId = user?.id;
+
+
     const times: string[] = [];
 
     for (let h = 0; h < 24; h++) {
@@ -84,9 +91,11 @@ export default function Dashboard() {
         completedBookings: 0,
         events: 0,
     });
-    const userId = 2; // temporary for testing
+
     const [currentDate, setCurrentDate] = useState(today)
+
     type Slot = {
+        id?: number
         start: string
         end: string
     }
@@ -128,6 +137,10 @@ export default function Dashboard() {
             const end = b.slot?.endTime || null;
             const date = b.slot?.date || null;
 
+            if (!isLoaded) {
+                return <div>Loading...</div>;
+            }
+
 
             return {
                 id: b.id,
@@ -164,9 +177,12 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
+        if (!userId) return;
         fetchBookings();
-    }, []);
+    }, [userId]);
+
     useEffect(() => {
+        if (!userId) return;
 
         const interval = setInterval(async () => {
             const now = new Date()
@@ -194,6 +210,9 @@ export default function Dashboard() {
     }, [currentDate])
 
     useEffect(() => {
+
+        if (!userId) return;
+
         const fetchStats = async () => {
             try {
                 const res = await fetch(
@@ -214,9 +233,10 @@ export default function Dashboard() {
         };
 
         fetchStats();
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
+        if (!userId) return;
         const fetchReviews = async () => {
             const res = await fetch(
                 `http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`
@@ -228,9 +248,12 @@ export default function Dashboard() {
         };
 
         fetchReviews();
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
+
+        if (!userId) return;
+
         const fetchRatings = async () => {
             const res = await fetch(
                 `http://localhost:3001/dashboard/vendor/rating-summary?userId=${userId}`
@@ -246,9 +269,10 @@ export default function Dashboard() {
         };
 
         fetchRatings();
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
+        if (!userId) return;
 
         const fetchAvailability = async () => {
 
@@ -265,11 +289,17 @@ export default function Dashboard() {
             if (Array.isArray(data)) {
                 data.forEach((d: any) => {
                     const day = new Date(d.date).getDate();
-                    mapped[day] = d.slots || [];
+
+                    mapped[day] = (d.slots || []).map((s: any) => ({
+                        id: s.id,
+                        start: s.start,
+                        end: s.end
+                    }));
                 });
             }
 
             setAvailability(mapped);
+            console.log("FETCHED AVAILABILITY:", JSON.stringify(mapped, null, 2));
         };
 
         fetchAvailability();
@@ -277,6 +307,7 @@ export default function Dashboard() {
     }, [currentDate]);
 
     useEffect(() => {
+        if (!userId) return;
         const fetchListings = async () => {
             try {
                 const res = await fetch(
@@ -424,7 +455,6 @@ export default function Dashboard() {
             const copy = { ...prev };
             copy[day] = copy[day].filter((_, i) => i !== index);
             if (copy[day].length === 0) {
-                delete copy[day];
                 if (activeDay === day) setActiveDay(null);
             }
             return copy;
@@ -577,11 +607,15 @@ export default function Dashboard() {
                                             <img src={b.avatar} alt={b.name} className="request-avatar" />
                                             <div className="request-info">
                                                 <h4>{b.name}</h4>
-                                                <p>
-                                                    {b.property} • {b.slot ? `${b.slot.date}  ${b.slot.start} - ${b.slot.end}` : "No slot"}
-                                                    {" • Guests: "} {b.guests}
-                                                    {b.slot && ` (${b.slot.bookedGuests}/${b.slot.maxGuests})`}
-                                                </p>
+                                                <div className="booking-meta">
+                                                    <p>
+                                                        {b.property} • {b.slot ? `${b.slot.date} ${b.slot.start} - ${b.slot.end}` : "No slot"}
+                                                    </p>
+
+                                                    <p className="booking-guests">
+                                                        Guests: {b.guests} ({b.slot?.bookedGuests}/{b.slot?.maxGuests})
+                                                    </p>
+                                                </div>
                                                 {b.slot?.isFull && (
                                                     <span style={{ color: "red", fontWeight: "bold", fontSize: "12px" }}>
                                                         SLOT FULL
@@ -659,7 +693,7 @@ export default function Dashboard() {
                         ) : (
                             <div className="listings-scroll-container">
 
-                                {listings.map((l) => (
+                                {Array.isArray(listings) && listings.map((l) => (
                                     <div className="dashboard-listing-card" key={l.id}>
 
                                         <img
@@ -852,12 +886,15 @@ export default function Dashboard() {
                                         <button
                                             className="btn-accept"
                                             onClick={async () => {
-
                                                 const monthNumber = month + 1;
 
                                                 const dates = Object.entries(availability).map(([day, slots]) => ({
                                                     date: `${year}-${String(monthNumber).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
-                                                    slots
+                                                    slots: slots.map(s => ({
+                                                        id: s.id,
+                                                        start: s.start,
+                                                        end: s.end
+                                                    }))
                                                 }));
 
                                                 await fetch(
@@ -877,10 +914,29 @@ export default function Dashboard() {
                                                 setIsEditingCal(false);
                                                 setActiveDay(null);
 
+                                                // --- ADD THESE LINES TO RE-SYNC STATE ---
+                                                const monthString = `${year}-${String(monthNumber).padStart(2, '0')}-01`;
+                                                const res = await fetch(`http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`);
+                                                const data = await res.json();
+
+                                                const mapped: AvailabilityState = {};
+                                                if (Array.isArray(data)) {
+                                                    data.forEach((d: any) => {
+                                                        const day = new Date(d.date).getDate();
+                                                        mapped[day] = (d.slots || []).map((s: any) => ({
+                                                            id: s.id,
+                                                            start: s.start,
+                                                            end: s.end
+                                                        }));
+                                                    });
+                                                }
+                                                setAvailability(mapped);
+
                                             }}
                                         >
                                             Save
                                         </button>
+
                                     </>
                                 )}
                             </div>
@@ -956,7 +1012,7 @@ export default function Dashboard() {
                                             .map((slot, idx) => (
 
                                                 <div
-                                                    key={idx}
+                                                    key={slot.id || idx}
                                                     className="slot-card"
                                                     style={{
                                                         display: "flex",
