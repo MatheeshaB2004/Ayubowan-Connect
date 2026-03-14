@@ -14,7 +14,7 @@ export default function LoginPage() {
   // Redirect if already signed in
   useEffect(() => {
     if (userLoaded && isSignedIn) {
-      router.replace("/auth/post-login");
+      router.replace("/");
     }
   }, [userLoaded, isSignedIn, router]);
 
@@ -39,7 +39,7 @@ export default function LoginPage() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/auth/post-login");
+        router.push("/");
       } else {
         setError("Sign in incomplete. Please try again.");
       }

@@ -24,7 +24,7 @@ function AuthCallbackContent() {
       localStorage.setItem("refresh_token", refreshToken);
 
       // Redirect to post-login check which will route based on role
-      router.push("/auth/post-login");
+      router.push("/");
     } else {
       // No tokens received, redirect to login
       router.push("/auth/login");

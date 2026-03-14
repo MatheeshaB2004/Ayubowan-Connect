@@ -33,7 +33,7 @@ export default function UserRegisterPage() {
   // Redirect if already signed in and profile is complete
   React.useEffect(() => {
     if (isSignedIn && user?.unsafeMetadata?.role) {
-      router.replace("/auth/post-login");
+      router.replace("/");
     }
   }, [isSignedIn, user, router]);
 
