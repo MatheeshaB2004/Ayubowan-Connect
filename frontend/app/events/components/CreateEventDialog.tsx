@@ -4,18 +4,30 @@ import { useState, useRef } from "react";
 import { X, Loader2, Upload } from "lucide-react";
 import { createEvent } from "../lib/api/events";
 
-const CATEGORIES = ["Cooking","Arts & Crafts","Cultural","Food & Beverage","Community","Adventure","Wellness"];
-const CITIES = ["Colombo","Kandy","Galle","Nuwara Eliya","Matale","Jaffna","Trincomalee","Anuradhapura"];
+const CATEGORIES = ["Traditional Artisanship","Textiles & Handicrafts","Cooking","Arts & Crafts","Cultural","Food & Beverage","Community","Adventure","Nature & Wellness"];
+
+const provinceDistrictMap: { [key: string]: string[] } = {
+   'Western': ['Colombo', 'Gampaha', 'Kalutara'],
+   'Central': ['Kandy', 'Matale', 'Nuwara Eliya'],
+   'Southern': ['Galle', 'Matara', 'Hambantota'],
+   'Northern': ['Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya'],
+   'Eastern': ['Ampara', 'Batticaloa', 'Trincomalee'],
+   'North Western': ['Kurunegala', 'Puttalam'],
+   'North Central': ['Anuradhapura', 'Polonnaruwa'],
+   'Uva': ['Badulla', 'Monaragala'],
+   'Sabaragamuwa': ['Ratnapura', 'Kegalle']
+};
 
 interface Props { open: boolean; token: string; onClose: () => void; onCreated: () => void; }
 
 interface Form {
   title: string; description: string; category: string; city: string;
+  province: string;
   startDate: string; endDate: string; time: string;
   maxParticipants: string; price: string; isFree: boolean; imageUrl: string;
 }
 const EMPTY: Form = {
-  title:"",description:"",category:"",city:"",startDate:"",endDate:"",
+  title:"",description:"",category:"",city:"",province:"",startDate:"",endDate:"",
   time:"",maxParticipants:"",price:"",isFree:false,imageUrl:"",
 };
 
@@ -84,7 +96,7 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             <Label text="City / Location" required>
               <select value={form.city} onChange={e => set("city", e.target.value)} className={inp}>
                 <option value="">Select city</option>
-                {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
+                {provinceDistrictMap[form.province]?.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </Label>
           </div>
