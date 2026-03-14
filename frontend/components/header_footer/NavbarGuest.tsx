@@ -41,7 +41,7 @@ const NavbarGuest: React.FC<NavbarGuestProps> = ({ textColorClass = '', isSigned
         <Link href="/marketplace" className={`nav-link ${textColorClass} ${isActive('/marketplace') ? 'active' : ''}`}>Marketplace</Link>
         <Link href="/events" className={`nav-link ${textColorClass} ${isActive('/events') ? 'active' : ''}`}>Events</Link>
         <Link href="/pro" className={`nav-link ${textColorClass} ${isActive('/pro') ? 'active' : ''}`}>Pro</Link>
-        <Link href="/faqs" className={`nav-link ${textColorClass} ${isActive('/faqs') ? 'active' : ''}`}>FAQs</Link>
+        <Link href="/faq" className={`nav-link ${textColorClass} ${isActive('/faqs') ? 'active' : ''}`}>FAQs</Link>
       </div>
 
       {/* Action Buttons */}
