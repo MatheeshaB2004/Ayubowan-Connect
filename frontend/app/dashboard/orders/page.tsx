@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -28,41 +28,59 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [usedMock, setUsedMock] = useState(false);
+  const hasFetched = useRef(false);
+
+  const fetchOrders = useCallback(async (userId: string) => {
+    const url = `${API_BASE}/orders`;
+    console.log('Orders API URL:', url);
+    console.log('User ID:', userId);
+
+    try {
+      const response = await fetch(url, {
+        headers: { 'x-user-id': userId },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Orders response:', data);
+        setOrders(data ?? []);
+        setUsedMock(false);
+      } else if (response.status === 404) {
+        // 404 = no database user found for this Clerk ID → treat as empty orders
+        console.log('No DB user / no orders found — showing empty state');
+        setOrders([]);
+        setUsedMock(false);
+      } else {
+        const errorText = await response.text();
+        console.error('Server error:', response.status, errorText);
+        toast.error('Failed to load orders', { id: 'orders-error' });
+      }
+    } catch (error) {
+      console.error('Network or fetch error:', error);
+      toast.error('Network error. Showing sample data.', { id: 'orders-error' });
+      setOrders(MOCK_ORDERS);
+      setUsedMock(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (!isLoaded || !user) {
-      if (isLoaded && !isSignedIn) setIsLoading(false);
+    // Wait until Clerk finishes loading
+    if (!isLoaded) return;
+
+    // User not signed in — stop loading
+    if (!isSignedIn || !user) {
+      setIsLoading(false);
       return;
     }
 
-    const fetchOrders = async () => {
-      console.log('Orders API URL:', `${API_BASE}/orders`);
-      console.log('User ID:', user.id);
-      try {
-        const response = await fetch(`${API_BASE}/orders`, {
-          headers: { 'x-user-id': user.id },
-        });
+    // Prevent React Strict Mode double-fetch
+    if (hasFetched.current) return;
+    hasFetched.current = true;
 
-        if (response.ok) {
-          const data = await response.json();
-          setOrders(data ?? []);
-          setUsedMock(false);
-        } else {
-          console.error('Server returned an error:', response.status);
-          toast.error('Failed to load orders');
-        }
-      } catch (error) {
-        console.error('Network or fetch error:', error);
-        toast.error('Network error. Falling back to sample data.');
-        setOrders(MOCK_ORDERS);
-        setUsedMock(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [isSignedIn, user, isLoaded]);
+    fetchOrders(user.id);
+  }, [isLoaded, isSignedIn, user, fetchOrders]);
 
   /* ── Loading ── */
   if (!isLoaded || isLoading) {
