@@ -94,7 +94,7 @@ const GlobalHeader: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="desktop-nav">
-            {activeRole === 'guest' && <NavbarGuest textColorClass={textColorClass} isSignedIn={isSignedIn} user={user} />}
+            {activeRole === 'guest' && <NavbarGuest textColorClass={textColorClass} isSignedIn={isSignedIn} />}
             {(activeRole === 'traveller' || activeRole === 'user') && <NavbarTraveller textColorClass={textColorClass} />}
             {activeRole === 'vendor' && <NavbarVendor textColorClass={textColorClass} />}
           </div>
