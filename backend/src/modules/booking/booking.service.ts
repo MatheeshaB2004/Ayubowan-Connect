@@ -13,33 +13,66 @@ export class BookingService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Resolve a Clerk user ID (string) or numeric user ID to the actual
-   * numeric database user ID.
-   *
-   * - If the value is already a valid integer string, use it directly.
-   * - Otherwise treat it as a Clerk ID and look up the User record
-   *   via the `clerk_<id>@placeholder.local` email convention used by
-   *   the vendor-management module during registration.
+   * Resolve a Clerk user ID to a numeric database userId.
+   * Auto-creates User + LocalTourist records if they don't exist yet.
    */
   private async resolveUserId(rawId: string): Promise<number> {
+    // If already numeric, return directly
     const parsed = Number(rawId);
     if (!isNaN(parsed) && Number.isInteger(parsed)) {
       return parsed;
     }
 
-    // Clerk ID – look up DB user by placeholder email
-    const user = await this.prisma.user.findFirst({
-      where: { email: `clerk_${rawId}@placeholder.local` },
+    // Step 1 — Check Vendor table by clerkUserId
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId: rawId },
     });
-
-    if (!user) {
-      throw new NotFoundException(
-        `No database user found for Clerk ID "${rawId}". ` +
-          'The user may not have completed registration.',
-      );
+    if (vendor) {
+      this.logger.log(`Resolved Clerk ID "${rawId}" via vendor → userId=${vendor.userId}`);
+      return vendor.userId;
     }
 
-    return user.id;
+    // Step 2 — Look for existing User created by registration
+    const placeholderEmail = `clerk_${rawId}@placeholder.local`;
+    let userId: number;
+
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: placeholderEmail },
+    });
+
+    if (existingUser) {
+      userId = existingUser.id;
+      this.logger.log(`Resolved Clerk ID "${rawId}" via placeholder email → userId=${userId}`);
+    } else {
+      // Step 3 — Create a new User record
+      const newUser = await this.prisma.user.create({
+        data: {
+          fullName: 'Clerk User',
+          email: placeholderEmail,
+          passwordHash: 'clerk-auth',
+        },
+      });
+      userId = newUser.id;
+      this.logger.log(`Auto-created User for Clerk ID "${rawId}" → userId=${userId}`);
+    }
+
+    // Step 4 — Ensure LocalTourist record exists
+    const tourist = await this.prisma.localTourist.findUnique({
+      where: { userId },
+    });
+    if (!tourist) {
+      await this.prisma.localTourist.create({
+        data: {
+          userId,
+          fullName: 'Clerk User',
+          userType: 'LOCAL',
+        },
+      });
+      this.logger.log(`Auto-created LocalTourist for userId=${userId}`);
+    }
+
+    // Step 5
+    return userId;
   }
 
   async createBooking(
@@ -69,24 +102,6 @@ export class BookingService {
       throw new NotFoundException('Listing not found');
     }
 
-    // --- ensure a LocalTourist record exists for this user -------------------
-    const tourist = await this.prisma.localTourist.findUnique({
-      where: { userId },
-    });
-
-    if (!tourist) {
-      // Auto-create a minimal LocalTourist profile so the booking can proceed.
-      const dbUser = await this.prisma.user.findUnique({ where: { id: userId } });
-      await this.prisma.localTourist.create({
-        data: {
-          userId,
-          fullName: dbUser?.fullName ?? 'Guest',
-          userType: 'TOURIST',
-        },
-      });
-      this.logger.log(`Auto-created LocalTourist record for userId=${userId}`);
-    }
-
     // --- create the booking --------------------------------------------------
     try {
       const booking = await this.prisma.booking.create({
@@ -113,7 +128,7 @@ export class BookingService {
   async updateBookingStatus(bookingId: number, status: string, rawUserId: string) {
     const userId = await this.resolveUserId(rawUserId);
     const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId }
+      where: { id: bookingId },
     });
     if (!booking) throw new NotFoundException('Booking not found');
     if (booking.localTouristId !== userId) {
@@ -121,7 +136,7 @@ export class BookingService {
     }
     return this.prisma.booking.update({
       where: { id: bookingId },
-      data: { status: status as any }
+      data: { status: status as any },
     });
   }
 
