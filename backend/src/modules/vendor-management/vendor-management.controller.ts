@@ -140,6 +140,22 @@ export class VendorManagementController {
     return this.vendorService.deleteListing(vendorId, listingId);
   }
 
+  @Put(':vendorId/capacity')
+  async updateVendorCapacity(
+    @Param('vendorId') vendorId: number,
+    @Body() body: { capacity: number }
+  ) {
+    return this.vendorService.updateVendorCapacity(
+      Number(vendorId),
+      body.capacity,
+    );
+  }
+
+  @Get(':vendorId/capacity')
+  getVendorCapacity(@Param('vendorId') vendorId: string) {
+    return this.vendorService.getVendorCapacity(Number(vendorId));
+  }
+
   @Post(":id/view")
   async recordProfileView(
     @Param("id") id: string,

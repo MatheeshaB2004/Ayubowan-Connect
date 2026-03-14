@@ -265,8 +265,12 @@ export class VendorManagementService {
         priceMax: dto.priceMax,
         priceNote: dto.priceNote,
         duration: dto.duration,
-        capacity: dto.capacity,
-        visibilityStatus: dto.visibilityStatus || "DRAFT", 
+        capacity: null,
+        stock:
+          dto.listingType === "PRODUCT" && dto.stock
+            ? Number(dto.stock)
+            : null,
+        visibilityStatus: dto.visibilityStatus || "DRAFT",
         availability: dto.availability,
         tags:
           typeof dto.tags === 'string'
@@ -327,8 +331,10 @@ export class VendorManagementService {
           console.error(e);
         }
       });
+
     }
     console.timeEnd("CREATE_LISTING_TOTAL");
+
     return listing;
   }
 
@@ -408,10 +414,9 @@ export class VendorManagementService {
         ...(dto.priceMax !== undefined && { priceMax: dto.priceMax }),
         ...(dto.priceNote !== undefined && { priceNote: dto.priceNote }),
         ...(dto.duration !== undefined && { duration: dto.duration }),
-        ...(dto.capacity !== undefined && dto.capacity > 0
-          ? { capacity: dto.capacity }
-          : { capacity: null }),
-
+        ...(dto.listingType === "PRODUCT"
+          ? { stock: dto.stock ? Number(dto.stock) : null }
+          : { stock: null }),
         ...(dto.availability !== undefined && {
           availability: dto.availability,
         }),
@@ -576,4 +581,44 @@ export class VendorManagementService {
       return null;
     }
   }
+
+  async updateVendorCapacity(vendorId: number, capacity: number) {
+
+    if (!capacity || capacity < 1) {
+      throw new BadRequestException("Capacity must be greater than 0");
+    }
+
+    // update all availability slots
+    await this.prisma.availabilitySlot.updateMany({
+      where: {
+        availability: {
+          vendorId: vendorId,
+        },
+      },
+      data: {
+        maxGuests: capacity,
+      },
+    });
+
+    return { message: "Capacity updated successfully" };
+  }
+
+  async getVendorCapacity(vendorId: number) {
+
+    const slot = await this.prisma.availabilitySlot.findFirst({
+      where: {
+        availability: {
+          vendorId: vendorId
+        }
+      },
+      select: {
+        maxGuests: true
+      }
+    });
+
+    return {
+      capacity: slot?.maxGuests || null
+    };
+  }
+
 }
