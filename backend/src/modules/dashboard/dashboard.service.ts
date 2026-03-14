@@ -1008,7 +1008,7 @@ export class DashboardService {
 
     const completedBookings = await this.prisma.booking.count({
       where: {
-        status: "CONFIRMED",
+        status: "COMPLETED",
         listing: {
           vendorId: vendor.id,
         },
@@ -1223,70 +1223,117 @@ export class DashboardService {
   }
 
   async saveAvailability(userId: number, dates: any[]) {
-
     const vendor = await this.prisma.vendor.findUnique({
       where: { userId }
     });
 
     if (!vendor) throw new Error("Vendor not found");
 
+    const pad = (n: number) => String(n).padStart(2, "0");
+
     for (const d of dates) {
+      if (!d.date || !Array.isArray(d.slots)) continue;
 
       const dateObj = new Date(d.date);
+      dateObj.setUTCHours(0, 0, 0, 0);
 
-      const availability = await this.prisma.vendorAvailability.findFirst({
+      let availability = await this.prisma.vendorAvailability.findFirst({
         where: {
           vendorId: vendor.id,
-          date: dateObj
-        }
+          date: {
+            gte: dateObj,
+            lt: new Date(dateObj.getTime() + 86400000)
+          }
+        },
+        include: { slots: true }
       });
 
-      let availabilityRecord;
-
       if (!availability) {
-
-        availabilityRecord = await this.prisma.vendorAvailability.create({
+        availability = await this.prisma.vendorAvailability.create({
           data: {
             vendorId: vendor.id,
             date: dateObj
-          }
+          },
+          include: { slots: true }
         });
-
-      } else {
-
-        availabilityRecord = availability;
-
-        await this.prisma.availabilitySlot.deleteMany({
-          where: {
-            availabilityId: availability.id
-          }
-        });
-
       }
 
+      const existingSlots = availability.slots || [];
+      const existingIds = existingSlots.map(s => s.id);
+
+      // We will track the IDs we want to KEEP in the database.
+      const incomingIds: number[] = [];
+
+      // PROCESS EACH SLOT
       for (const slot of d.slots) {
+        if (!slot.start || !slot.end) continue;
+
         const [startH, startM] = slot.start.split(":").map(Number);
         const [endH, endM] = slot.end.split(":").map(Number);
 
-        const start = new Date(d.date);
-        start.setUTCHours(startH, startM, 0, 0);
+        const startDate = new Date(d.date);
+        startDate.setUTCHours(startH, startM, 0, 0);
 
-        const end = new Date(d.date);
-        end.setUTCHours(endH, endM, 0, 0);
+        const endDate = new Date(d.date);
+        endDate.setUTCHours(endH, endM, 0, 0);
 
-        await this.prisma.availabilitySlot.create({
-          data: {
-            availabilityId: availabilityRecord.id,
-            startTime: start,
-            endTime: end
+        // Safely parse the ID, even if the frontend sends it as a string
+        const slotId = slot.id != null ? Number(slot.id) : null;
+
+        // UPDATE EXISTING SLOT IF ID IS MATCHED
+        if (slotId && !isNaN(slotId)) {
+          const existing = existingSlots.find(s => s.id === slotId);
+          if (existing) {
+            incomingIds.push(slotId); // Mark to keep
+
+            const existingStart = `${pad(existing.startTime.getUTCHours())}:${pad(existing.startTime.getUTCMinutes())}`;
+            const existingEnd = `${pad(existing.endTime.getUTCHours())}:${pad(existing.endTime.getUTCMinutes())}`;
+
+            if (existingStart !== slot.start || existingEnd !== slot.end) {
+              await this.prisma.availabilitySlot.update({
+                where: { id: slotId },
+                data: { startTime: startDate, endTime: endDate }
+              });
+            }
+            continue; 
           }
+        }
+
+    
+        const duplicate = existingSlots.find(s => {
+          const sStart = `${pad(s.startTime.getUTCHours())}:${pad(s.startTime.getUTCMinutes())}`;
+          const sEnd = `${pad(s.endTime.getUTCHours())}:${pad(s.endTime.getUTCMinutes())}`;
+          return sStart === slot.start && sEnd === slot.end;
         });
 
+        
+        if (duplicate) {
+          incomingIds.push(duplicate.id); // Mark duplicate's ID to keep
+          continue;
+        }
+
+        // It is genuinely a brand new slot.
+        await this.prisma.availabilitySlot.create({
+          data: {
+            availabilityId: availability.id,
+            startTime: startDate,
+            endTime: endDate
+          }
+        });
+      }
+
+      // DELETE REMOVED SLOTS (Using all preserved IDs)
+      const removedIds = existingIds.filter(id => !incomingIds.includes(id));
+      if (removedIds.length > 0) {
+        await this.prisma.availabilitySlot.deleteMany({
+          where: { id: { in: removedIds } }
+        });
       }
     }
-    return { message: "Availability saved successfully" }
 
+    return { message: "Availability saved successfully" };
   }
+
 
   async getAvailability(userId: number, month: string) {
 
@@ -1297,27 +1344,26 @@ export class DashboardService {
     if (!vendor) throw new Error("Vendor not found");
 
     const input = new Date(month);
-
     const start = new Date(input.getFullYear(), input.getMonth(), 1);
     const end = new Date(input.getFullYear(), input.getMonth() + 1, 1);
 
     const dates = await this.prisma.vendorAvailability.findMany({
       where: {
         vendorId: vendor.id,
-        date: {
-          gte: start,
-          lt: end
-        }
+        date: { gte: start, lt: end }
       },
-      include: {
-        slots: true
-      }
+      include: { slots: true }
     });
+
+    const pad = (n: number) => String(n).padStart(2, "0");
+
     return dates.map(d => ({
       date: d.date,
       slots: d.slots.map(s => ({
-        start: s.startTime.toISOString().slice(11, 16),
-        end: s.endTime.toISOString().slice(11, 16)
+        id: s.id,
+
+        start: `${pad(s.startTime.getUTCHours())}:${pad(s.startTime.getUTCMinutes())}`,
+        end: `${pad(s.endTime.getUTCHours())}:${pad(s.endTime.getUTCMinutes())}`,
       }))
     }));
   }
@@ -1378,6 +1424,7 @@ export class DashboardService {
   }
 
   async deleteAvailabilityForMonth(userId: number, month: string) {
+    console.log("DELETE MONTH AVAILABILITY CALLED");
 
     const vendor = await this.prisma.vendor.findUnique({
       where: { userId }
@@ -1426,9 +1473,28 @@ export class DashboardService {
 
     if (!vendor) throw new Error("Vendor not found");
 
+    const now = new Date();
+    // temp data - const now = new Date("2026-03-07");
+
+    const startOfMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+
+    const startOfNextMonth = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      1
+    );
+
     const bookings = await this.prisma.booking.findMany({
       where: {
-        vendorId: vendor.id
+        vendorId: vendor.id,
+        createdAt: {
+          gte: startOfMonth,
+          lt: startOfNextMonth
+        }
       },
       include: {
         listing: {

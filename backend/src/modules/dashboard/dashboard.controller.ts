@@ -5,152 +5,217 @@ import {
   Patch,
   Delete,
   Body,
-  Req,
   Query,
-  Param,
-  ParseIntPipe
+  Param
 } from '@nestjs/common';
+import { PrismaService } from '../../prisma/prisma.service';
 import { DashboardService } from './dashboard.service';
+import { NotFoundException } from '@nestjs/common';
 
 @Controller('dashboard/vendor')
 export class DashboardController {
-  constructor(private readonly service: DashboardService) { }
+  constructor(private readonly service: DashboardService,
+    private readonly prisma: PrismaService
+  ) { }
+
+  private async getUserIdFromClerk(clerkUserId: string) {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId }
+    });
+
+    if (!vendor) {
+      throw new NotFoundException("Vendor not found");
+    }
+
+    return vendor.userId;
+  }
+  
 
   // CREATE GOAL
   @Post('goal')
-  createGoal(@Body() body: { userId: number; target: number }) {
-    return this.service.createGoal(body.userId, body.target);
+  async createGoal(@Body() body: { userId: string; target: number }) {
+
+    const userId = await this.getUserIdFromClerk(body.userId);
+
+    return this.service.createGoal(userId, body.target);
   }
 
   // GET DASHBOARD
   @Get()
-  getDashboard(@Query('userId') userId: string) {
-    return this.service.getDashboard(Number(userId));
+  async getDashboard(@Query('userId') clerkUserId: string) {
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+    return this.service.getDashboard(userId);
   }
 
   // INCREASE GOAL
   @Patch('goal')
-  increaseGoal(@Body() body: { userId: number; target: number }) {
-    return this.service.increaseGoal(body.userId, body.target);
+  async increaseGoal(@Body() body: { userId: string; target: number }) {
+
+    const userId = await this.getUserIdFromClerk(body.userId);
+
+    return this.service.increaseGoal(userId, body.target);
   }
 
   // DELETE GOAL
   @Delete('goal')
-  deleteGoal(@Body() body: { userId: number }) {
-    return this.service.deleteGoal(body.userId);
+  async deleteGoal(@Body() body: { userId: string }) {
+
+    const userId = await this.getUserIdFromClerk(body.userId);
+
+    return this.service.deleteGoal(userId);
   }
 
   @Get('summary')
-  getSummary(
-    @Query('userId') userId: string,
+  async getSummary(
+    @Query('userId') clerkUserId: string,
     @Query('period') period: string,
   ) {
-    return this.service.getVendorSummary(Number(userId), period || "thisMonth");
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+    return this.service.getVendorSummary(userId, period || "thisMonth");
   }
 
   @Get("booking-trend")
-  getBookingTrend(
-    @Query("userId") userId: string,
+  async getBookingTrend(
+    @Query("userId") clerkUserId: string,
     @Query("period") period: string
   ) {
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
     return this.service.getBookingTrend(
-      Number(userId),
+      userId,
       period
     );
   }
 
   @Get("top-listings")
-  getTopListings(
-    @Query("userId") userId: string,
+  async getTopListings(
+    @Query("userId") clerkUserId: string,
     @Query("period") period: string
   ) {
-    return this.service.getTopListings(Number(userId), period || "thisMonth");
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.getTopListings(userId, period || "thisMonth");
   }
 
   @Get("ratings")
-  getRatings(
-    @Query("userId") userId: string,
+  async getRatings(
+    @Query("userId") clerkUserId: string,
     @Query("period") period: string
   ) {
-    return this.service.getRatingAnalytics(Number(userId), period || "thisMonth");
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.getRatingAnalytics(userId, period || "thisMonth");
   }
 
   @Get("insights")
-  getInsights(
-    @Query("userId") userId: string,
+  async getInsights(
+    @Query("userId") clerkUserId: string,
     @Query("period") period: string
   ) {
-    return this.service.getEngagementInsights(Number(userId), period || "thisMonth");
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.getEngagementInsights(userId, period || "thisMonth");
   }
 
   @Get("views-vs-bookings")
-  getViewsVsBookings(
-    @Query("userId") userId: string,
+  async getViewsVsBookings(
+    @Query("userId") clerkUserId: string,
     @Query("period") period: string
   ) {
-    return this.service.getViewsVsBookings(Number(userId), period || "thisMonth");
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.getViewsVsBookings(userId, period || "thisMonth");
   }
 
   @Get("event-overview")
-  getEventOverview(@Query("userId") userId: string) {
-    return this.service.getEventOverview(Number(userId));
+  async getEventOverview(@Query("userId") clerkUserId: string) {
+
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.getEventOverview(userId);
   }
 
   @Post("simulate-view/:id")
-  simulate(
+  async simulate(
     @Param("id") id: string,
-    @Query("userId") userId: string
+    @Query("userId") clerkUserId: string
   ) {
+
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
     return this.service.simulateListingView(
       Number(id),
-      Number(userId)
+      userId
     );
   }
 
   @Get("stats")
-  getStats(@Query("userId") userId: string) {
-    return this.service.getDashboardStats(Number(userId));
+  async getStats(@Query("userId") clerkUserId: string) {
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+    return this.service.getDashboardStats(userId);
   }
 
   @Get("rating-summary")
-  getDashboardRating(@Query("userId") userId: string) {
-    return this.service.getDashboardRating(Number(userId));
+  async getDashboardRating(@Query("userId") clerkUserId: string) {
+
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.getDashboardRating(userId);
   }
 
   @Get("reviews")
-  getVendorReviews(@Query("userId") userId: number) {
-    return this.service.getVendorReviews(Number(userId));
+  async getVendorReviews(@Query("userId") clerkUserId: string) {
+
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.getVendorReviews(userId);
   }
 
   @Get("listings")
-  getVendorListings(@Query("userId", ParseIntPipe) userId: number) {
+  async getVendorListings(@Query("userId") clerkUserId: string) {
+
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
     return this.service.getVendorListings(userId);
   }
 
   @Post("availability")
-  saveAvailability(@Body() body: any) {
-    return this.service.saveAvailability(body.userId, body.dates);
+  async saveAvailability(@Body() body: any) {
+
+    const userId = await this.getUserIdFromClerk(body.userId);
+
+    return this.service.saveAvailability(userId, body.dates);
   }
 
   @Get("availability")
-  getAvailability(
-    @Query("userId") userId: string,
+  async getAvailability(
+    @Query("userId") clerkUserId: string,
     @Query("month") month: string
   ) {
-    return this.service.getAvailability(Number(userId), month);
+
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.getAvailability(userId, month);
   }
+
   @Delete("availability/previous")
-  deletePreviousAvailability(@Query("userId") userId: string) {
-    return this.service.deletePreviousAvailability(Number(userId));
+  async deletePreviousAvailability(@Query("userId") clerkUserId: string) {
+
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
+    return this.service.deletePreviousAvailability(userId);
   }
 
   @Delete("availability")
-  deleteAvailability(
-    @Query("userId") userId: string,
+  async deleteAvailability(
+    @Query("userId") clerkUserId: string,
     @Query("month") month: string
   ) {
+
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+
     return this.service.deleteAvailabilityForMonth(
-      Number(userId),
+      userId,
       month
     );
   }
@@ -173,8 +238,9 @@ export class DashboardController {
   }
 
   @Get("bookings")
-  getBookings(@Query("userId") userId: string) {
-    return this.service.getVendorBookings(Number(userId));
+  async getBookings(@Query("userId") clerkUserId: string) {
+    const userId = await this.getUserIdFromClerk(clerkUserId);
+    return this.service.getVendorBookings(userId);
   }
 
   @Patch("booking/accept/:id")

@@ -101,7 +101,7 @@ export default function DashboardClient({
   const [hideSidebar, setHideSidebar] = useState(false);
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const data = dashboardData[selectedPeriod];
+  
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -360,9 +360,9 @@ export default function DashboardClient({
                 title="Booking Trends" />
 
               <PerformanceTrends
-                bookingTrend={bookingTrend}
-                viewsVsBookings={viewsVsBookings}
-                conversionRate={conversionRate}
+                bookingTrend={bookingTrend || []}
+                viewsVsBookings={viewsVsBookings || []}
+                conversionRate={conversionRate || 0}
               />
             </section>
 
@@ -378,7 +378,7 @@ export default function DashboardClient({
                     color="#577399"
                     title="Top Listings" />
 
-                  <TopListings listings={topListings} />
+                  <TopListings listings={topListings || []} />
                 </section>
 
                 <section
@@ -391,10 +391,10 @@ export default function DashboardClient({
                     title="Rating Analytics" />
 
                   <RatingAnalytics
-                    avgRating={ratings.avgRating}
-                    totalReviews={ratings.totalReviews}
-                    satisfaction={ratings.satisfaction}
-                    breakdown={ratings.breakdown}
+                    avgRating={ratings?.avgRating || 0}
+                    totalReviews={ratings?.totalReviews || 0}
+                    satisfaction={ratings?.satisfaction || 0}
+                    breakdown={ratings?.breakdown || []}
                   />
                 </section>
               </div>
@@ -407,7 +407,7 @@ export default function DashboardClient({
                 color="#8D5A97"
                 title="Engagement Insights" />
 
-              <EngagementInsights insights={insights} />
+              <EngagementInsights insights={insights || []} />
             </section>
 
             {/* ── 5. Goals ── */}

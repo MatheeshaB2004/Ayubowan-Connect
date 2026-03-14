@@ -86,7 +86,7 @@ export default function RatingAnalytics({
 
         {/* Star breakdown bars */}
         <div className="rating-breakdown">
-          {breakdown.map((item, index) =>
+          {(Array.isArray(breakdown) ? breakdown : []).map((item, index) =>
           <motion.div
             key={item.stars}
             initial={{

@@ -93,7 +93,7 @@ export default function TopListings({ listings }: TopListingsProps) {
       </div>
 
       <div className="listings-list">
-        {listings.map((listing, index) => {
+        {(Array.isArray(listings) ? listings : []).map((listing, index) => {
           const primaryTag = listing.tags?.[0];
           const tag = primaryTag ? getTag(primaryTag) : null;
           const pct =
