@@ -68,6 +68,11 @@ const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 
 export default function ExperienceDetailPage() {
   const { user } = useAuth();
+
+  console.log("USER OBJECT:", user);
+  console.log("USER ID:", user?.id);
+  console.log("TYPE:", typeof user?.id);
+
   const { addToCart } = useCart();
   const params = useParams();
   const idStr = Array.isArray(params?.id) ? params?.id[0] : params?.id;
@@ -87,9 +92,24 @@ export default function ExperienceDetailPage() {
     notes: '',
   });
   const [isBookingSubmitted, setIsBookingSubmitted] = useState(false);
+  const viewLogged = React.useRef(false);
 
   // Gallery State
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!idStr || viewLogged.current) return;
+
+    viewLogged.current = true;
+
+    const url = user?.id
+      ? `${API_BASE}/dashboard/vendor/simulate-view/${idStr}?userId=${user.id}`
+      : `${API_BASE}/dashboard/vendor/simulate-view/${idStr}`;
+
+    fetch(url, { method: "POST" });
+
+  }, [idStr]);
+
 
   useEffect(() => {
     if (!idStr) return;

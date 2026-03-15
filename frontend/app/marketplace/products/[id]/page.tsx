@@ -17,6 +17,7 @@ import { useParams } from 'next/navigation';
 import './ProductDetail.css';
 import ReviewSection from '../../review';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 
 type ApiListing = {
   id: number;
@@ -57,6 +58,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001'
 const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 
 export default function ProductDetailPage() {
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const params = useParams();
   const idStr = Array.isArray(params?.id) ? params?.id[0] : params?.id;
@@ -65,6 +67,23 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const viewLogged = React.useRef(false);
+
+
+  useEffect(() => {
+    if (!idStr || viewLogged.current) return;
+
+    viewLogged.current = true;
+
+    const url = user?.id
+      ? `${API_BASE}/dashboard/vendor/simulate-view/${idStr}?userId=${user.id}`
+      : `${API_BASE}/dashboard/vendor/simulate-view/${idStr}`;
+
+    fetch(url, { method: "POST" });
+
+  }, [idStr]);
+
+
 
   useEffect(() => {
     if (!idStr) return;

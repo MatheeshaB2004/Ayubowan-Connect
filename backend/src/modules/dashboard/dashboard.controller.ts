@@ -29,7 +29,7 @@ export class DashboardController {
 
     return vendor.userId;
   }
-  
+
 
   // CREATE GOAL
   @Post('goal')
@@ -138,16 +138,38 @@ export class DashboardController {
   @Post("simulate-view/:id")
   async simulate(
     @Param("id") id: string,
-    @Query("userId") clerkUserId: string
+    @Query("userId") clerkUserId?: string
+    
   ) {
+    console.log("SIMULATE VIEW CALLED → listing:", id, "time:", new Date());
+    let userId: number | undefined = undefined;
 
-    const userId = await this.getUserIdFromClerk(clerkUserId);
+    if (clerkUserId) {
 
-    return this.service.simulateListingView(
-      Number(id),
-      userId
-    );
+      const user = await this.prisma.user.findFirst({
+        where: { email: clerkUserId } // because you store Clerk ID in email
+      });
+      console.log("CLERK USER ID FROM FRONTEND:", clerkUserId);
+
+      if (user) {
+
+        // Check if that user is a LocalTourist
+        const tourist = await this.prisma.localTourist.findUnique({
+          where: { userId: user.id }
+        });
+
+        if (tourist) {
+          userId = user.id;
+        }
+
+      }
+
+
+    }
+
+    return this.service.simulateListingView(Number(id), userId);
   }
+
 
   @Get("stats")
   async getStats(@Query("userId") clerkUserId: string) {

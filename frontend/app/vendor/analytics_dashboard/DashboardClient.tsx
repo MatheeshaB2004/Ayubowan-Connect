@@ -101,7 +101,8 @@ export default function DashboardClient({
   const [hideSidebar, setHideSidebar] = useState(false);
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
+  const [mounted, setMounted] = useState(false);
+
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -157,6 +158,10 @@ export default function DashboardClient({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const scrollTo = (id: string) =>
     document.getElementById(id)?.scrollIntoView({
       behavior: 'smooth',
@@ -165,7 +170,7 @@ export default function DashboardClient({
 
   const periods: Period[] = ['thisMonth', 'last30Days', 'lastQuarter'];
   console.log("SUMMARY STATE:", summary);
-  if (!summary) return null;
+  if (!mounted || !summary) return null;
   return (
     <div className={`${inter.className} dashboard-container`}>
       {/* ── Sidebar ── */}

@@ -346,7 +346,7 @@ export class MarketplaceService {
         id: review.id,
         listingId: review.listingId,
         userId: review.userId,
-        userName: review.user.fullName,
+        userName: review.user?.fullName ?? "Unknown User",
         rating: review.rating,
         comment: review.comment,
         reply: review.reply,
