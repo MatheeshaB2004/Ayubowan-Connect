@@ -10,8 +10,9 @@ type Booking = {
   id: number;
   listingId: number;
   bookingDate: string;
+  updatedAt: string;
   guests: number;
-  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'COMPLETED';
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
   totalPrice: number;
   listing: {
     title: string;
@@ -66,6 +67,13 @@ export default function OrdersPage() {
   const vendorName = (b: Booking) =>
     b.vendor?.businessName ?? b.listing?.vendor?.businessName ?? 'Unknown Vendor';
 
+  const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+
   /* ── Loading ── */
   if (!isLoaded || isLoading) {
     return (
@@ -101,6 +109,12 @@ export default function OrdersPage() {
               className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
             >
               Pending Bookings
+            </Link>
+            <Link
+              href="/dashboard/upcoming"
+              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Upcoming Experiences
             </Link>
             <Link
               href="/dashboard/orders"
@@ -142,8 +156,8 @@ export default function OrdersPage() {
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Item Name</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Type</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Date</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Total Price</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience Date</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Payment Date</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
                   </tr>
                 </thead>
@@ -166,14 +180,10 @@ export default function OrdersPage() {
                         {vendorName(order)}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">
-                        {new Date(order.bookingDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
+                        {formatDate(order.bookingDate)}
                       </td>
                       <td className="py-4 px-6 text-sm text-[#21a17a] font-semibold">
-                        LKR {order.totalPrice.toLocaleString()}
+                        {formatDate(order.updatedAt)}
                       </td>
                       <td className="py-4 px-6">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#21a17a]/15 text-[#21a17a]">
