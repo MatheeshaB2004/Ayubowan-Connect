@@ -33,6 +33,13 @@ export class BookingController {
     return this.bookingService.getVendorAvailability(vendorId);
   }
 
+  @Get('availability/listing/:listingId')
+  async getListingAvailability(
+    @Param('listingId', ParseIntPipe) listingId: number
+  ) {
+    return this.bookingService.getListingAvailability(listingId);
+  }
+
   @Get('vendor/:vendorId')
   async getVendorBookings(
     @Param('vendorId', ParseIntPipe) vendorId: number

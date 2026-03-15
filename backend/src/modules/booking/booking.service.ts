@@ -55,9 +55,50 @@ export class BookingService {
   // ─── Public Availability (read-only) ─────────────────────────────────────
 
   /**
-   * Return availability dates + slots for a given vendor.
+   * Return availability dates + slots for a given listing.
    * This is a read-only query — no mutations.
    */
+  async getListingAvailability(listingId: number) {
+    const listing = await this.prisma.listing.findUnique({
+      where: { id: listingId },
+      select: { vendorId: true },
+    });
+
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+
+    const records = await this.prisma.vendorAvailability.findMany({
+      where: {
+        vendorId: listing.vendorId,
+        slots: {
+          some: {
+            listingId,
+          },
+        },
+      },
+      include: {
+        slots: {
+          where: {
+            listingId,
+          },
+        },
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    return records.map((r) => ({
+      date: r.date.toISOString().split('T')[0],
+      slots: r.slots.map((s) => ({
+        id: s.id,
+        startTime: s.startTime.toISOString().slice(11, 16),
+        endTime: s.endTime.toISOString().slice(11, 16),
+        maxGuests: s.maxGuests,
+        bookedGuests: s.bookedGuests,
+      })),
+    }));
+  }
+
   async getVendorAvailability(vendorId: number) {
     const records = await this.prisma.vendorAvailability.findMany({
       where: {

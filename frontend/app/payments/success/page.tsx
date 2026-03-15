@@ -14,6 +14,7 @@ type Booking = {
   totalPrice: number;
   listing?: {
     title?: string;
+    listingType?: string;
     vendor?: { businessName?: string };
   } | null;
   vendor?: { businessName?: string } | null;
@@ -96,6 +97,14 @@ export default function PaymentSuccessPage() {
     });
   }, [booking]);
 
+  const isExperiencePurchase = booking
+    ? (booking.listing?.listingType ?? 'EXPERIENCE') === 'EXPERIENCE'
+    : false;
+
+  const primaryCta = isExperiencePurchase
+    ? { href: '/dashboard/upcoming', text: 'View Upcoming Experiences' }
+    : { href: '/dashboard/orders', text: 'View Your Orders' };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
 
@@ -139,9 +148,9 @@ export default function PaymentSuccessPage() {
         )}
 
         <div className="flex flex-col gap-3">
-          <Link href="/dashboard/upcoming">
+          <Link href={primaryCta.href}>
             <button className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-              View Upcoming Experiences
+              {primaryCta.text}
             </button>
           </Link>
 

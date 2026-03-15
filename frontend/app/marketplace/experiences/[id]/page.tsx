@@ -93,7 +93,7 @@ export default function ExperienceDetailPage() {
   const [showPhone, setShowPhone] = useState(false);
 
   // Availability State
-  const [vendorAvailability, setVendorAvailability] = useState<AvailabilityDate[]>([]);
+  const [listingAvailability, setListingAvailability] = useState<AvailabilityDate[]>([]);
 
   // Booking Sidebar State
   const [bookingForm, setBookingForm] = useState({
@@ -141,17 +141,16 @@ export default function ExperienceDetailPage() {
     setCurrentImageIndex(0);
   }, [listing?.id]);
 
-  // Fetch real vendor availability
+  // Fetch listing-specific availability
   useEffect(() => {
     if (!listing) return;
-    const vId = listing.vendorId ?? listing.vendor?.id;
-    if (!vId) return;
+    if (!listing.id) return;
 
     const controller = new AbortController();
-    fetch(`${API_BASE}/bookings/availability/${vId}`, { signal: controller.signal })
+    fetch(`${API_BASE}/bookings/availability/listing/${listing.id}`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: AvailabilityDate[]) => {
-        if (!controller.signal.aborted) setVendorAvailability(data ?? []);
+        if (!controller.signal.aborted) setListingAvailability(data ?? []);
       })
       .catch(() => {});
     return () => controller.abort();
@@ -159,30 +158,36 @@ export default function ExperienceDetailPage() {
 
   // Available dates that have at least one slot with remaining capacity
   const availableDates = React.useMemo(
-    () => vendorAvailability.filter((d) => d.slots.some((s) => s.maxGuests - s.bookedGuests > 0)),
-    [vendorAvailability],
+    () => listingAvailability.filter((d) => d.slots.some((s) => s.maxGuests - s.bookedGuests > 0)),
+    [listingAvailability],
   );
 
   // Slots for the currently selected date
   const slotsForSelectedDate = React.useMemo(() => {
     if (!bookingForm.date) return [];
-    const dayData = vendorAvailability.find((d) => d.date === bookingForm.date);
+    const dayData = listingAvailability.find((d) => d.date === bookingForm.date);
     return dayData?.slots ?? [];
-  }, [vendorAvailability, bookingForm.date]);
+  }, [listingAvailability, bookingForm.date]);
 
-  const formatTime = (dateString: string) => {
+  const formatSlotTime = (dateString: string) => {
     const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) return null;
-    const hours = date.getUTCHours();
-    const minutes = date.getUTCMinutes();
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    if (Number.isNaN(date.getTime())) {
+      const match = dateString.match(/^(\d{1,2}):(\d{2})/);
+      if (!match) return null;
+      const h = String(Number(match[1])).padStart(2, '0');
+      const m = String(Number(match[2])).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+    const h = String(date.getUTCHours()).padStart(2, '0');
+    const m = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
   };
 
-  const formatTimeSlot = (startTime: string, endTime: string) => {
-    const start = formatTime(startTime);
-    const end = formatTime(endTime);
-    if (!start || !end) return '-';
-    return `${start} – ${end}`;
+  const formatSlotRange = (start?: string, end?: string) => {
+    const s = start ? formatSlotTime(start) : null;
+    const e = end ? formatSlotTime(end) : null;
+    if (!s || !e) return '-';
+    return `${s} – ${e}`;
   };
 
   const handleBookingSubmit = async () => {
@@ -724,12 +729,15 @@ export default function ExperienceDetailPage() {
                     >
                       <option value="">Select a time slot</option>
                       {slotsForSelectedDate.map((slot) => {
+                        const timeLabel = formatSlotRange(slot.startTime, slot.endTime);
                         const remaining = slot.maxGuests - slot.bookedGuests;
                         const isFull = remaining <= 0;
+                        const label = timeLabel === '-'
+                          ? '-'
+                          : `${timeLabel} (${remaining > 0 ? `${remaining} spots left` : 'Full'})`;
                         return (
                           <option key={slot.id} value={slot.id} disabled={isFull}>
-                            {formatTimeSlot(slot.startTime, slot.endTime)}{' '}
-                            {isFull ? '(Full)' : `(${remaining} spots left)`}
+                            {label}
                           </option>
                         );
                       })}

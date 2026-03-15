@@ -40,9 +40,12 @@ export default function OrdersPage() {
 
       if (response.ok) {
         const data: Booking[] = await response.json();
-        // Only show COMPLETED bookings as "orders"
-        const completed = (data ?? []).filter((b) => b.status === 'COMPLETED');
-        setOrders(completed);
+        const orderItems = (data ?? []).filter(
+          (b) =>
+            b.status === 'COMPLETED' ||
+            (b.status === 'CONFIRMED' && (b.listing?.listingType ?? '').toUpperCase() === 'PRODUCT'),
+        );
+        setOrders(orderItems);
       } else if (response.status === 404) {
         setOrders([]);
       } else {
@@ -158,7 +161,7 @@ export default function OrdersPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders yet.</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders found.</h2>
             <p className="text-gray-500 mb-6">Explore experiences or products to make your first booking or purchase.</p>
             <Link href="/marketplace">
               <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
@@ -204,7 +207,7 @@ export default function OrdersPage() {
                       </td>
                       <td className="py-4 px-6">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#21a17a]/15 text-[#21a17a]">
-                          COMPLETED
+                          {order.status}
                         </span>
                       </td>
                     </tr>
