@@ -11,14 +11,25 @@ type Booking = {
   listingId: number;
   bookingDate: string;
   updatedAt: string;
+  quantity?: number;
   guests: number;
   status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
   totalPrice: number;
-  listing: {
+  listing?: {
     title: string;
+    priceMin?: number;
     listingType?: string;
     vendor?: { businessName?: string };
-  };
+  } | null;
+  booking?: {
+    guests?: number;
+    listing?: {
+      title?: string;
+      priceMin?: number;
+      listingType?: string;
+      vendor?: { businessName?: string };
+    } | null;
+  } | null;
   vendor?: { businessName?: string };
   slot?: {
     startTime?: string;
@@ -71,15 +82,31 @@ export default function OrdersPage() {
   }, [isLoaded, isSignedIn, user, fetchOrders]);
 
   /* ── Helpers ── */
-  const vendorName = (b: Booking) =>
-    b.vendor?.businessName ?? b.listing?.vendor?.businessName ?? 'Unknown Vendor';
+  const getListing = (order: Booking) =>
+    order.listing ?? order.booking?.listing ?? null;
 
-  const formatDate = (value: string) =>
-    new Date(value).toLocaleDateString('en-US', {
+  const getListingType = (order: Booking) =>
+    (getListing(order)?.listingType ?? '').toUpperCase();
+
+  const isProductOrder = (order: Booking) => getListingType(order) === 'PRODUCT';
+  const isExperienceOrder = (order: Booking) => !isProductOrder(order);
+
+  const experienceOrders = orders.filter(isExperienceOrder);
+  const productOrders = orders.filter(isProductOrder);
+
+  const vendorName = (b: Booking) =>
+    b.vendor?.businessName ?? getListing(b)?.vendor?.businessName ?? 'Unknown Vendor';
+
+  const formatDate = (value?: string) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '-';
+    return parsed.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
     });
+  };
 
   const formatTime = (dateString: string) => {
     const parsed = new Date(dateString);
@@ -95,6 +122,18 @@ export default function OrdersPage() {
     const end = formatTime(order.slot.endTime);
     if (!start || !end) return '-';
     return `${start} – ${end}`;
+  };
+
+  const formatExperienceDate = (order: Booking) =>
+    order.slot?.startTime ? formatDate(order.slot.startTime) : '-';
+
+  const getProductQuantity = (order: Booking) =>
+    order.quantity ?? order.booking?.guests ?? order.guests ?? 1;
+
+  const getProductTotal = (order: Booking) => {
+    const listing = getListing(order);
+    const computed = (listing?.priceMin ?? 0) * getProductQuantity(order);
+    return computed > 0 ? computed : order.totalPrice;
   };
 
   /* ── Loading ── */
@@ -170,51 +209,113 @@ export default function OrdersPage() {
             </Link>
           </div>
         ) : (
-          /* ── Orders table ── */
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="table-auto w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Item</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Scheduled Experience Date</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Participants</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Price</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {orders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
-                      <td className="py-4 px-6 text-sm text-gray-900 font-medium">
-                        {order.listing?.title || 'Unknown Item'}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
-                        {vendorName(order)}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
-                        {order.slot?.startTime ? formatDate(order.slot.startTime) : '-'}
-                        {order.slot?.startTime && order.slot?.endTime && (
-                          <p className="text-xs text-gray-500 mt-1">Time: {formatTimeSlot(order)}</p>
-                        )}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
-                        {order.guests}
-                      </td>
-                      <td className="py-4 px-6 text-sm text-[#21a17a] font-semibold">
-                        LKR {order.totalPrice.toLocaleString()}
-                      </td>
-                      <td className="py-4 px-6">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#21a17a]/15 text-[#21a17a]">
-                          {order.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="space-y-6">
+            {experienceOrders.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                  <h3 className="text-sm font-semibold text-gray-800">Experience Orders</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="table-auto w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience Name</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Scheduled Experience Date</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Time Slot</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Participants</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Price</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {experienceOrders.map((order) => {
+                        const listing = getListing(order);
+                        return (
+                          <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
+                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                              {listing?.title ?? 'Unknown Experience'}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600">
+                              {vendorName(order)}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600">
+                              {formatExperienceDate(order)}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600">
+                              {formatTimeSlot(order)}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600">
+                              {order.guests} {order.guests === 1 ? 'Guest' : 'Guests'}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-[#21a17a] font-semibold">
+                              LKR {order.totalPrice.toLocaleString()}
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#21a17a]/15 text-[#21a17a]">
+                                {order.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {productOrders.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                  <h3 className="text-sm font-semibold text-gray-800">Product Orders</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="table-auto w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Product Name</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Quantity</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Price</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Order Date</th>
+                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {productOrders.map((order) => {
+                        const listing = getListing(order);
+                        const quantity = getProductQuantity(order);
+                        return (
+                          <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
+                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                              {listing?.title ?? 'Unknown Product'}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600">
+                              {vendorName(order)}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600">
+                              Qty: {quantity}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-[#21a17a] font-semibold">
+                              LKR {getProductTotal(order).toLocaleString()}
+                            </td>
+                            <td className="py-4 px-6 text-sm text-gray-600">
+                              {formatDate(order.updatedAt)}
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#21a17a]/15 text-[#21a17a]">
+                                {order.status === 'CONFIRMED' ? 'COMPLETED' : order.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
