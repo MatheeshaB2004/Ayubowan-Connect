@@ -13,7 +13,7 @@ type CartItem = {
         listingType: string;
         media: Array<{ mediaUrl: string }>;
         vendor: { businessName: string };
-    };
+    } | null;
 };
 
 type CartContextType = {

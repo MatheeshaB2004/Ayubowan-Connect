@@ -258,7 +258,6 @@ export default function VendorRegisterPage() {
                 <p className="text-gray-600 mb-8 text-center">Set up your login details.</p>
 
                 <form onSubmit={handleNextStep1} className="space-y-5">
-                  <div id="clerk-captcha"></div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
@@ -425,6 +424,8 @@ export default function VendorRegisterPage() {
                 <p className="text-gray-600 mb-8 text-center">Where is your business located?</p>
 
                 <form onSubmit={handleSignUpSubmit}>
+                  <div id="clerk-captcha"></div>
+
                   <div className="form-group mb-5">
                     <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
                     <input
