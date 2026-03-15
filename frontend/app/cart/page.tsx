@@ -25,6 +25,7 @@ export default function CartPage() {
     }
 
     const handleItemCheckout = (item: any) => {
+        if (!item.listing) return;
         const typePath = item.listing.listingType === 'EXPERIENCE' ? 'experiences' : 'products';
         router.push(`/marketplace/${typePath}/${item.listingId}`);
     };
@@ -47,7 +48,7 @@ export default function CartPage() {
                     {items.map((item) => (
                         <div key={item.id} className="cart-item-card">
                             <div className="cart-item-image-wrapper">
-                                {item.listing.media[0] ? (
+                                {item.listing?.media?.[0] ? (
                                     <Image
                                         src={item.listing.media[0].mediaUrl}
                                         alt={item.listing.title}
@@ -60,9 +61,9 @@ export default function CartPage() {
                             </div>
 
                             <div className="cart-item-details">
-                                <h3 className="cart-item-title">{item.listing.title}</h3>
-                                <p className="cart-item-vendor">{item.listing.vendor ? item.listing.vendor.businessName : 'Unknown Vendor'}</p>
-                                <p className="cart-item-price">LKR {item.listing.priceMin.toLocaleString()}</p>
+                                <h3 className="cart-item-title">{item.listing?.title ?? 'Listing unavailable'}</h3>
+                                <p className="cart-item-vendor">{item.listing?.vendor ? item.listing.vendor.businessName : 'Unknown Vendor'}</p>
+                                <p className="cart-item-price">{item.listing ? `LKR ${item.listing.priceMin.toLocaleString()}` : '—'}</p>
                                 <div className="cart-item-qty">Qty: {item.quantity}</div>
                             </div>
 
@@ -70,6 +71,7 @@ export default function CartPage() {
                                 <button
                                     onClick={() => handleItemCheckout(item)}
                                     className="checkout-btn"
+                                    disabled={!item.listing}
                                 >
                                     Proceed to Checkout
                                 </button>
