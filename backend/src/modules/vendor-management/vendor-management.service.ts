@@ -33,6 +33,7 @@ export class VendorManagementService {
     const location = vendor.locations[0] || null;
 
     return {
+      vendorId: vendor.id,
       businessName: vendor.businessName,
       shortTagline: vendor.shortTagline,
       contactPhone: vendor.contactPhone,
@@ -592,12 +593,14 @@ export class VendorManagementService {
     await this.prisma.availabilitySlot.updateMany({
       where: {
         availability: {
-          vendorId: vendorId,
-        },
+          is: {
+            vendorId: vendorId
+          }
+        }
       },
       data: {
-        maxGuests: capacity,
-      },
+        maxGuests: capacity
+      }
     });
 
     return { message: "Capacity updated successfully" };
@@ -608,7 +611,8 @@ export class VendorManagementService {
     const slot = await this.prisma.availabilitySlot.findFirst({
       where: {
         availability: {
-          vendorId: vendorId
+          is:{
+          vendorId: vendorId}
         }
       },
       select: {

@@ -145,6 +145,7 @@ export class VendorManagementController {
     @Param('vendorId') vendorId: number,
     @Body() body: { capacity: number }
   ) {
+    console.log("VendorId received:", vendorId);
     return this.vendorService.updateVendorCapacity(
       Number(vendorId),
       body.capacity,
@@ -161,12 +162,12 @@ export class VendorManagementController {
     @Param("id") id: string,
     @Req() req: any
   ) {
-    //const userId = req.user?.id; // After profile is built
-    const userId = 4;//Temporary test
+    const userId = req.user?.id; // After profile is built
 
-    /*if (!userId) {
+
+    if (!userId) {
       throw new UnauthorizedException("Login required");
-    }*/
+    }
 
     return this.vendorService.recordProfileView(
       Number(id),
