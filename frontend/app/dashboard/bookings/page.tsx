@@ -14,7 +14,7 @@ type Booking = {
   listingId: number;
   bookingDate: string;
   guests: number;
-  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'COMPLETED';
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
   totalPrice: number;
   listing: {
     title: string;
@@ -55,7 +55,7 @@ export default function BookingsPage() {
           const filtered = (data || []).filter(
             (b) =>
               b.listing?.listingType === 'EXPERIENCE' &&
-              ['PENDING', 'CONFIRMED', 'REJECTED', 'COMPLETED'].includes(b.status),
+              ['PENDING', 'CONFIRMED', 'REJECTED'].includes(b.status),
           );
           setBookings(filtered);
         } else {
@@ -81,6 +81,31 @@ export default function BookingsPage() {
     }
   };
 
+  const handleCancelBooking = async (bookingId: number) => {
+    if (!user) return;
+    try {
+      const response = await fetch(`${API_BASE}/bookings/${bookingId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+
+      if (!response.ok) {
+        toast.error('Failed to cancel booking');
+        return;
+      }
+
+      setBookings((prev) => prev.filter((booking) => booking.id !== bookingId));
+      toast.success('Booking cancelled');
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      toast.error('Failed to cancel booking');
+    }
+  };
+
   /* ── Helpers ── */
   const vendorName = (b: Booking) =>
     b.vendor?.businessName ?? b.listing?.vendor?.businessName ?? 'Unknown Vendor';
@@ -95,10 +120,21 @@ export default function BookingsPage() {
     return map[status] ?? 'bg-gray-100 text-gray-800';
   };
 
+  const formatSlotTime = (value?: string) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      if (/^\d{2}:\d{2}/.test(value)) return value.slice(0, 5);
+      return null;
+    }
+    return parsed.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
+
   const formatTimeSlot = (booking: Booking) => {
     if (!booking.slot?.startTime || !booking.slot?.endTime) return '-';
-    const start = booking.slot.startTime.slice(0, 5);
-    const end = booking.slot.endTime.slice(0, 5);
+    const start = formatSlotTime(booking.slot.startTime);
+    const end = formatSlotTime(booking.slot.endTime);
+    if (!start || !end) return '-';
     return `${start} – ${end}`;
   };
 
@@ -137,6 +173,12 @@ export default function BookingsPage() {
               className="inline-flex items-center rounded-xl bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm"
             >
               Pending Bookings
+            </Link>
+            <Link
+              href="/dashboard/upcoming"
+              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Upcoming Experiences
             </Link>
             <Link
               href="/dashboard/orders"
@@ -197,11 +239,11 @@ export default function BookingsPage() {
                         {vendorName(booking)}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">
-                        {new Date(booking.bookingDate).toLocaleDateString('en-US', {
+                        {booking.slot?.startTime ? new Date(booking.slot.startTime).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
-                        })}
+                        }) : '-'}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">
                         {formatTimeSlot(booking)}
@@ -211,22 +253,38 @@ export default function BookingsPage() {
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge(booking.status)}`}
                         >
-                          {booking.status === 'COMPLETED' ? 'Payment Completed' : booking.status}
+                          {booking.status}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         {booking.status === 'PENDING' && (
-                          <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500 cursor-not-allowed">
-                            Waiting for vendor
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500">
+                              Waiting for vendor
+                            </span>
+                            <button
+                              onClick={() => handleCancelBooking(booking.id)}
+                              className="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition-all hover:bg-red-100 active:scale-[0.98]"
+                            >
+                              Cancel Booking
+                            </button>
+                          </div>
                         )}
                         {booking.status === 'CONFIRMED' && (
-                          <button
-                            onClick={() => handleProceedToCheckout(booking.id)}
-                            className="inline-flex items-center rounded-lg bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
-                          >
-                            Proceed to Checkout
-                          </button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <button
+                              onClick={() => handleProceedToCheckout(booking.id)}
+                              className="inline-flex items-center rounded-lg bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
+                            >
+                              Proceed to Checkout
+                            </button>
+                            <button
+                              onClick={() => handleCancelBooking(booking.id)}
+                              className="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition-all hover:bg-red-100 active:scale-[0.98]"
+                            >
+                              Cancel Booking
+                            </button>
+                          </div>
                         )}
                         {booking.status === 'REJECTED' && (
                           <Link href={`/marketplace/experiences/${booking.listingId}`}>
