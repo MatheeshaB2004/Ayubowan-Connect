@@ -6,8 +6,7 @@ function authHeaders(token?: string): HeadersInit {
     : { "Content-Type": "application/json" };
 }
 
-// Public
-
+//  Public
 export async function fetchAllEvents(params?: {
   search?: string;
   category?: string;
@@ -40,7 +39,10 @@ export async function fetchVendorEvents(token: string) {
   return res.json();
 }
 
-export async function createEvent(token: string, data: Record<string, unknown>) {
+export async function createEvent(
+  token: string,
+  data: Record<string, unknown>
+) {
   const res = await fetch(`${BASE}/events`, {
     method: "POST",
     headers: authHeaders(token),
@@ -51,9 +53,14 @@ export async function createEvent(token: string, data: Record<string, unknown>) 
 }
 
 /**
- * Upload an image file to Cloudinary via the backend.
- * Backend endpoint: POST /events/upload-image (multipart/form-data, field: "file")
- * Returns: { url: string }
+ * Upload an image file to Cloudinary via the NestJS backend.
+ *
+ * Backend endpoint: POST /events/upload-image
+ * Accepts: multipart/form-data, field name = "file"
+ * Returns: { url: string }  — the Cloudinary secure_url
+ *
+ * NOTE: Do NOT set Content-Type header manually.
+ * The browser sets "multipart/form-data; boundary=..." automatically.
  */
 export async function uploadEventImage(
   token: string,
@@ -65,13 +72,16 @@ export async function uploadEventImage(
   const res = await fetch(`${BASE}/events/upload-image`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
-    // browser sets multipart boundary automatically
     body: formData,
   });
 
-  if (!res.ok) throw new Error("Image upload failed");
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "Image upload failed");
+    throw new Error(msg);
+  }
+
   const data = await res.json();
-  return data.url; // Cloudinary secure_url returned by backend
+  return data.url as string;
 }
 
 // User
