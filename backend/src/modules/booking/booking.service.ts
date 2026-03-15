@@ -198,7 +198,11 @@ export class BookingService {
         localTouristId: userId,
       },
       include: {
-        listing: true,
+        listing: {
+          include: {
+            vendor: true,
+          },
+        },
         vendor: true,
       },
       orderBy: {
