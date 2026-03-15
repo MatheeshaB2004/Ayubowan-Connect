@@ -6,8 +6,12 @@ import { useCart, CartItem } from '@/context/CartContext';
 
 export default function CartPage() {
   const { items, removeFromCart } = useCart();
+  const productItems = items.filter((item) => {
+    const listing = item.listing ?? item.booking?.listing;
+    return item.bookingId == null && listing?.listingType !== 'EXPERIENCE';
+  });
 
-  const totalAmount = items.reduce(
+  const totalAmount = productItems.reduce(
     (sum, item) => {
       const listing = item.listing ?? item.booking?.listing;
       const price = listing?.priceMin ?? 0;
@@ -19,7 +23,7 @@ export default function CartPage() {
 
   // Group items by vendor
   const groupedByVendor: Record<string, CartItem[]> = {};
-  items.forEach((item) => {
+  productItems.forEach((item) => {
     const listing = item.listing ?? item.booking?.listing;
     const vendorName = listing?.vendor?.businessName ?? 'Vendor';
     if (!groupedByVendor[vendorName]) {
@@ -47,7 +51,7 @@ export default function CartPage() {
         {/* Title */}
         <h1 className="text-3xl font-bold text-gray-900 mb-8 tracking-tight">Your Cart</h1>
 
-        {items.length === 0 ? (
+        {productItems.length === 0 ? (
           /* ── Empty State ── */
           <div className="bg-white rounded-xl shadow-md border border-gray-100 p-12 text-center">
             {/* Shopping bag icon */}
@@ -137,19 +141,12 @@ export default function CartPage() {
                           </p>
                         </div>
 
-                        {/* Remove Button (products only) */}
-                        {item.bookingId == null ? (
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-3 py-1 transition-colors"
-                          >
-                            Remove
-                          </button>
-                        ) : (
-                          <span className="text-xs font-medium text-gray-500 px-2 py-1">
-                            Continue to checkout
-                          </span>
-                        )}
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-3 py-1 transition-colors"
+                        >
+                          Remove
+                        </button>
                       </div>
                     );
                   })}

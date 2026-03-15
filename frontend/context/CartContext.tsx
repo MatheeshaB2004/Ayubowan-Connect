@@ -22,6 +22,10 @@ export type CartItem = {
     } | null;
     booking?: {
         guests?: number;
+        slot?: {
+            startTime?: string;
+            endTime?: string;
+        };
         listing: {
             title: string;
             priceMin: number;
