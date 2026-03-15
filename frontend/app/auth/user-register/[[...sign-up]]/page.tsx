@@ -289,6 +289,8 @@ export default function UserRegisterPage() {
               <form onSubmit={handleSignUpSubmit} className="space-y-5 animate-fadeIn">
                 <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Profile Details</h2>
 
+                <div id="clerk-captcha"></div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="userType">
                     I am a

@@ -425,6 +425,8 @@ export default function VendorRegisterPage() {
                 <p className="text-gray-600 mb-8 text-center">Where is your business located?</p>
 
                 <form onSubmit={handleSignUpSubmit}>
+                  <div id="clerk-captcha"></div>
+
                   <div className="form-group mb-5">
                     <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
                     <input
