@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #1f2937;
+  --lochinvar: #379683;
+  --lochinvar-dark: #2d7a6a;
+  --waikawa: #577399;
+  --trendy: #8D5A97;
+  --light-gray: #f9fafb;
+  --border-color: #e5e7eb;
+}
+
+body {
+  color: var(--primary);
+  background: white;
+}
+
+/* Animation for Logo */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+/* Hide Next.js DevTools Indicator */
+#panel-route,
+.panel-route,
+[data-nextjs-dev-tools-indicator],
+[data-nextjs-dev-tools-button] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -9999 !important;
+}
+
+/* Container styles from main.css */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) { .container { padding: 0 1.5rem; } }
+@media (min-width: 1024px) { .container { padding: 0 2rem; } }
