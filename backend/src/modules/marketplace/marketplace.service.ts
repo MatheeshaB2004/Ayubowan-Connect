@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ListingType, Prisma } from '@prisma/client';
+import { ListingType, Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import {
@@ -329,8 +329,29 @@ export class MarketplaceService {
 
   async createReview(
     createReviewDto: CreateReviewDto,
-    userId: number,
   ): Promise<ReviewResponseDto> {
+    // Resolve user by email sent from the frontend (logged-in Clerk user).
+    // Upsert so the stored fullName stays in sync with Clerk profile changes.
+    let resolvedUserId = 1; // fallback for unauthenticated requests
+    if (createReviewDto.userEmail) {
+      const displayName =
+        createReviewDto.userName?.trim() ||
+        createReviewDto.userEmail.split('@')[0];
+      const user = await this.prisma.user.upsert({
+        where: { email: createReviewDto.userEmail },
+        create: {
+          fullName: displayName,
+          email: createReviewDto.userEmail,
+          passwordHash: 'clerk-managed',
+          role: UserRole.USER,
+        },
+        update: {
+          fullName: displayName,
+        },
+      });
+      resolvedUserId = user.id;
+    }
+
     // Check if listing exists
     const listing = await this.prisma.listing.findUnique({
       where: { id: createReviewDto.listingId },
@@ -352,7 +373,7 @@ export class MarketplaceService {
       const newReview = await tx.review.create({
         data: {
           listingId: createReviewDto.listingId,
-          userId: userId,
+          userId: resolvedUserId,
           rating: createReviewDto.rating,
           comment: createReviewDto.comment,
         },
@@ -418,6 +439,127 @@ export class MarketplaceService {
       createdAt: completeReview.createdAt,
       updatedAt: completeReview.updatedAt,
     };
+  }
+
+  async getUserReviewForListing(
+    listingId: number,
+    userEmail: string,
+  ): Promise<ReviewResponseDto | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+    if (!user) return null;
+
+    const review = await this.prisma.review.findUnique({
+      where: { userId_listingId: { userId: user.id, listingId } },
+      include: {
+        user: { select: { fullName: true } },
+        media: { orderBy: { displayOrder: 'asc' } },
+      },
+    });
+    if (!review) return null;
+
+    return {
+      id: review.id,
+      listingId: review.listingId,
+      userId: review.userId,
+      userName: review.user.fullName,
+      rating: review.rating,
+      comment: review.comment,
+      media: review.media.map((m) => ({
+        id: m.id,
+        mediaType: m.mediaType,
+        mediaUrl: m.mediaUrl,
+        displayOrder: m.displayOrder,
+      })),
+      createdAt: review.createdAt,
+      updatedAt: review.updatedAt,
+    };
+  }
+
+  async updateReview(
+    reviewId: number,
+    userEmail: string,
+    rating: number,
+    comment: string,
+    mediaUrls?: string[],
+  ): Promise<ReviewResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const existing = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+    });
+    if (!existing) throw new NotFoundException('Review not found');
+    if (existing.userId !== user.id)
+      throw new NotFoundException('Review not found');
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.review.update({
+        where: { id: reviewId },
+        data: { rating, comment },
+      });
+
+      if (mediaUrls !== undefined) {
+        await tx.reviewMedia.deleteMany({ where: { reviewId } });
+        if (mediaUrls.length > 0) {
+          await tx.reviewMedia.createMany({
+            data: mediaUrls.map((url, index) => ({
+              reviewId,
+              mediaType: url.match(/\.(mp4|webm|ogg|mov)$/i) ? 'VIDEO' : 'IMAGE',
+              mediaUrl: url,
+              displayOrder: index,
+            })),
+          });
+        }
+      }
+    });
+
+    await this.updateListingRating(existing.listingId);
+
+    const updated = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+      include: {
+        user: { select: { fullName: true } },
+        media: { orderBy: { displayOrder: 'asc' } },
+      },
+    });
+
+    return {
+      id: updated!.id,
+      listingId: updated!.listingId,
+      userId: updated!.userId,
+      userName: updated!.user.fullName,
+      rating: updated!.rating,
+      comment: updated!.comment,
+      media: updated!.media.map((m) => ({
+        id: m.id,
+        mediaType: m.mediaType,
+        mediaUrl: m.mediaUrl,
+        displayOrder: m.displayOrder,
+      })),
+      createdAt: updated!.createdAt,
+      updatedAt: updated!.updatedAt,
+    };
+  }
+
+  async deleteReview(reviewId: number, userEmail: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const existing = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+    });
+    if (!existing) throw new NotFoundException('Review not found');
+    if (existing.userId !== user.id)
+      throw new NotFoundException('Review not found');
+
+    await this.prisma.review.delete({ where: { id: reviewId } });
+    await this.updateListingRating(existing.listingId);
   }
 
   private async updateListingRating(listingId: number): Promise<void> {

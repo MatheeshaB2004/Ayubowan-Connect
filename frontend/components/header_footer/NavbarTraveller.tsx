@@ -31,6 +31,7 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
       <Link href="/events" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/events') ? 'active' : ''}`}>Events</Link>
       <Link href="/dashboard/bookings" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/dashboard') ? 'active' : ''}`}>Dashboard</Link>
       <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/pro') ? 'active' : ''}`}>Pro</Link>
+      <Link href="/faq" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/faq') ? 'active' : ''}`}>FAQs</Link>
       <Link href="/User_profile_manager" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/User_profile_manager') ? 'active' : ''}`}>My Profile</Link>
 
       <div className={`h-6 w-px ${textColorClass.includes('white') ? 'bg-white/30' : 'bg-gray-300'}`}></div>

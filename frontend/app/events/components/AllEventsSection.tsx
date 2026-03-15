@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
+import Link from "next/link";
 import { Calendar } from "lucide-react";
 import { EventBar } from "./EventBar";
 import { Event } from "../types/events";
@@ -60,9 +61,9 @@ export function AllEventsSection({ events, totalCount, isGuest }: AllEventsSecti
           <span className="text-lg">🌿</span>
           <span>
             <strong className="text-[#0d9488]">Sign in</strong> to register for events and view full details.{" "}
-            <a href="/auth/login" className="text-[#0d9488] underline font-semibold hover:text-[#0b7a70]">
+            <Link href="/auth/login" className="text-[#0d9488] underline font-semibold hover:text-[#0b7a70]">
               Log in here →
-            </a>
+            </Link>
           </span>
         </div>
       )}

@@ -33,7 +33,7 @@ export default function UserRegisterPage() {
   // Redirect if already signed in and profile is complete
   React.useEffect(() => {
     if (isSignedIn && user?.unsafeMetadata?.role) {
-      router.replace("/auth/post-login");
+      router.replace("/");
     }
   }, [isSignedIn, user, router]);
 
@@ -188,8 +188,6 @@ export default function UserRegisterPage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Account Details</h2>
 
                 <form onSubmit={handleNextStep1} className="space-y-5">
-                  <div id="clerk-captcha"></div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -288,6 +286,8 @@ export default function UserRegisterPage() {
             {currentStep === 2 && (
               <form onSubmit={handleSignUpSubmit} className="space-y-5 animate-fadeIn">
                 <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Profile Details</h2>
+
+                <div id="clerk-captcha"></div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="userType">

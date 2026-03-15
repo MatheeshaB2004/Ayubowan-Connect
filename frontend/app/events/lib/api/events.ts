@@ -6,8 +6,7 @@ function authHeaders(token?: string): HeadersInit {
     : { "Content-Type": "application/json" };
 }
 
-// ── Public ────────────────────────────────────────────────────────────────────
-
+//  Public
 export async function fetchAllEvents(params?: {
   search?: string;
   category?: string;
@@ -18,9 +17,7 @@ export async function fetchAllEvents(params?: {
   if (params?.category) q.set("category", params.category);
   if (params?.location) q.set("location", params.location);
 
-  const res = await fetch(`${BASE}/events?${q.toString()}`, {
-    cache: "no-store",
-  });
+  const res = await fetch(`${BASE}/events?${q.toString()}`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch events");
   return res.json();
 }
@@ -31,7 +28,7 @@ export async function fetchEventById(id: number) {
   return res.json();
 }
 
-// ── Vendor ────────────────────────────────────────────────────────────────────
+// Vendor
 
 export async function fetchVendorEvents(token: string) {
   const res = await fetch(`${BASE}/events/vendor/mine`, {
@@ -55,7 +52,39 @@ export async function createEvent(
   return res.json();
 }
 
-// ── User ──────────────────────────────────────────────────────────────────────
+/**
+ * Upload an image file to Cloudinary via the NestJS backend.
+ *
+ * Backend endpoint: POST /events/upload-image
+ * Accepts: multipart/form-data, field name = "file"
+ * Returns: { url: string }  — the Cloudinary secure_url
+ *
+ * NOTE: Do NOT set Content-Type header manually.
+ * The browser sets "multipart/form-data; boundary=..." automatically.
+ */
+export async function uploadEventImage(
+  token: string,
+  file: File
+): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${BASE}/events/upload-image`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "Image upload failed");
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  return data.url as string;
+}
+
+// User
 
 export async function fetchUserRegisteredEvents(token: string) {
   const res = await fetch(`${BASE}/events/user/registered`, {

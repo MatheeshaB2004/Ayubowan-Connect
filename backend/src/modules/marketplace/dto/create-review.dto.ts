@@ -1,6 +1,7 @@
 import {
   IsInt,
   IsString,
+  IsEmail,
   Min,
   Max,
   IsNotEmpty,
@@ -27,4 +28,12 @@ export class CreateReviewDto {
   @ArrayMaxSize(5)
   @IsString({ each: true })
   mediaUrls?: string[];
+
+  @IsOptional()
+  @IsEmail()
+  userEmail?: string;
+
+  @IsOptional()
+  @IsString()
+  userName?: string;
 }

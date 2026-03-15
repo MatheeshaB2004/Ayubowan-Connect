@@ -3,6 +3,9 @@
 import React, { useCallback, useState } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 
+const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+const googleMapsEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_MAPS === 'true' && Boolean(googleMapsApiKey);
+
 const mapContainerStyle = {
     width: '100%',
     height: '100%'
@@ -14,10 +17,36 @@ interface VendorLocationMapProps {
     businessName?: string;
 }
 
-export default function VendorLocationMap({ latitude, longitude, businessName }: VendorLocationMapProps) {
+function MapFallback({ latitude, longitude, businessName }: VendorLocationMapProps) {
+    return (
+        <div className="flex h-[250px] w-full flex-col justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950">
+            <div>
+                <p className="text-sm font-semibold">Map preview unavailable</p>
+                <p className="mt-1 text-sm text-amber-900">Google Maps is disabled or not configured for this environment.</p>
+            </div>
+
+            <div className="space-y-1 text-sm">
+                {businessName ? <p className="font-medium">{businessName}</p> : null}
+                <p>Latitude: {latitude.toFixed(6)}</p>
+                <p>Longitude: {longitude.toFixed(6)}</p>
+            </div>
+
+            <a
+                href={`https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-fit rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100"
+            >
+                Open in Google Maps
+            </a>
+        </div>
+    );
+}
+
+function GoogleVendorLocationMap({ latitude, longitude, businessName }: VendorLocationMapProps) {
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+        googleMapsApiKey,
     });
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -80,4 +109,20 @@ export default function VendorLocationMap({ latitude, longitude, businessName }:
             </GoogleMap>
         </div>
     );
+}
+
+export default function VendorLocationMap(props: VendorLocationMapProps) {
+    if (!props.latitude || !props.longitude) {
+        return (
+            <div className="h-[250px] w-full bg-gray-50 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-500">
+                Location not provided
+            </div>
+        );
+    }
+
+    if (!googleMapsEnabled) {
+        return <MapFallback {...props} />;
+    }
+
+    return <GoogleVendorLocationMap {...props} />;
 }
