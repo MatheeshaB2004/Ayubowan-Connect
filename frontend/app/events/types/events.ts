@@ -26,6 +26,10 @@ export interface Event {
   vendor?: EventVendor;
   createdAt?: string;
   updatedAt?: string;
+
+  // Vendor-provided content sections
+  whatYouWillLearn?: string[];   // bullet list → "What You'll Learn" section
+  importantInfo?: string[];      // bullet list → "Important Information" section
 }
 
 export interface CreateEventPayload {
@@ -43,4 +47,6 @@ export interface CreateEventPayload {
   price?: number;
   isFree?: boolean;
   imageUrl?: string;
+  whatYouWillLearn?: string[];
+  importantInfo?: string[];
 }
