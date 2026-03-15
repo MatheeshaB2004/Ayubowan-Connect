@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useUser } from '@clerk/nextjs';
 
@@ -12,12 +12,29 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001'
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useUser();
+  const bookingIdParam = searchParams.get('bookingId');
+  const directBookingId = bookingIdParam ? Number(bookingIdParam) : null;
 
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
+  const [directBooking, setDirectBooking] = useState<{
+    id: number;
+    guests: number;
+    slot?: {
+      startTime?: string;
+      endTime?: string;
+    } | null;
+    listing?: {
+      title?: string;
+      priceMin?: number;
+      listingType?: string;
+      vendor?: { businessName?: string };
+    } | null;
+  } | null>(null);
 
   const [errors, setErrors] = useState<{
     cardName?: string;
@@ -25,6 +42,43 @@ export default function CheckoutPage() {
     expiry?: string;
     cvv?: string;
   }>({});
+
+  useEffect(() => {
+    if (!user || !directBookingId || Number.isNaN(directBookingId)) return;
+
+    const fetchDirectBooking = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/bookings`, {
+          headers: { 'x-user-id': user.id },
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const booking = (data ?? []).find((b: { id: number }) => b.id === directBookingId);
+        setDirectBooking(booking ?? null);
+      } catch (error) {
+        console.error('Failed loading booking for checkout:', error);
+      }
+    };
+
+    fetchDirectBooking();
+  }, [user, directBookingId]);
+
+  const formatTime = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return null;
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  const formatTimeSlot = (startTime?: string, endTime?: string) => {
+    if (!startTime || !endTime) return '-';
+    const start = formatTime(startTime);
+    const end = formatTime(endTime);
+    if (!start || !end) return '-';
+    return `${start} – ${end}`;
+  };
 
   const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
@@ -81,6 +135,30 @@ export default function CheckoutPage() {
     }
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    if (user && directBooking) {
+      try {
+        const response = await fetch(`${API_BASE}/bookings/${directBooking.id}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id,
+          },
+          body: JSON.stringify({ status: 'COMPLETED' }),
+        });
+        if (!response.ok) {
+          toast.error('Failed to complete booking payment');
+          return;
+        }
+      } catch (error) {
+        console.error('Direct booking checkout error:', error);
+        toast.error('Failed to complete booking payment');
+        return;
+      }
+
+      router.push(`/payments/success?bookingId=${directBooking.id}`);
+      return;
+    }
 
     if (user) {
       for (const item of items) {
@@ -148,16 +226,17 @@ export default function CheckoutPage() {
 
       <div className="max-w-2xl mx-auto">
 
-        {/* Back to Cart */}
-        <Link
-          href="/payments/cart"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] mb-6"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
-          Back to Cart
-        </Link>
+        {!directBookingId && (
+          <Link
+            href="/payments/cart"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] mb-6"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            Back to Cart
+          </Link>
+        )}
 
         {/* Header */}
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center tracking-tight">
@@ -171,11 +250,44 @@ export default function CheckoutPage() {
           </h2>
 
           <div className="divide-y divide-gray-100">
-            {items.map((item) => {
+            {directBooking ? (
+              (() => {
+                const listing = directBooking.listing;
+                const listingType = listing?.listingType ?? 'EXPERIENCE';
+                const vendorName = listing?.vendor?.businessName ?? 'Vendor';
+                const basePrice = listing?.priceMin ?? 0;
+                const guests = directBooking.guests ?? 1;
+                const totalPrice = basePrice * guests;
+                const slotText = formatTimeSlot(directBooking.slot?.startTime, directBooking.slot?.endTime);
+
+                return (
+                  <div className="flex justify-between items-center py-3">
+                    <div>
+                      <p className="font-medium text-gray-900">{listing?.title ?? 'Experience'}</p>
+                      <p className="text-sm text-gray-500 mt-1">{vendorName}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${listingType === 'EXPERIENCE'
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'bg-green-100 text-green-700'
+                          }`}>
+                          {listingType}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1">Qty: {guests}</p>
+                      <p className="text-sm text-gray-500 mt-1">Time Slot: {slotText}</p>
+                    </div>
+                    <p className="font-medium text-[#21a17a]">LKR {totalPrice.toLocaleString()}</p>
+                  </div>
+                );
+              })()
+            ) : items.map((item) => {
               const listing = item.listing ?? item.booking?.listing;
               const listingType = listing?.listingType ?? 'EXPERIENCE';
               const vendorName = listing?.vendor?.businessName ?? 'Vendor';
-              const price = listing?.priceMin ?? 0;
+              const basePrice = listing?.priceMin ?? 0;
+              const guests = item.booking?.guests ?? item.quantity ?? 1;
+              const totalPrice = basePrice * guests;
+              const slotText = formatTimeSlot(item.booking?.slot?.startTime, item.booking?.slot?.endTime);
 
               return (
                 <div
@@ -186,10 +298,7 @@ export default function CheckoutPage() {
                     <p className="font-medium text-gray-900">
                       {listing?.title ?? 'Experience'}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {vendorName}
-                    </p>
-
+                    <p className="text-sm text-gray-500 mt-1">{vendorName}</p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${listingType === 'EXPERIENCE'
                         ? 'bg-purple-100 text-purple-700'
@@ -198,10 +307,7 @@ export default function CheckoutPage() {
                         {listingType}
                       </span>
                     </div>
-
-                    <p className="text-sm text-gray-500 mt-1">
-                      Qty: {item.quantity}
-                    </p>
+                    <p className="text-sm text-gray-500 mt-1">Qty: {guests}</p>
 
                     {listingType === 'EXPERIENCE' && (
                       <div className="mt-1.5 space-y-0.5">
@@ -210,14 +316,14 @@ export default function CheckoutPage() {
                         </p>
 
                         <p className="text-sm text-gray-500">
-                          Booking Date: {new Date().toLocaleDateString()}
+                          Time Slot: {slotText}
                         </p>
                       </div>
                     )}
                   </div>
 
                   <p className="font-medium text-[#21a17a]">
-                    LKR {(item.quantity * price).toLocaleString()}
+                    LKR {totalPrice.toLocaleString()}
                   </p>
                 </div>
               );
@@ -226,7 +332,11 @@ export default function CheckoutPage() {
 
           <div className="flex justify-between mt-5 pt-4 border-t border-[#cfe7e1] font-bold text-lg text-[#21a17a]">
             <span>Total</span>
-            <span>LKR {totalAmount.toLocaleString()}</span>
+            <span>
+              LKR {directBooking
+                ? (((directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)).toLocaleString())
+                : totalAmount.toLocaleString()}
+            </span>
           </div>
         </div>
 
@@ -327,7 +437,10 @@ export default function CheckoutPage() {
               onClick={handlePay}
               className="w-full rounded-xl bg-[#0d9488] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
             >
-              Pay LKR {totalAmount.toLocaleString()}
+              Pay LKR {(directBooking
+                ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
+                : totalAmount
+              ).toLocaleString()}
             </button>
 
           </div>

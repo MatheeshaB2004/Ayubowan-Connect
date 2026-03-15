@@ -20,6 +20,10 @@ type Booking = {
     vendor?: { businessName?: string };
   };
   vendor?: { businessName?: string };
+  slot?: {
+    startTime?: string;
+    endTime?: string;
+  } | null;
 };
 
 export default function OrdersPage() {
@@ -73,6 +77,22 @@ export default function OrdersPage() {
       day: 'numeric',
       year: 'numeric',
     });
+
+  const formatTime = (dateString: string) => {
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) return null;
+    const hours = parsed.getUTCHours();
+    const minutes = parsed.getUTCMinutes();
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  const formatTimeSlot = (order: Booking) => {
+    if (!order.slot?.startTime || !order.slot?.endTime) return '-';
+    const start = formatTime(order.slot.startTime);
+    const end = formatTime(order.slot.endTime);
+    if (!start || !end) return '-';
+    return `${start} – ${end}`;
+  };
 
   /* ── Loading ── */
   if (!isLoaded || isLoading) {
@@ -138,8 +158,8 @@ export default function OrdersPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">You have no bookings yet.</h2>
-            <p className="text-gray-500 mb-6">Browse the marketplace to find amazing experiences and products.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders yet.</h2>
+            <p className="text-gray-500 mb-6">Explore experiences or products to make your first booking or purchase.</p>
             <Link href="/marketplace">
               <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
                 Browse Marketplace
@@ -153,11 +173,11 @@ export default function OrdersPage() {
               <table className="table-auto w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Item Name</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Type</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Item</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience Date</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Payment Date</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Scheduled Experience Date</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Participants</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Price</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
                   </tr>
                 </thead>
@@ -167,23 +187,20 @@ export default function OrdersPage() {
                       <td className="py-4 px-6 text-sm text-gray-900 font-medium">
                         {order.listing?.title || 'Unknown Item'}
                       </td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${
-                          order.listing?.listingType === 'EXPERIENCE'
-                            ? 'bg-purple-50 text-purple-700'
-                            : 'bg-green-50 text-green-700'
-                        }`}>
-                          {order.listing?.listingType === 'EXPERIENCE' ? 'Experience' : 'Product'}
-                        </span>
-                      </td>
                       <td className="py-4 px-6 text-sm text-gray-600">
                         {vendorName(order)}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">
-                        {formatDate(order.bookingDate)}
+                        {order.slot?.startTime ? formatDate(order.slot.startTime) : '-'}
+                        {order.slot?.startTime && order.slot?.endTime && (
+                          <p className="text-xs text-gray-500 mt-1">Time: {formatTimeSlot(order)}</p>
+                        )}
+                      </td>
+                      <td className="py-4 px-6 text-sm text-gray-600">
+                        {order.guests}
                       </td>
                       <td className="py-4 px-6 text-sm text-[#21a17a] font-semibold">
-                        {formatDate(order.updatedAt)}
+                        LKR {order.totalPrice.toLocaleString()}
                       </td>
                       <td className="py-4 px-6">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#21a17a]/15 text-[#21a17a]">

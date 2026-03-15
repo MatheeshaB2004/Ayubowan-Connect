@@ -61,44 +61,38 @@ export default function UpcomingExperiencesPage() {
     fetchBookings();
   }, [isLoaded, isSignedIn, user]);
 
-  const today = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-
   const upcomingBookings = useMemo(
     () =>
       bookings.filter((b) => {
-        const bookingDay = new Date(b.slot?.startTime ?? b.bookingDate);
-        bookingDay.setHours(0, 0, 0, 0);
-
+        const slotStart = b.slot?.startTime ? new Date(b.slot.startTime) : null;
         const isExperience = b.listing?.listingType === 'EXPERIENCE';
-        const isFutureOrToday = !Number.isNaN(bookingDay.getTime()) && bookingDay >= today;
-        const isRelevantStatus = b.status === 'COMPLETED' || b.status === 'CANCELLED';
+        const isFutureOrToday = !!slotStart && !Number.isNaN(slotStart.getTime()) && slotStart >= new Date();
+        const isRelevantStatus = b.status === 'COMPLETED';
 
         return isExperience && isFutureOrToday && isRelevantStatus;
+      }).sort((a, b) => {
+        const startA = a.slot?.startTime ? new Date(a.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;
+        const startB = b.slot?.startTime ? new Date(b.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;
+        return startA - startB;
       }),
-    [bookings, today],
+    [bookings],
   );
 
   const vendorName = (b: Booking) =>
     b.vendor?.businessName ?? b.listing?.vendor?.businessName ?? 'Unknown Vendor';
 
-  const formatSlotTime = (value?: string) => {
-    if (!value) return null;
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-      if (/^\d{2}:\d{2}/.test(value)) return value.slice(0, 5);
-      return null;
-    }
-    return parsed.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const formatTime = (dateString: string) => {
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) return null;
+    const hours = parsed.getUTCHours();
+    const minutes = parsed.getUTCMinutes();
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
   const formatTimeSlot = (booking: Booking) => {
     if (!booking.slot?.startTime || !booking.slot?.endTime) return '-';
-    const start = formatSlotTime(booking.slot.startTime);
-    const end = formatSlotTime(booking.slot.endTime);
+    const start = formatTime(booking.slot.startTime);
+    const end = formatTime(booking.slot.endTime);
     if (!start || !end) return '-';
     return `${start} – ${end}`;
   };
@@ -164,8 +158,8 @@ export default function UpcomingExperiencesPage() {
 
         {upcomingBookings.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No upcoming experiences</h2>
-            <p className="text-gray-500 mb-6">Complete a booking checkout to see it here.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No upcoming experiences yet.</h2>
+            <p className="text-gray-500 mb-6">Explore experiences to book your next adventure.</p>
             <Link href="/marketplace">
               <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
                 Browse Marketplace
@@ -194,17 +188,17 @@ export default function UpcomingExperiencesPage() {
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">{vendorName(booking)}</td>
                       <td className="py-4 px-6 text-sm text-gray-600">
-                        {new Date(booking.bookingDate).toLocaleDateString('en-US', {
+                        {booking.slot?.startTime ? new Date(booking.slot.startTime).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
-                        })}
+                        }) : '-'}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">{formatTimeSlot(booking)}</td>
                       <td className="py-4 px-6 text-sm text-gray-600">{booking.guests}</td>
                       <td className="py-4 px-6">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge(booking.status)}`}>
-                          {booking.status}
+                          Upcoming
                         </span>
                       </td>
                     </tr>

@@ -170,6 +170,21 @@ export default function ExperienceDetailPage() {
     return dayData?.slots ?? [];
   }, [vendorAvailability, bookingForm.date]);
 
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return null;
+    const hours = date.getUTCHours();
+    const minutes = date.getUTCMinutes();
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  const formatTimeSlot = (startTime: string, endTime: string) => {
+    const start = formatTime(startTime);
+    const end = formatTime(endTime);
+    if (!start || !end) return '-';
+    return `${start} – ${end}`;
+  };
+
   const handleBookingSubmit = async () => {
     if (!isSignedIn || !user) {
       toast.error("Please log in to book this experience");
@@ -713,7 +728,7 @@ export default function ExperienceDetailPage() {
                         const isFull = remaining <= 0;
                         return (
                           <option key={slot.id} value={slot.id} disabled={isFull}>
-                            {slot.startTime} – {slot.endTime}{' '}
+                            {formatTimeSlot(slot.startTime, slot.endTime)}{' '}
                             {isFull ? '(Full)' : `(${remaining} spots left)`}
                           </option>
                         );

@@ -3,8 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
-import { useCart } from '@/context/CartContext';
-import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
@@ -18,6 +16,7 @@ type Booking = {
   totalPrice: number;
   listing: {
     title: string;
+    priceMin?: number;
     listingType?: string;
     vendor?: { businessName?: string };
   };
@@ -30,8 +29,6 @@ type Booking = {
 
 export default function BookingsPage() {
   const { isSignedIn, user, isLoaded } = useUser();
-  const { addToCart } = useCart();
-  const router = useRouter();
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,16 +68,6 @@ export default function BookingsPage() {
     fetchBookings();
   }, [isSignedIn, user, isLoaded]);
 
-  const handleProceedToCheckout = async (bookingId: number) => {
-    toast.success('Adding to cart…');
-    try {
-      await addToCart(null, 1, bookingId);
-      router.push('/payments/cart');
-    } catch {
-      toast.error('Failed to add booking to cart');
-    }
-  };
-
   const handleCancelBooking = async (bookingId: number) => {
     if (!user) return;
     try {
@@ -109,6 +96,7 @@ export default function BookingsPage() {
   /* ── Helpers ── */
   const vendorName = (b: Booking) =>
     b.vendor?.businessName ?? b.listing?.vendor?.businessName ?? 'Unknown Vendor';
+  const bookingPrice = (b: Booking) => b.totalPrice || (b.listing?.priceMin ?? 0) * b.guests;
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
@@ -120,20 +108,18 @@ export default function BookingsPage() {
     return map[status] ?? 'bg-gray-100 text-gray-800';
   };
 
-  const formatSlotTime = (value?: string) => {
-    if (!value) return null;
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-      if (/^\d{2}:\d{2}/.test(value)) return value.slice(0, 5);
-      return null;
-    }
-    return parsed.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const formatTime = (dateString: string) => {
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) return null;
+    const hours = parsed.getUTCHours();
+    const minutes = parsed.getUTCMinutes();
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
   const formatTimeSlot = (booking: Booking) => {
     if (!booking.slot?.startTime || !booking.slot?.endTime) return '-';
-    const start = formatSlotTime(booking.slot.startTime);
-    const end = formatSlotTime(booking.slot.endTime);
+    const start = formatTime(booking.slot.startTime);
+    const end = formatTime(booking.slot.endTime);
     if (!start || !end) return '-';
     return `${start} – ${end}`;
   };
@@ -217,11 +203,12 @@ export default function BookingsPage() {
               <table className="table-auto w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience Name</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Date</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Time Slot</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Participants</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Price</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Action</th>
                   </tr>
@@ -249,6 +236,9 @@ export default function BookingsPage() {
                         {formatTimeSlot(booking)}
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">{booking.guests}</td>
+                      <td className="py-4 px-6 text-sm font-semibold text-[#21a17a]">
+                        LKR {bookingPrice(booking).toLocaleString()}
+                      </td>
                       <td className="py-4 px-6">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge(booking.status)}`}
@@ -272,12 +262,13 @@ export default function BookingsPage() {
                         )}
                         {booking.status === 'CONFIRMED' && (
                           <div className="flex flex-wrap items-center gap-2">
-                            <button
-                              onClick={() => handleProceedToCheckout(booking.id)}
-                              className="inline-flex items-center rounded-lg bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
-                            >
-                              Proceed to Checkout
-                            </button>
+                            <Link href={`/payments/checkout?bookingId=${booking.id}`}>
+                              <button
+                                className="inline-flex items-center rounded-lg bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
+                              >
+                                Proceed to Checkout
+                              </button>
+                            </Link>
                             <button
                               onClick={() => handleCancelBooking(booking.id)}
                               className="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition-all hover:bg-red-100 active:scale-[0.98]"
