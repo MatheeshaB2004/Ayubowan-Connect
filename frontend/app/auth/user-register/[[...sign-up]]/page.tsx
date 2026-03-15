@@ -188,8 +188,6 @@ export default function UserRegisterPage() {
                 <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Account Details</h2>
 
                 <form onSubmit={handleNextStep1} className="space-y-5">
-                  <div id="clerk-captcha"></div>
-
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
