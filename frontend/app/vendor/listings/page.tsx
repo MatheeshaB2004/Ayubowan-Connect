@@ -4,13 +4,23 @@ import { useState, useEffect, useRef } from "react";
 import "./page.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useUser } from "@clerk/nextjs";
 
 export default function CreateListingsPage() {
+
+  const { user, isLoaded } = useUser();
+  
+
+  const clerkUserId = user?.id;
+
+  console.log("DEBUG USER:", user);
+  console.log("DEBUG LOADED:", isLoaded);
 
   const [showModal, setShowModal] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
   const listingsRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [vendorId, setVendorId] = useState<number | null>(null);
 
   const [submitting, setSubmitting] = useState(false);
   const SHORT_DESC_MAX = 500;
@@ -45,17 +55,47 @@ export default function CreateListingsPage() {
   });
 
   const [listings, setListings] = useState<any[]>([]);
-  const vendorId = 2;
+
   const [locations, setLocations] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<"PUBLISHED" | "DRAFT">("PUBLISHED");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [capacityLocked, setCapacityLocked] = useState(false);
 
   useEffect(() => {
+
+    if (!isLoaded) return;
+    if (!user?.id) return;
+
+
+    const fetchVendor = async () => {
+      const res = await fetch(
+        `http://localhost:3001/vendor/profile?userId=${user.id}`
+      );
+
+      const data = await res.json();
+
+      console.log("VENDOR RESPONSE:", data);
+
+      if (data?.vendorId) {
+        setVendorId(data.vendorId);
+      }
+    };
+
+    fetchVendor();
+
+  }, [isLoaded, user]);
+
+  useEffect(() => {
+    if (!vendorId) return;
+
     fetchListings();
-    fetchLocations();
-    fetchCategories();
+    fetchLocations(vendorId);
     fetchCapacity();
+
+  }, [vendorId]);
+
+  useEffect(() => {
+    fetchCategories();
   }, []);
 
   useEffect(() => {
@@ -72,18 +112,24 @@ export default function CreateListingsPage() {
     }
   };
 
-  const fetchLocations = async () => {
-    try {
-      const response = await fetch(`http://localhost:3001/vendor/${vendorId}/locations`);
-      const data = await response.json();
-      setLocations(data);
-    } catch (error) {
-      console.error("Location fetch error:", error);
-    }
+  const fetchLocations = async (id: number) => {
+    const response = await fetch(
+      `http://localhost:3001/vendor/${id}/locations`
+    );
+
+    const data = await response.json();
+
+    console.log("LOCATIONS:", data);
+
+    setLocations(data);
   };
+
+
 
   const fetchCapacity = async () => {
     try {
+
+      console.log("FETCHING CAPACITY FOR VENDOR:", vendorId);
 
       const res = await fetch(
         `http://localhost:3001/vendor/${vendorId}/capacity`
@@ -103,6 +149,9 @@ export default function CreateListingsPage() {
 
   const saveVendorCapacity = async () => {
     try {
+      if (!vendorId) return;
+
+      console.log("SAVING CAPACITY FOR VENDOR:", vendorId);
 
       const res = await fetch(
         `http://localhost:3001/vendor/${vendorId}/capacity`,
@@ -180,6 +229,10 @@ export default function CreateListingsPage() {
       l.listingType === listingFilter &&
       l.visibilityStatus === statusFilter
   );
+
+  if (!isLoaded) {
+    return null;
+  }
 
   return (
     <main className="listings-page">
@@ -415,6 +468,7 @@ export default function CreateListingsPage() {
                         setEditingListing(null);
                         setFormData(emptyForm);
                         setShowModal(true);
+
                       }}
                     >
                       Create Listing
@@ -635,7 +689,7 @@ export default function CreateListingsPage() {
                       <label>Location *</label>
                       <select
                         required
-                        value={selectedAddressId || ""}
+                        value={selectedAddressId ?? ""}
                         onChange={(e) => setSelectedAddressId(Number(e.target.value))}
                       >
                         <option value="">Select location</option>
@@ -854,6 +908,10 @@ export default function CreateListingsPage() {
                       formDataToSend.append("listingType", formData.listingType);
                       formDataToSend.append("title", formData.title);
                       formDataToSend.append("shortDescription", formData.shortDescription);
+                      formDataToSend.append(
+                        "tags",
+                        JSON.stringify(formData.tags)
+                      );
                       if (formData.longDescription) formDataToSend.append("longDescription", formData.longDescription);
                       formDataToSend.append("priceMin", formData.minPrice);
                       formDataToSend.append("priceMax", formData.maxPrice);

@@ -272,6 +272,7 @@ export default function Dashboard() {
     }, [userId]);
 
     useEffect(() => {
+
         if (!userId) return;
 
         const fetchAvailability = async () => {
@@ -299,12 +300,12 @@ export default function Dashboard() {
             }
 
             setAvailability(mapped);
-            console.log("FETCHED AVAILABILITY:", JSON.stringify(mapped, null, 2));
         };
 
         fetchAvailability();
 
-    }, [currentDate]);
+    }, [currentDate, userId]);   // ALWAYS SAME LENGTH
+
 
     useEffect(() => {
         if (!userId) return;
@@ -323,7 +324,7 @@ export default function Dashboard() {
         };
 
         fetchListings();
-    }, []);
+    }, [userId]);
 
     const handleAccept = async (id: number) => {
 
@@ -480,6 +481,10 @@ export default function Dashboard() {
 
         return true;
     });
+
+    if (!isLoaded) {
+        return <div>Loading dashboard...</div>;
+    }
 
     return (
         <div className="proplux-app">

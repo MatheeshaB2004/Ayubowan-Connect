@@ -1,4 +1,5 @@
 import DashboardClient from "./DashboardClient";
+import { auth } from "@clerk/nextjs/server";
 
 export default async function Page({
   searchParams,
@@ -6,36 +7,38 @@ export default async function Page({
   searchParams: Promise<{ period?: string }>;
 }) {
 
+  const { userId } = await auth();
+  if (!userId) return null;
   const params = await searchParams;
   const period = params.period || "thisMonth";
 
   const summaryRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/summary?userId=2&period=${period}`,
+    `http://localhost:3001/dashboard/vendor/summary?userId=${userId}&period=${period}`,
     { cache: "no-store" }
   );
 
   const trendRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/booking-trend?userId=2&period=${period}`,
+    `http://localhost:3001/dashboard/vendor/booking-trend?userId=${userId}&period=${period}`,
     { cache: "no-store" }
   );
 
   const topListingsRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/top-listings?userId=2&period=${period}`,
+    `http://localhost:3001/dashboard/vendor/top-listings?userId=${userId}&period=${period}`,
     { cache: "no-store" }
   );
 
   const ratingRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/ratings?userId=2&period=${period}`,
+    `http://localhost:3001/dashboard/vendor/ratings?userId=${userId}&period=${period}`,
     { cache: "no-store" }
   );
 
   const insightsRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/insights?userId=2&period=${period}`,
+    `http://localhost:3001/dashboard/vendor/insights?userId=${userId}&period=${period}`,
     { cache: "no-store" }
   );
 
   const viewsVsBookingsRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/views-vs-bookings?userId=2&period=${period}`,
+    `http://localhost:3001/dashboard/vendor/views-vs-bookings?userId=${userId}&period=${period}`,
     { cache: "no-store" }
   );
 

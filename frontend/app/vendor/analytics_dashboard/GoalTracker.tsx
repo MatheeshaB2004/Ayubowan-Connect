@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useUser } from "@clerk/nextjs";
 import {
     RocketIcon,
     PartyPopperIcon,
@@ -22,7 +23,7 @@ interface GoalData {
 }
 
 
-const USER_ID = 2;
+
 export default function GoalTracker() {
     const router = useRouter();
     const [localGoal, setLocalGoal] = useState<GoalData | null>(null);
@@ -32,8 +33,21 @@ export default function GoalTracker() {
     const [inputValue, setInputValue] = useState('');
     const [inputError, setInputError] = useState('');
     const [mounted, setMounted] = useState(false);
+    const { user, isLoaded } = useUser();
+    const userId = user?.id;
+
+    const fetchGoal = async () => {
+        const res = await fetch(`http://localhost:3001/vendor/dashboard?userId=${userId}`);
+        const data = await res.json();
+        setLocalGoal(data.goal);
+        setHasGoal(data.goal?.exists ?? false);
+        setCustomTarget(data.goal?.target ?? 0);
+    };
+
 
     useEffect(() => {
+        if (!isLoaded || !userId) return;
+
         fetchGoal();
     }, []);
 
@@ -65,13 +79,6 @@ export default function GoalTracker() {
     const circumference = 2 * Math.PI * radius;
     const progress = Math.min(percentage, 100) / 100 * circumference;
 
-    const fetchGoal = async () => {
-        const res = await fetch(`http://localhost:3001/vendor/dashboard?userId=${USER_ID}`);
-        const data = await res.json();
-        setLocalGoal(data.goal);
-        setHasGoal(data.goal?.exists ?? false);
-        setCustomTarget(data.goal?.target ?? 0);
-    };
 
     // CREATE / UPDATE GOAL
     const saveGoal = async (val: number) => {
@@ -83,7 +90,7 @@ export default function GoalTracker() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                userId: USER_ID,
+                userId: userId,
                 target: val,
             }),
         });
@@ -99,7 +106,7 @@ export default function GoalTracker() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                userId: USER_ID,
+                userId: userId,
             }),
         });
 
