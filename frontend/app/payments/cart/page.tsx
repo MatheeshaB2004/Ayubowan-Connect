@@ -9,8 +9,10 @@ export default function CartPage() {
 
   const totalAmount = items.reduce(
     (sum, item) => {
-      const price = item.listing?.priceMin ?? item.booking?.listing?.priceMin ?? 0;
-      return sum + item.quantity * price;
+      const listing = item.listing ?? item.booking?.listing;
+      const price = listing?.priceMin ?? 0;
+      const guests = item.booking?.guests ?? item.quantity ?? 1;
+      return sum + guests * price;
     },
     0
   );
@@ -18,10 +20,12 @@ export default function CartPage() {
   // Group items by vendor
   const groupedByVendor: Record<string, CartItem[]> = {};
   items.forEach((item) => {
-    const vendorName = item.listing?.vendor?.businessName ?? item.booking?.listing?.vendor?.businessName ?? 'Unknown Vendor';
+    const listing = item.listing ?? item.booking?.listing;
+    const vendorName = listing?.vendor?.businessName ?? 'Vendor';
     if (!groupedByVendor[vendorName]) {
       groupedByVendor[vendorName] = [];
     }
+
     groupedByVendor[vendorName].push(item);
   });
 
@@ -80,15 +84,15 @@ export default function CartPage() {
 
                 <div className="divide-y divide-gray-100">
                   {vendorItems.map((item) => {
-                    const listingData = item.listing ?? item.booking?.listing;
+                    const listing = item.listing ?? item.booking?.listing;
                     const imageUrl =
-                      listingData?.media?.[0]?.mediaUrl ||
+                      listing?.media?.[0]?.mediaUrl ||
                       '/assets/photos/B4.webp';
-                    const title = listingData?.title ?? 'Unknown Item';
-                    const price = listingData?.priceMin ?? 0;
-                    const listingType = listingData?.listingType ?? 'PRODUCT';
+                    const title = listing?.title ?? 'Unknown Item';
+                    const price = listing?.priceMin ?? 0;
+                    const listingType = listing?.listingType ?? 'PRODUCT';
                     const vendorNameForItem =
-                      listingData?.vendor?.businessName ?? 'Unknown Vendor';
+                      listing?.vendor?.businessName ?? 'Vendor';
 
                     return (
                       <div
@@ -129,17 +133,23 @@ export default function CartPage() {
                           </div>
 
                           <p className="text-base font-bold text-[#21a17a] mt-2">
-                            LKR {(price * item.quantity).toLocaleString()}
+                            LKR {(price * (item.booking?.guests ?? item.quantity)).toLocaleString()}
                           </p>
                         </div>
 
-                        {/* Remove Button */}
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-3 py-1 transition-colors"
-                        >
-                          Remove
-                        </button>
+                        {/* Remove Button (products only) */}
+                        {item.bookingId == null ? (
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg px-3 py-1 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        ) : (
+                          <span className="text-xs font-medium text-gray-500 px-2 py-1">
+                            Continue to checkout
+                          </span>
+                        )}
                       </div>
                     );
                   })}

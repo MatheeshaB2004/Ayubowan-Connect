@@ -21,6 +21,7 @@ export type CartItem = {
         vendor: { businessName: string };
     } | null;
     booking?: {
+        guests?: number;
         listing: {
             title: string;
             priceMin: number;
@@ -190,8 +191,10 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const totalAmount = items.reduce(
         (sum, item) => {
-            const price = item.listing?.priceMin ?? item.booking?.listing?.priceMin ?? 0;
-            return sum + (item.quantity * price);
+            const listing = item.listing ?? item.booking?.listing;
+            const price = listing?.priceMin ?? 0;
+            const guests = item.booking?.guests ?? item.quantity ?? 1;
+            return sum + (guests * price);
         },
         0
     );
