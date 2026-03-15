@@ -15,6 +15,7 @@ type Booking = {
   totalPrice: number;
   listing: {
     title: string;
+    listingType?: string;
     vendor?: { businessName?: string };
   };
   vendor?: { businessName?: string };
@@ -92,18 +93,28 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Back to Dashboard */}
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] mb-6"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
-          Back to Dashboard
-        </Link>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Dashboard</h1>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href="/dashboard/bookings"
+              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Pending Bookings
+            </Link>
+            <Link
+              href="/dashboard/orders"
+              className="inline-flex items-center rounded-xl bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm"
+            >
+              Orders History
+            </Link>
+          </div>
+        </div>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8 tracking-tight">My Orders</h1>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">My Orders</h2>
+        <p className="text-gray-600 mt-2 mb-8">
+          View your completed purchases and booking history.
+        </p>
 
         {orders.length === 0 ? (
           /* ── Empty state ── */
@@ -129,6 +140,7 @@ export default function OrdersPage() {
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Item Name</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Type</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Date</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Total Price</th>
@@ -140,6 +152,15 @@ export default function OrdersPage() {
                     <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
                       <td className="py-4 px-6 text-sm text-gray-900 font-medium">
                         {order.listing?.title || 'Unknown Item'}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${
+                          order.listing?.listingType === 'EXPERIENCE'
+                            ? 'bg-purple-50 text-purple-700'
+                            : 'bg-green-50 text-green-700'
+                        }`}>
+                          {order.listing?.listingType === 'EXPERIENCE' ? 'Experience' : 'Product'}
+                        </span>
                       </td>
                       <td className="py-4 px-6 text-sm text-gray-600">
                         {vendorName(order)}

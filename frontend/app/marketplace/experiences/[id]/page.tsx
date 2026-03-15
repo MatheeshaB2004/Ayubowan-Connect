@@ -14,7 +14,6 @@ import {
   ShieldCheck,
   ChevronRight,
   ChevronLeft,
-  X,
   Music,
   Camera,
   Sun,
@@ -51,12 +50,27 @@ type ApiListing = {
   };
   media?: Array<{ mediaUrl: string; isPrimary: boolean }>;
   vendor?: {
+    id?: number;
     businessName: string;
     shortTagline?: string | null;
     contactEmail?: string | null;
     contactPhone?: string | null;
   };
+  vendorId?: number;
   availability?: string;
+};
+
+type AvailabilitySlot = {
+  id: number;
+  startTime: string; // "09:00"
+  endTime: string;   // "12:00"
+  maxGuests: number;
+  bookedGuests: number;
+};
+
+type AvailabilityDate = {
+  date: string; // "2026-03-20"
+  slots: AvailabilitySlot[];
 };
 
 type InclusionItem = {
@@ -78,13 +92,13 @@ export default function ExperienceDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPhone, setShowPhone] = useState(false);
 
-  // Booking Modal State
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  // Availability State
+  const [vendorAvailability, setVendorAvailability] = useState<AvailabilityDate[]>([]);
+
+  // Booking Sidebar State
   const [bookingForm, setBookingForm] = useState({
-    name: '',
-    email: '',
     date: '',
-    time: '',
+    slotId: null as number | null,
     participants: 1,
     notes: '',
   });
@@ -128,42 +142,65 @@ export default function ExperienceDetailPage() {
     setCurrentImageIndex(0);
   }, [listing?.id]);
 
-  const availableTimeSlots = React.useMemo(() => {
-    if (!listing?.availability || listing.availability.trim() === '' || listing.availability === '[]') return ["09:00", "14:00"];
-    try {
-      const parsed = JSON.parse(listing.availability);
-      if (Array.isArray(parsed)) {
-        if (parsed.length === 0) return ["09:00", "14:00"];
-        if (typeof parsed[0] === 'string') return parsed;
-        if (parsed[0]?.time) return parsed.map((p: any) => p.time);
-        if (parsed[0]?.start) return parsed.map((p: any) => `${p.start} - ${p.end}`);
-      }
-      return [listing.availability];
-    } catch {
-      if (listing.availability.includes(',')) {
-        return listing.availability.split(',').map((s: string) => s.trim());
-      }
-      return [listing.availability];
-    }
-  }, [listing?.availability]);
+  // Fetch real vendor availability
+  useEffect(() => {
+    if (!listing) return;
+    const vId = listing.vendorId ?? listing.vendor?.id;
+    if (!vId) return;
 
-  const handleBookingSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const controller = new AbortController();
+    fetch(`${API_BASE}/bookings/availability/${vId}`, { signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: AvailabilityDate[]) => {
+        if (!controller.signal.aborted) setVendorAvailability(data ?? []);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [listing]);
+
+  // Available dates that have at least one slot with remaining capacity
+  const availableDates = React.useMemo(
+    () => vendorAvailability.filter((d) => d.slots.some((s) => s.maxGuests - s.bookedGuests > 0)),
+    [vendorAvailability],
+  );
+
+  // Slots for the currently selected date
+  const slotsForSelectedDate = React.useMemo(() => {
+    if (!bookingForm.date) return [];
+    const dayData = vendorAvailability.find((d) => d.date === bookingForm.date);
+    return dayData?.slots ?? [];
+  }, [vendorAvailability, bookingForm.date]);
+
+  const handleBookingSubmit = async () => {
     if (!isSignedIn || !user) {
       toast.error("Please log in to book this experience");
       return;
     }
 
-    if (!bookingForm.name.trim()) {
-      toast.error('Please enter your name');
+    if (!bookingForm.date) {
+      toast.error('Please select a date');
       return;
     }
-    if (!bookingForm.email.trim()) {
-      toast.error('Please enter your email');
+
+    if (!bookingForm.slotId) {
+      toast.error('Please select a time slot');
       return;
     }
+
     if (bookingForm.participants < 1) {
       toast.error('At least 1 participant is required');
+      return;
+    }
+
+    const selectedSlot = slotsForSelectedDate.find((s) => s.id === bookingForm.slotId);
+    if (!selectedSlot) {
+      toast.error('Invalid time slot selected');
+      return;
+    }
+
+    const remaining = selectedSlot.maxGuests - selectedSlot.bookedGuests;
+    if (bookingForm.participants > remaining) {
+      toast.error(`Only ${remaining} spots available for this time slot.`);
       return;
     }
 
@@ -178,16 +215,14 @@ export default function ExperienceDetailPage() {
           listingId: listing?.id,
           date: bookingForm.date,
           participants: bookingForm.participants,
-          name: bookingForm.name,
-          email: bookingForm.email,
-          notes: bookingForm.time ? `Time: ${bookingForm.time}\n${bookingForm.notes}` : bookingForm.notes,
+          slotId: bookingForm.slotId,
+          notes: bookingForm.notes,
         }),
       });
 
       if (response.ok) {
         toast.success('Booking request sent!');
-        setIsBookingModalOpen(false);
-        router.push('/dashboard/bookings');
+        setIsBookingSubmitted(true);
       } else {
         const errorText = await response.text();
         console.error("Booking API error:", response.status, errorText);
@@ -615,173 +650,153 @@ export default function ExperienceDetailPage() {
           <div className="booking-card">
             <h3 className="booking-title">Booking card</h3>
 
-            <div className="booking-form">
-              <div className="form-field">
-                <label className="field-label" htmlFor="booking-date">
-                  <Calendar size={16} />
-                  Date
-                </label>
-                <input
-                  id="booking-date"
-                  title="Booking Date"
-                  type="date"
-                  className="field-input"
-                  min={new Date().toISOString().split('T')[0]}
-                  value={bookingForm.date}
-                  onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value })}
-                />
-              </div>
-
-              {availableTimeSlots.length > 0 ? (
-                <div className="form-field">
-                  <label className="field-label" htmlFor="time-slot">Time slot</label>
-                  <select
-                    id="time-slot"
-                    title="Time slot"
-                    className="field-input"
-                    value={bookingForm.time}
-                    onChange={(e) => setBookingForm({ ...bookingForm, time: e.target.value })}
-                  >
-                    <option value="">Select time</option>
-                    {availableTimeSlots.map((slot: string, idx: number) => (
-                      <option key={idx} value={slot}>{slot}</option>
-                    ))}
-                  </select>
+            {isBookingSubmitted ? (
+              <div className="success-message py-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ShieldCheck size={32} className="text-green-600" />
                 </div>
-              ) : (
+                <h3 className="text-xl font-semibold mb-2 text-center text-gray-900">
+                  Booking request sent successfully.
+                </h3>
+                <p className="text-gray-600 text-center mb-6">
+                  The vendor will confirm your booking within 24 hours.
+                </p>
+                <button
+                  className="btn-primary w-full"
+                  onClick={() => router.push('/dashboard/bookings')}
+                >
+                  View My Pending Bookings
+                </button>
+              </div>
+            ) : (
+              <div className="booking-form">
+                {/* Date picker — only show dates that have available slots */}
                 <div className="form-field">
-                  <label className="field-label">Time slot</label>
-                  <div className="p-3 mt-1 bg-gray-50 border border-gray-200 rounded text-gray-500 italic text-sm">
-                    No available time slots
+                  <label className="field-label" htmlFor="booking-date">
+                    <Calendar size={16} />
+                    Date
+                  </label>
+                  {availableDates.length > 0 ? (
+                    <select
+                      id="booking-date"
+                      title="Booking Date"
+                      className="field-input"
+                      value={bookingForm.date}
+                      onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value, slotId: null, participants: 1 })}
+                    >
+                      <option value="">Select a date</option>
+                      {availableDates.map((d) => (
+                        <option key={d.date} value={d.date}>
+                          {new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="p-3 mt-1 bg-gray-50 border border-gray-200 rounded text-gray-500 italic text-sm">
+                      No availability set by vendor
+                    </div>
+                  )}
+                </div>
+
+                {/* Time slot — show slots for the selected date */}
+                {bookingForm.date && slotsForSelectedDate.length > 0 && (
+                  <div className="form-field">
+                    <label className="field-label" htmlFor="time-slot">Time Slot</label>
+                    <select
+                      id="time-slot"
+                      title="Time Slot"
+                      className="field-input"
+                      value={bookingForm.slotId ?? ''}
+                      onChange={(e) => setBookingForm({ ...bookingForm, slotId: Number(e.target.value) || null, participants: 1 })}
+                    >
+                      <option value="">Select a time slot</option>
+                      {slotsForSelectedDate.map((slot) => {
+                        const remaining = slot.maxGuests - slot.bookedGuests;
+                        const isFull = remaining <= 0;
+                        return (
+                          <option key={slot.id} value={slot.id} disabled={isFull}>
+                            {slot.startTime} – {slot.endTime}{' '}
+                            {isFull ? '(Full)' : `(${remaining} spots left)`}
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
+                )}
+
+                {/* Participants with increment controls */}
+                <div className="form-field">
+                  <label className="field-label" htmlFor="booking-participants">
+                    <Users size={16} />
+                    Participants
+                  </label>
+                  <div className="flex items-center gap-4 mt-1">
+                    <button
+                      type="button"
+                      className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50"
+                      disabled={bookingForm.participants <= 1 || !bookingForm.slotId}
+                      onClick={() => setBookingForm((prev) => ({ ...prev, participants: prev.participants - 1 }))}
+                    >
+                      -
+                    </button>
+                    <span className="text-lg font-semibold w-8 text-center">{bookingForm.participants}</span>
+                    <button
+                      type="button"
+                      className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50"
+                      disabled={
+                        !bookingForm.slotId ||
+                        bookingForm.participants >= (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)?.maxGuests ?? 0) - (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)?.bookedGuests ?? 0)
+                      }
+                      onClick={() => setBookingForm((prev) => ({ ...prev, participants: prev.participants + 1 }))}
+                    >
+                      +
+                    </button>
+                  </div>
+                  {bookingForm.slotId && (() => {
+                    const sel = slotsForSelectedDate.find((s) => s.id === bookingForm.slotId);
+                    const rem = sel ? sel.maxGuests - sel.bookedGuests : 0;
+                    return (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Max {rem} available
+                      </p>
+                    );
+                  })()}
                 </div>
-              )}
 
-              <div className="form-field">
-                <label className="field-label" htmlFor="booking-participants">
-                  <Users size={16} />
-                  Participants
-                </label>
-                <input
-                  id="booking-participants"
-                  title="Participants"
-                  type="number"
-                  min={1}
-                  className="field-input"
-                  value={bookingForm.participants}
-                  onChange={(e) => setBookingForm({ ...bookingForm, participants: Math.max(1, parseInt(e.target.value) || 1) })}
-                />
-              </div>
+                {/* Special Requests */}
+                <div className="form-field mt-4">
+                  <label className="field-label" htmlFor="booking-notes">Special Requests (optional)</label>
+                  <textarea
+                    id="booking-notes"
+                    title="Special Requests"
+                    placeholder="Any special requirements..."
+                    className="field-input mt-1"
+                    rows={3}
+                    value={bookingForm.notes}
+                    onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                  />
+                </div>
 
-              <button
-                className="btn-book-now"
-                disabled={!bookingForm.date || bookingForm.participants < 1}
-                onClick={() => {
-                  if (availableTimeSlots.length > 0 && !bookingForm.time) {
-                    toast.error('Please select a time slot');
-                    return;
+                <button
+                  className="btn-book-now mt-4"
+                  disabled={
+                    !bookingForm.date ||
+                    !bookingForm.slotId ||
+                    bookingForm.participants < 1 ||
+                    (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)
+                      ? bookingForm.participants > (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)!.maxGuests - slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)!.bookedGuests)
+                      : false)
                   }
-                  setIsBookingModalOpen(true);
-                }}
-              >
-                Book Now
-              </button>
+                  onClick={handleBookingSubmit}
+                >
+                  Book Experience
+                </button>
 
-            </div>
+              </div>
+            )}
           </div>
         </aside>
       </div>
-
-      {/* Booking Modal */}
-      {isBookingModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsBookingModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 className="modal-title">Reserve your experience</h3>
-              <button
-                className="modal-close-btn"
-                onClick={() => setIsBookingModalOpen(false)}
-                title="Close modal"
-                aria-label="Close modal"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="modal-body">
-              {isBookingSubmitted ? (
-                <div className="success-message py-8">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <ShieldCheck size={32} className="text-green-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2 text-center text-gray-900">
-                    Request Sent!
-                  </h3>
-                  <p className="text-gray-600 text-center mb-6">
-                    The vendor will confirm your booking within 24 hours.
-                  </p>
-                  <button
-                    className="btn-primary w-full"
-                    onClick={() => {
-                      setIsBookingModalOpen(false);
-                      setIsBookingSubmitted(false);
-                    }}
-                  >
-                    Close
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleBookingSubmit}>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="booking-name">Full Name</label>
-                    <input
-                      id="booking-name"
-                      title="Full Name"
-                      placeholder="Full Name"
-                      type="text"
-                      required
-                      className="form-input"
-                      value={bookingForm.name}
-                      onChange={(e) => setBookingForm({ ...bookingForm, name: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="booking-email">Email</label>
-                    <input
-                      id="booking-email"
-                      title="Email"
-                      placeholder="Email"
-                      type="email"
-                      required
-                      className="form-input"
-                      value={bookingForm.email}
-                      onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="booking-notes">Special Requests</label>
-                    <textarea
-                      id="booking-notes"
-                      title="Special Requests"
-                      placeholder="Special Requests"
-                      className="form-input"
-                      rows={3}
-                      value={bookingForm.notes}
-                      onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
-                    />
-                  </div>
-
-                  <button type="submit" className="btn-primary w-full">
-                    Send Booking Request
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

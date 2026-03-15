@@ -22,6 +22,10 @@ type Booking = {
     vendor?: { businessName?: string };
   };
   vendor?: { businessName?: string };
+  slot?: {
+    startTime?: string;
+    endTime?: string;
+  } | null;
 };
 
 export default function BookingsPage() {
@@ -90,6 +94,21 @@ export default function BookingsPage() {
     return map[status] ?? 'bg-gray-100 text-gray-800';
   };
 
+  const formatTimeSlot = (booking: Booking) => {
+    if (!booking.slot?.startTime || !booking.slot?.endTime) return 'Not specified';
+    const start = new Date(booking.slot.startTime).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const end = new Date(booking.slot.endTime).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    return `${start} - ${end}`;
+  };
+
   /* ── Loading ── */
   if (!isLoaded || isLoading) {
     return (
@@ -117,18 +136,28 @@ export default function BookingsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Back to Dashboard */}
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] mb-6"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-          </svg>
-          Back to Dashboard
-        </Link>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Dashboard</h1>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link
+              href="/dashboard/bookings"
+              className="inline-flex items-center rounded-xl bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm"
+            >
+              Pending Bookings
+            </Link>
+            <Link
+              href="/dashboard/orders"
+              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Orders History
+            </Link>
+          </div>
+        </div>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8 tracking-tight">My Pending Bookings</h1>
+        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">My Pending Bookings</h2>
+        <p className="text-gray-600 mt-2 mb-8">
+          Track your experience booking requests and vendor confirmations.
+        </p>
 
         {bookings.length === 0 ? (
           /* ── Empty state ── */
@@ -153,10 +182,11 @@ export default function BookingsPage() {
               <table className="table-auto w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience Name</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Booking Date</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Guests</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Date</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Time Slot</th>
+                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Participants</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
                     <th className="py-4 px-6 font-semibold text-sm text-gray-700">Action</th>
                   </tr>
@@ -177,17 +207,22 @@ export default function BookingsPage() {
                           year: 'numeric',
                         })}
                       </td>
+                      <td className="py-4 px-6 text-sm text-gray-600">
+                        {formatTimeSlot(booking)}
+                      </td>
                       <td className="py-4 px-6 text-sm text-gray-600">{booking.guests}</td>
                       <td className="py-4 px-6">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${statusBadge(booking.status)}`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge(booking.status)}`}
                         >
-                          {booking.status.toLowerCase()}
+                          {booking.status}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         {booking.status === 'PENDING' && (
-                          <span className="text-sm text-gray-500 italic">Waiting for vendor</span>
+                          <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500 cursor-not-allowed">
+                            Waiting for vendor
+                          </span>
                         )}
                         {booking.status === 'CONFIRMED' && (
                           <button
@@ -198,7 +233,7 @@ export default function BookingsPage() {
                           </button>
                         )}
                         {booking.status === 'REJECTED' && (
-                          <Link href="/marketplace">
+                          <Link href={`/marketplace/experiences/${booking.listingId}`}>
                             <button className="inline-flex items-center rounded-lg border border-[#0d9488] px-4 py-2 text-sm font-semibold text-[#0d9488] shadow-sm transition-all hover:bg-[#0d9488]/5 active:scale-[0.98]">
                               Book Again
                             </button>

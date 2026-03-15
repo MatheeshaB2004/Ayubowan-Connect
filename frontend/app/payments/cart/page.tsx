@@ -8,14 +8,17 @@ export default function CartPage() {
   const { items, removeFromCart } = useCart();
 
   const totalAmount = items.reduce(
-    (sum, item) => sum + item.quantity * item.listing.priceMin,
+    (sum, item) => {
+      const price = item.listing?.priceMin ?? item.booking?.listing?.priceMin ?? 0;
+      return sum + item.quantity * price;
+    },
     0
   );
 
   // Group items by vendor
   const groupedByVendor: Record<string, CartItem[]> = {};
   items.forEach((item) => {
-    const vendorName = item.listing.vendor?.businessName ?? 'Unknown Vendor';
+    const vendorName = item.listing?.vendor?.businessName ?? item.booking?.listing?.vendor?.businessName ?? 'Unknown Vendor';
     if (!groupedByVendor[vendorName]) {
       groupedByVendor[vendorName] = [];
     }
@@ -77,9 +80,13 @@ export default function CartPage() {
 
                 <div className="divide-y divide-gray-100">
                   {vendorItems.map((item) => {
+                    const listingData = item.listing ?? item.booking?.listing;
                     const imageUrl =
-                      item.listing.media?.[0]?.mediaUrl ||
+                      listingData?.media?.[0]?.mediaUrl ||
                       '/assets/photos/B4.webp';
+                    const title = listingData?.title ?? 'Unknown Item';
+                    const price = listingData?.priceMin ?? 0;
+                    const listingType = listingData?.listingType ?? 'PRODUCT';
 
                     return (
                       <div
@@ -90,7 +97,7 @@ export default function CartPage() {
                         <div className="flex-shrink-0 overflow-hidden rounded-lg">
                           <Image
                             src={imageUrl}
-                            alt={item.listing.title}
+                            alt={title}
                             width={110}
                             height={80}
                             className="object-cover rounded-lg"
@@ -100,15 +107,15 @@ export default function CartPage() {
                         {/* Details */}
                         <div className="flex-1 min-w-0">
                           <h3 className="text-base font-semibold text-gray-900 truncate">
-                            {item.listing.title}
+                            {title}
                           </h3>
 
                           <div className="flex items-center gap-3 mt-2">
-                            <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${item.listing.listingType === 'EXPERIENCE'
+                            <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${listingType === 'EXPERIENCE'
                               ? 'bg-purple-50 text-purple-700'
                               : 'bg-green-50 text-green-700'
                               }`}>
-                              {item.listing.listingType === 'EXPERIENCE' ? 'Experience' : 'Product'}
+                              {listingType === 'EXPERIENCE' ? 'Experience' : 'Product'}
                             </span>
 
                             <span className="text-sm text-gray-500">
@@ -117,7 +124,7 @@ export default function CartPage() {
                           </div>
 
                           <p className="text-base font-bold text-gray-900 mt-2">
-                            LKR {(item.listing.priceMin * item.quantity).toLocaleString()}
+                            LKR {(price * item.quantity).toLocaleString()}
                           </p>
                         </div>
 
