@@ -3,14 +3,20 @@
 import { Search, X, SlidersHorizontal, MapPin } from "lucide-react";
 
 const CATEGORIES = [
-  "Cooking", "Arts & Crafts", "Cultural",
-  "Food & Beverage", "Community", "Adventure", "Wellness",
+  "Traditional Artisanship","Textiles & Handicrafts","Cooking","Arts & Crafts","Cultural","Food & Beverage","Community","Adventure","Nature & Wellness"
 ];
 
-const LOCATIONS = [
-  "Colombo", "Kandy", "Galle", "Nuwara Eliya",
-  "Matale", "Jaffna", "Trincomalee", "Anuradhapura",
-];
+const provinceDistrictMap: { [key: string]: string[] } = {
+   'Western': ['Colombo', 'Gampaha', 'Kalutara'],
+   'Central': ['Kandy', 'Matale', 'Nuwara Eliya'],
+   'Southern': ['Galle', 'Matara', 'Hambantota'],
+   'Northern': ['Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya'],
+   'Eastern': ['Ampara', 'Batticaloa', 'Trincomalee'],
+   'North Western': ['Kurunegala', 'Puttalam'],
+   'North Central': ['Anuradhapura', 'Polonnaruwa'],
+   'Uva': ['Badulla', 'Monaragala'],
+   'Sabaragamuwa': ['Ratnapura', 'Kegalle']
+};
 
 interface EventFiltersProps {
   search: string;
@@ -66,7 +72,13 @@ export function EventFilters({
           <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
           <select value={location} onChange={(e) => onLocationChange(e.target.value)} className={selectCls}>
             <option value="all">All Locations</option>
-            {LOCATIONS.map((l) => <option key={l} value={l}>{l}</option>)}
+            {Object.entries(provinceDistrictMap).flatMap(([province, districts]) =>
+              districts.map((district) => (
+                <option key={district} value={district}>
+                  {district}, {province}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
