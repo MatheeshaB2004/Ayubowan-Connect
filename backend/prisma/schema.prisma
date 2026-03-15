@@ -144,6 +144,7 @@ model Listing {
   bookings         Booking[]
   cartItems        CartItem[]
   listingViews     ListingView[]
+  AvailabilitySlot AvailabilitySlot[]
 
   @@index([vendorId])
   @@index([categoryId])
@@ -223,14 +224,18 @@ model AvailabilitySlot {
   id Int @id @default(autoincrement())
 
   availabilityId Int
+  listingId      Int
 
   startTime DateTime
   endTime   DateTime
 
-  maxGuests Int  @default(35)
+  maxGuests    Int @default(35)
   bookedGuests Int @default(0)
 
   availability VendorAvailability @relation(fields: [availabilityId], references: [id])
+  listing      Listing            @relation(fields: [listingId], references: [id])
+
+  @@index([listingId])
 }
 
 model ReviewMedia {
@@ -270,13 +275,13 @@ model Booking {
   bookingDate    DateTime      @map("booking_date")
   status         BookingStatus @default(PENDING)
 
-  guests         Int           @default(1)
-  totalPrice     Float         @default(0) @map("total_price")
-  notes          String?
-  approvedAt     DateTime?
-  rejectedAt     DateTime?
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  guests     Int       @default(1)
+  totalPrice Float     @default(0) @map("total_price")
+  notes      String?
+  approvedAt DateTime?
+  rejectedAt DateTime?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   vendor       Vendor       @relation(fields: [vendorId], references: [id])
   localTourist LocalTourist @relation(fields: [localTouristId], references: [userId])
@@ -330,19 +335,19 @@ model Cart {
 }
 
 model CartItem {
-  id        Int      @id @default(autoincrement()) @map("cart_item_id")
-  cartId    Int      @map("cart_id")
-  listingId Int?     @map("listing_id")
-  bookingId Int?     @map("booking_id")
+  id        Int  @id @default(autoincrement()) @map("cart_item_id")
+  cartId    Int  @map("cart_id")
+  listingId Int? @map("listing_id")
+  bookingId Int? @map("booking_id")
 
-  quantity  Int      @default(1)
-  addedAt   DateTime @default(now()) @map("added_at")
+  quantity Int      @default(1)
+  addedAt  DateTime @default(now()) @map("added_at")
 
-  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cart    Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
   @@unique([cartId, listingId])
   @@map("cart_items")
-  
 }
 
 model Event {
@@ -362,8 +367,8 @@ model Event {
   isFree          Boolean   @default(false) @map("is_free")
   maxParticipants Int?      @map("max_participants")
 
-  whatYouWillLearn  String[]  @default([])  @map("what_you_will_learn")
-  importantInfo     String[]  @default([])  @map("important_info")
+  whatYouWillLearn String[] @default([]) @map("what_you_will_learn")
+  importantInfo    String[] @default([]) @map("important_info")
 
   vendorId Int?
   vendor   Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
