@@ -100,12 +100,25 @@ export default function BookingsPage() {
 
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
-      PENDING: 'bg-yellow-100 text-yellow-800',
-      CONFIRMED: 'bg-[#0d9488]/15 text-[#0d9488]',
-      REJECTED: 'bg-red-100 text-red-800',
-      COMPLETED: 'bg-[#21a17a]/15 text-[#21a17a]',
+      UPCOMING: 'bg-blue-100 text-blue-700',
+      COMPLETED: 'bg-green-100 text-green-700',
+      CANCELLED: 'bg-gray-200 text-gray-700',
+      PENDING: 'bg-yellow-100 text-yellow-700',
+      CONFIRMED: 'bg-blue-100 text-blue-700',
+      REJECTED: 'bg-red-100 text-red-700',
     };
-    return map[status] ?? 'bg-gray-100 text-gray-800';
+    return map[status.toUpperCase()] ?? 'bg-gray-100 text-gray-700';
+  };
+
+  const formatDisplayDate = (value?: string) => {
+    if (!value) return '-';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '-';
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(parsed);
   };
 
   const formatTime = (dateString: string) => {
@@ -151,7 +164,7 @@ export default function BookingsPage() {
   return (
     <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Dashboard</h1>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
@@ -175,20 +188,22 @@ export default function BookingsPage() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">My Pending Bookings</h2>
-        <p className="text-gray-600 mt-2 mb-8">
-          Track your experience booking requests and vendor confirmations.
-        </p>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Pending Bookings</h2>
+          <p className="text-gray-600 mt-2">
+            Track your experience booking requests and vendor confirmations.
+          </p>
+        </div>
 
         {bookings.length === 0 ? (
           /* ── Empty state ── */
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
+          <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
               <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">You have no bookings yet.</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">You have no pending bookings.</h2>
             <p className="text-gray-500 mb-6">Browse the marketplace to find amazing experiences and products.</p>
             <Link href="/marketplace">
               <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
@@ -198,55 +213,48 @@ export default function BookingsPage() {
           </div>
         ) : (
           /* ── Bookings table ── */
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
+          <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+            <div className="mt-4 overflow-x-auto">
               <table className="table-auto w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Date</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Time Slot</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Participants</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Price</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
-                    <th className="py-4 px-6 font-semibold text-sm text-gray-700">Action</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Experience</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Time Slot</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Participants</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {bookings.map((booking) => (
-                    <tr
-                      key={booking.id}
-                      className={`transition-colors ${booking.status === 'COMPLETED' ? 'bg-green-50/30' : 'hover:bg-gray-50/60'}`}
-                    >
-                      <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 text-sm text-gray-700 font-medium">
                         {booking.listing?.title || 'Unknown Experience'}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-gray-700">
                         {vendorName(booking)}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
-                        {booking.slot?.startTime ? new Date(booking.slot.startTime).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        }) : '-'}
+                      <td className="px-4 py-3 text-sm text-gray-700">
+                        {formatDisplayDate(booking.slot?.startTime)}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-gray-700">
                         {formatTimeSlot(booking)}
                       </td>
-                      <td className="py-4 px-6 text-sm text-gray-600">{booking.guests}</td>
-                      <td className="py-4 px-6 text-sm font-semibold text-[#21a17a]">
+                      <td className="px-4 py-3 text-sm text-gray-700">{booking.guests}</td>
+                      <td className="px-4 py-3 text-sm font-semibold text-[#21a17a]">
                         LKR {bookingPrice(booking).toLocaleString()}
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="px-4 py-3">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge(booking.status)}`}
+                          className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusBadge(booking.status)}`}
                         >
-                          {booking.status}
+                          {booking.status.toUpperCase()}
                         </span>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="px-4 py-3">
                         {booking.status === 'PENDING' && (
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="inline-flex items-center rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-500">

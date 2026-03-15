@@ -9,6 +9,18 @@ import { useUser } from '@clerk/nextjs';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
+type DirectBooking = {
+  id: number;
+  guests: number;
+  slot?: { startTime?: string; endTime?: string } | null;
+  listing?: {
+    title?: string;
+    priceMin?: number;
+    listingType?: string;
+    vendor?: { businessName?: string };
+  } | null;
+};
+
 export default function CheckoutPage() {
   const { items, totalAmount, clearCart } = useCart();
   const router = useRouter();
@@ -21,21 +33,7 @@ export default function CheckoutPage() {
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
-  const [directBooking, setDirectBooking] = useState<{
-    id: number;
-    guests: number;
-    slot?: {
-      startTime?: string;
-      endTime?: string;
-    } | null;
-    listing?: {
-      title?: string;
-      priceMin?: number;
-      listingType?: string;
-      vendor?: { businessName?: string };
-    } | null;
-  } | null>(null);
-
+  const [directBooking, setDirectBooking] = useState<DirectBooking | null>(null);
   const [errors, setErrors] = useState<{
     cardName?: string;
     cardNumber?: string;
@@ -81,22 +79,11 @@ export default function CheckoutPage() {
   };
 
   const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-
-    value = value.replace(/[^\d/]/g, '');
-
+    let value = e.target.value.replace(/[^\d/]/g, '');
     const parts = value.split('/');
-    if (parts.length > 2) {
-      value = parts[0] + '/' + parts.slice(1).join('');
-    }
-
-    if (value.length === 2 && !value.includes('/') && expiry.length < 2) {
-      value = value + '/';
-    }
-
-    value = value.slice(0, 5);
-
-    setExpiry(value);
+    if (parts.length > 2) value = parts[0] + '/' + parts.slice(1).join('');
+    if (value.length === 2 && !value.includes('/') && expiry.length < 2) value += '/';
+    setExpiry(value.slice(0, 5));
   };
 
   const handlePay = async () => {
@@ -107,28 +94,22 @@ export default function CheckoutPage() {
     if (!expiry.match(/^\d{2}\/\d{2}$/)) {
       newErrors.expiry = 'Expiry must be in MM/YY format';
     } else {
-      // Validate expiry date is not in the past
       const [monthStr, yearStr] = expiry.split('/');
       const expiryMonth = parseInt(monthStr, 10);
       const expiryYear = 2000 + parseInt(yearStr, 10);
       const now = new Date();
-      const currentMonth = now.getMonth() + 1; // 1-indexed
+      const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
-
       if (expiryMonth < 1 || expiryMonth > 12) {
         newErrors.expiry = 'Month must be between 01 and 12';
-      } else if (expiryYear < currentYear) {
-        newErrors.expiry = 'Card has expired';
-      } else if (expiryYear === currentYear && expiryMonth < currentMonth) {
+      } else if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
         newErrors.expiry = 'Card has expired';
       }
     }
     if (cvv.length !== 3) newErrors.cvv = 'CVV must be exactly 3 digits';
 
     setErrors(newErrors);
-
     if (Object.keys(newErrors).length > 0) {
-      // Show a toast for the first error found
       const firstError = Object.values(newErrors)[0];
       if (firstError) toast.error(firstError);
       return;
@@ -164,7 +145,6 @@ export default function CheckoutPage() {
       for (const item of items) {
         try {
           if (item.bookingId) {
-            // Experience booking already exists — mark as COMPLETED
             await fetch(`${API_BASE}/bookings/${item.bookingId}/status`, {
               method: 'PATCH',
               headers: {
@@ -173,9 +153,7 @@ export default function CheckoutPage() {
               },
               body: JSON.stringify({ status: 'COMPLETED' }),
             });
-            console.log(`Updated booking ${item.bookingId} to COMPLETED`);
           } else {
-            // Product/regular item — create a new CONFIRMED booking
             const res = await fetch(`${API_BASE}/bookings`, {
               method: 'POST',
               headers: {
@@ -192,9 +170,6 @@ export default function CheckoutPage() {
 
             if (res.ok) {
               const booking = await res.json();
-              console.log(`Created booking ${booking.id} for listing ${item.listingId}`);
-
-              // Immediately mark as CONFIRMED (paid)
               await fetch(`${API_BASE}/bookings/${booking.id}/status`, {
                 method: 'PATCH',
                 headers: {
@@ -203,8 +178,6 @@ export default function CheckoutPage() {
                 },
                 body: JSON.stringify({ status: 'CONFIRMED' }),
               });
-            } else {
-              console.error('Failed to create booking:', await res.text());
             }
           }
         } catch (err) {
@@ -214,41 +187,34 @@ export default function CheckoutPage() {
     }
 
     await clearCart();
-
     router.push('/payments/success');
   };
 
   const inputBase =
     'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#0d9488] focus:outline-none focus:ring-2 focus:ring-[#0d9488]/30';
+  const payableAmount = directBooking
+    ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
+    : totalAmount;
 
   return (
     <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
-
-      <div className="max-w-2xl mx-auto">
-
+      <div className="max-w-3xl mx-auto">
         {!directBookingId && (
           <Link
-            href="/payments/cart"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98] mb-6"
+            href="/marketplace"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-green-700 mb-6"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
-            Back to Cart
+            Back to Marketplace
           </Link>
         )}
 
-        {/* Header */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center tracking-tight">
-          Checkout
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Checkout</h1>
 
-        {/* ORDER SUMMARY */}
-        <div className="bg-[#e8f5f2] rounded-lg shadow-sm border border-[#cfe7e1] p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Order Summary
-          </h2>
-
+        <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h2>
           <div className="divide-y divide-gray-100">
             {directBooking ? (
               (() => {
@@ -259,193 +225,118 @@ export default function CheckoutPage() {
                 const guests = directBooking.guests ?? 1;
                 const totalPrice = basePrice * guests;
                 const slotText = formatTimeSlot(directBooking.slot?.startTime, directBooking.slot?.endTime);
-
                 return (
-                  <div className="flex justify-between items-center py-3">
+                  <div className="flex justify-between items-center py-4">
                     <div>
                       <p className="font-medium text-gray-900">{listing?.title ?? 'Experience'}</p>
-                      <p className="text-sm text-gray-500 mt-1">{vendorName}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${listingType === 'EXPERIENCE'
-                          ? 'bg-purple-100 text-purple-700'
-                          : 'bg-green-100 text-green-700'
-                          }`}>
-                          {listingType}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">Qty: {guests}</p>
-                      <p className="text-sm text-gray-500 mt-1">Time Slot: {slotText}</p>
+                      <p className="text-sm text-gray-600 mt-1">{vendorName}</p>
+                      <p className="text-sm text-gray-600 mt-1">Qty: {guests}</p>
+                      <p className="text-sm text-gray-600 mt-1">Time Slot: {slotText}</p>
                     </div>
-                    <p className="font-medium text-[#21a17a]">LKR {totalPrice.toLocaleString()}</p>
+                    <p className="text-sm font-semibold text-[#21a17a]">LKR {totalPrice.toLocaleString()}</p>
                   </div>
                 );
               })()
-            ) : items.map((item) => {
-              const listing = item.listing ?? item.booking?.listing;
-              const listingType = listing?.listingType ?? 'EXPERIENCE';
-              const vendorName = listing?.vendor?.businessName ?? 'Vendor';
-              const basePrice = listing?.priceMin ?? 0;
-              const guests = item.booking?.guests ?? item.quantity ?? 1;
-              const totalPrice = basePrice * guests;
-              const slotText = formatTimeSlot(item.booking?.slot?.startTime, item.booking?.slot?.endTime);
-
-              return (
-                <div
-                  key={item.id}
-                  className="flex justify-between items-center py-3"
-                >
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {listing?.title ?? 'Experience'}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">{vendorName}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${listingType === 'EXPERIENCE'
-                        ? 'bg-purple-100 text-purple-700'
-                        : 'bg-green-100 text-green-700'
-                        }`}>
-                        {listingType}
-                      </span>
+            ) : (
+              items.map((item) => {
+                const listing = item.listing ?? item.booking?.listing;
+                const vendorName = listing?.vendor?.businessName ?? 'Vendor';
+                const basePrice = listing?.priceMin ?? 0;
+                const guests = item.booking?.guests ?? item.quantity ?? 1;
+                const totalPrice = basePrice * guests;
+                const slotText = formatTimeSlot(item.booking?.slot?.startTime, item.booking?.slot?.endTime);
+                return (
+                  <div key={item.id} className="flex justify-between items-center py-4">
+                    <div>
+                      <p className="font-medium text-gray-900">{listing?.title ?? 'Experience'}</p>
+                      <p className="text-sm text-gray-600 mt-1">{vendorName}</p>
+                      <p className="text-sm text-gray-600 mt-1">Qty: {guests}</p>
+                      <p className="text-sm text-gray-600 mt-1">Time Slot: {slotText}</p>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">Qty: {guests}</p>
-
-                    {listingType === 'EXPERIENCE' && (
-                      <div className="mt-1.5 space-y-0.5">
-                        <p className="text-sm text-[#21a17a] font-medium">
-                          Status: Approved
-                        </p>
-
-                        <p className="text-sm text-gray-500">
-                          Time Slot: {slotText}
-                        </p>
-                      </div>
-                    )}
+                    <p className="text-sm font-semibold text-[#21a17a]">LKR {totalPrice.toLocaleString()}</p>
                   </div>
-
-                  <p className="font-medium text-[#21a17a]">
-                    LKR {totalPrice.toLocaleString()}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex justify-between mt-5 pt-4 border-t border-[#cfe7e1] font-bold text-lg text-[#21a17a]">
-            <span>Total</span>
-            <span>
-              LKR {directBooking
-                ? (((directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)).toLocaleString())
-                : totalAmount.toLocaleString()}
-            </span>
+                );
+              })
+            )}
           </div>
         </div>
 
-        {/* PAYMENT FORM */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-
-          <h2 className="text-xl font-semibold text-gray-800 mb-6">
-            Payment Details
-          </h2>
-
+        <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Payment Details</h2>
           <div className="space-y-5">
-
-            {/* Cardholder Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Cardholder Name
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Cardholder Name</label>
               <input
                 className={`${inputBase} ${errors.cardName ? 'border-red-400' : ''}`}
                 placeholder="John Doe"
                 value={cardName}
                 onChange={(e) => {
                   setCardName(e.target.value);
-                  if (errors.cardName)
-                    setErrors((prev) => ({ ...prev, cardName: undefined }));
+                  if (errors.cardName) setErrors((prev) => ({ ...prev, cardName: undefined }));
                 }}
               />
-              {errors.cardName && (
-                <p className="mt-1 text-sm text-red-600">{errors.cardName}</p>
-              )}
+              {errors.cardName && <p className="mt-1 text-sm text-red-600">{errors.cardName}</p>}
             </div>
 
-            {/* Card Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Card Number
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Card Number</label>
               <input
                 className={`${inputBase} ${errors.cardNumber ? 'border-red-400' : ''}`}
                 placeholder="1234567890123456"
                 value={cardNumber}
                 onChange={(e) => {
                   setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16));
-                  if (errors.cardNumber)
-                    setErrors((prev) => ({ ...prev, cardNumber: undefined }));
+                  if (errors.cardNumber) setErrors((prev) => ({ ...prev, cardNumber: undefined }));
                 }}
               />
-              {errors.cardNumber && (
-                <p className="mt-1 text-sm text-red-600">{errors.cardNumber}</p>
-              )}
+              {errors.cardNumber && <p className="mt-1 text-sm text-red-600">{errors.cardNumber}</p>}
             </div>
 
-            {/* Expiry + CVV */}
             <div className="grid grid-cols-2 gap-4">
-
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Expiry Date
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Expiry Date</label>
                 <input
                   className={`${inputBase} ${errors.expiry ? 'border-red-400' : ''}`}
                   placeholder="MM/YY"
                   value={expiry}
                   onChange={(e) => {
                     handleExpiryChange(e);
-                    if (errors.expiry)
-                      setErrors((prev) => ({ ...prev, expiry: undefined }));
+                    if (errors.expiry) setErrors((prev) => ({ ...prev, expiry: undefined }));
                   }}
                 />
-                {errors.expiry && (
-                  <p className="mt-1 text-sm text-red-600">{errors.expiry}</p>
-                )}
+                {errors.expiry && <p className="mt-1 text-sm text-red-600">{errors.expiry}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  CVV
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">CVV</label>
                 <input
                   className={`${inputBase} ${errors.cvv ? 'border-red-400' : ''}`}
                   placeholder="123"
                   value={cvv}
                   onChange={(e) => {
                     setCvv(e.target.value.replace(/\D/g, '').slice(0, 3));
-                    if (errors.cvv)
-                      setErrors((prev) => ({ ...prev, cvv: undefined }));
+                    if (errors.cvv) setErrors((prev) => ({ ...prev, cvv: undefined }));
                   }}
                 />
-                {errors.cvv && (
-                  <p className="mt-1 text-sm text-red-600">{errors.cvv}</p>
-                )}
+                {errors.cvv && <p className="mt-1 text-sm text-red-600">{errors.cvv}</p>}
               </div>
-
             </div>
-
-            {/* Pay Button */}
-            <button
-              onClick={handlePay}
-              className="w-full rounded-xl bg-[#0d9488] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
-            >
-              Pay LKR {(directBooking
-                ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
-                : totalAmount
-              ).toLocaleString()}
-            </button>
-
           </div>
         </div>
 
+        <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Total Amount</h2>
+          <div className="flex justify-between items-center py-4 border-y border-gray-100 mb-4">
+            <span className="text-sm text-gray-600">Amount to pay</span>
+            <span className="text-xl font-bold text-[#21a17a]">LKR {payableAmount.toLocaleString()}</span>
+          </div>
+          <button
+            onClick={handlePay}
+            className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
+          >
+            Pay LKR {payableAmount.toLocaleString()}
+          </button>
+        </div>
       </div>
     </div>
   );

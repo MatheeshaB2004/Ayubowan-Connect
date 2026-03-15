@@ -52,9 +52,10 @@ export default function OrdersPage() {
       if (response.ok) {
         const data: Booking[] = await response.json();
         const orderItems = (data ?? []).filter(
-          (b) =>
-            b.status === 'COMPLETED' ||
-            (b.status === 'CONFIRMED' && (b.listing?.listingType ?? '').toUpperCase() === 'PRODUCT'),
+          (b) => {
+            const listingType = (b.listing?.listingType ?? b.booking?.listing?.listingType ?? '').toUpperCase();
+            return b.status === 'COMPLETED' || (b.status === 'CONFIRMED' && listingType === 'PRODUCT');
+          },
         );
         setOrders(orderItems);
       } else if (response.status === 404) {
@@ -101,11 +102,11 @@ export default function OrdersPage() {
     if (!value) return '-';
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return '-';
-    return parsed.toLocaleDateString('en-US', {
+    return new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
       month: 'short',
-      day: 'numeric',
       year: 'numeric',
-    });
+    }).format(parsed);
   };
 
   const formatTime = (dateString: string) => {
@@ -136,6 +137,23 @@ export default function OrdersPage() {
     return computed > 0 ? computed : order.totalPrice;
   };
 
+  const statusBadge = (status: string) => {
+    const map: Record<string, string> = {
+      UPCOMING: 'bg-blue-100 text-blue-700',
+      COMPLETED: 'bg-green-100 text-green-700',
+      CANCELLED: 'bg-gray-200 text-gray-700',
+      PENDING: 'bg-yellow-100 text-yellow-700',
+      CONFIRMED: 'bg-blue-100 text-blue-700',
+      REJECTED: 'bg-red-100 text-red-700',
+    };
+    return map[status.toUpperCase()] ?? 'bg-gray-100 text-gray-700';
+  };
+
+  const getDisplayStatus = (order: Booking) => {
+    if (isProductOrder(order) && order.status === 'CONFIRMED') return 'COMPLETED';
+    return order.status.toUpperCase();
+  };
+
   /* ── Loading ── */
   if (!isLoaded || isLoading) {
     return (
@@ -163,7 +181,7 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Dashboard</h1>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
@@ -187,20 +205,22 @@ export default function OrdersPage() {
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 tracking-tight">My Orders</h2>
-        <p className="text-gray-600 mt-2 mb-8">
-          View your completed purchases and booking history.
-        </p>
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Orders</h2>
+          <p className="text-gray-600 mt-2">
+            View your completed purchases and booking history.
+          </p>
+        </div>
 
         {orders.length === 0 ? (
           /* ── Empty state ── */
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
+          <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
               <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders found.</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders yet.</h2>
             <p className="text-gray-500 mb-6">Explore experiences or products to make your first booking or purchase.</p>
             <Link href="/marketplace">
               <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
@@ -209,51 +229,53 @@ export default function OrdersPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div>
             {experienceOrders.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                  <h3 className="text-sm font-semibold text-gray-800">Experience Orders</h3>
-                </div>
-                <div className="overflow-x-auto">
+              <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-md p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Experience Orders</h2>
+                <div className="mt-4 overflow-x-auto">
                   <table className="table-auto w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Experience Name</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Scheduled Experience Date</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Time Slot</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Participants</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Price</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Experience Name</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Scheduled Experience Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Time Slot</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Participants</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {experienceOrders.map((order) => {
                         const listing = getListing(order);
                         return (
-                          <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
-                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                          <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 text-sm text-gray-700 font-medium">
                               {listing?.title ?? 'Unknown Experience'}
                             </td>
-                            <td className="py-4 px-6 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-gray-700">
                               {vendorName(order)}
                             </td>
-                            <td className="py-4 px-6 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-gray-700">
                               {formatExperienceDate(order)}
                             </td>
-                            <td className="py-4 px-6 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-gray-700">
                               {formatTimeSlot(order)}
                             </td>
-                            <td className="py-4 px-6 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-gray-700">
                               {order.guests} {order.guests === 1 ? 'Guest' : 'Guests'}
                             </td>
-                            <td className="py-4 px-6 text-sm text-[#21a17a] font-semibold">
+                            <td className="px-4 py-3 text-sm text-gray-700">
+                              {formatDate(order.updatedAt)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-[#21a17a] font-semibold">
                               LKR {order.totalPrice.toLocaleString()}
                             </td>
-                            <td className="py-4 px-6">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#21a17a]/15 text-[#21a17a]">
-                                {order.status}
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusBadge(getDisplayStatus(order))}`}>
+                                {getDisplayStatus(order)}
                               </span>
                             </td>
                           </tr>
@@ -266,20 +288,18 @@ export default function OrdersPage() {
             )}
 
             {productOrders.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                  <h3 className="text-sm font-semibold text-gray-800">Product Orders</h3>
-                </div>
-                <div className="overflow-x-auto">
+              <div className="mt-8 bg-white rounded-xl border border-gray-200 shadow-md p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Product Orders</h2>
+                <div className="mt-4 overflow-x-auto">
                   <table className="table-auto w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Product Name</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Vendor</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Quantity</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Price</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Order Date</th>
-                        <th className="py-4 px-6 font-semibold text-sm text-gray-700">Status</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Product Name</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Vendor</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Quantity</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -287,25 +307,25 @@ export default function OrdersPage() {
                         const listing = getListing(order);
                         const quantity = getProductQuantity(order);
                         return (
-                          <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
-                            <td className="py-4 px-6 text-sm text-gray-900 font-medium">
+                          <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 text-sm text-gray-700 font-medium">
                               {listing?.title ?? 'Unknown Product'}
                             </td>
-                            <td className="py-4 px-6 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-gray-700">
                               {vendorName(order)}
                             </td>
-                            <td className="py-4 px-6 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-gray-700">
                               Qty: {quantity}
                             </td>
-                            <td className="py-4 px-6 text-sm text-[#21a17a] font-semibold">
-                              LKR {getProductTotal(order).toLocaleString()}
-                            </td>
-                            <td className="py-4 px-6 text-sm text-gray-600">
+                            <td className="px-4 py-3 text-sm text-gray-700">
                               {formatDate(order.updatedAt)}
                             </td>
-                            <td className="py-4 px-6">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#21a17a]/15 text-[#21a17a]">
-                                {order.status === 'CONFIRMED' ? 'COMPLETED' : order.status}
+                            <td className="px-4 py-3 text-sm text-[#21a17a] font-semibold">
+                              LKR {getProductTotal(order).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusBadge(getDisplayStatus(order))}`}>
+                                {getDisplayStatus(order)}
                               </span>
                             </td>
                           </tr>

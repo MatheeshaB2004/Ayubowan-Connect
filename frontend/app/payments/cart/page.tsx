@@ -40,12 +40,12 @@ export default function CartPage() {
         {/* Continue Shopping */}
         <Link
           href="/marketplace"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-green-700 transition-colors mb-6"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-green-700 mb-6"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
           </svg>
-          ← Continue Shopping
+          Continue Shopping
         </Link>
 
         {/* Title */}
@@ -155,16 +155,17 @@ export default function CartPage() {
             ))}
 
             {/* ── Total Section ── */}
-            <div className="bg-[#e8f5f2] rounded-lg shadow-sm border border-[#cfe7e1] p-6">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold text-gray-700">Total Amount</span>
-                <span className="text-2xl font-bold text-[#21a17a]">
+            <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Total Amount</h2>
+              <div className="flex justify-between items-center py-4 border-y border-gray-100 mb-4">
+                <span className="text-sm text-gray-600">Cart total</span>
+                <span className="text-xl font-bold text-[#21a17a]">
                   LKR {totalAmount.toLocaleString()}
                 </span>
               </div>
 
               <Link href="/payments/checkout">
-                <button className="w-full rounded-xl bg-[#0d9488] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                <button className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
                   Proceed to Checkout
                 </button>
               </Link>
