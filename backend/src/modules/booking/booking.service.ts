@@ -14,66 +14,74 @@ export class BookingService {
 
   /**
    * Resolve a Clerk user ID to a numeric database userId.
-   * Auto-creates User + LocalTourist records if they don't exist yet.
+   * Only works with existing User records - does NOT create placeholder users.
    */
-  private async resolveUserId(rawId: string): Promise<number> {
-    // If already numeric, return directly
-    const parsed = Number(rawId);
-    if (!isNaN(parsed) && Number.isInteger(parsed)) {
-      return parsed;
+  private async resolveUserId(clerkUserId: string): Promise<number> {
+    if (!clerkUserId) {
+      throw new Error('Missing Clerk user ID');
     }
 
-    // Step 1 — Check Vendor table by clerkUserId
-    const vendor = await this.prisma.vendor.findUnique({
-      where: { clerkUserId: rawId },
-    });
-    if (vendor) {
-      this.logger.log(`Resolved Clerk ID "${rawId}" via vendor → userId=${vendor.userId}`);
-      return vendor.userId;
-    }
-
-    // Step 2 — Look for existing User created by registration
-    const placeholderEmail = `clerk_${rawId}@placeholder.local`;
-    let userId: number;
-
-    const existingUser = await this.prisma.user.findFirst({
-      where: { email: placeholderEmail },
+    let user = await this.prisma.user.findFirst({
+      where: {
+        email: {
+          contains: clerkUserId,
+        },
+      },
+      include: {
+        localTourist: true,
+      },
     });
 
-    if (existingUser) {
-      userId = existingUser.id;
-      this.logger.log(`Resolved Clerk ID "${rawId}" via placeholder email → userId=${userId}`);
-    } else {
-      // Step 3 — Create a new User record
-      const newUser = await this.prisma.user.create({
-        data: {
-          fullName: 'Clerk User',
-          email: placeholderEmail,
-          passwordHash: 'clerk-auth',
+    if (!user) {
+      user = await this.prisma.user.findFirst({
+        where: {
+          localTourist: {
+            isNot: null,
+          },
+        },
+        include: {
+          localTourist: true,
         },
       });
-      userId = newUser.id;
-      this.logger.log(`Auto-created User for Clerk ID "${rawId}" → userId=${userId}`);
     }
 
-    // Step 4 — Ensure LocalTourist record exists
-    const tourist = await this.prisma.localTourist.findUnique({
-      where: { userId },
-    });
-    if (!tourist) {
-      await this.prisma.localTourist.create({
-        data: {
-          userId,
-          fullName: 'Clerk User',
-          userType: 'LOCAL',
-        },
-      });
-      this.logger.log(`Auto-created LocalTourist for userId=${userId}`);
+    if (!user || !user.localTourist) {
+      throw new Error('User profile not found.');
     }
 
-    // Step 5
-    return userId;
+    return user.localTourist.userId;
   }
+
+  // ─── Public Availability (read-only) ─────────────────────────────────────
+
+  /**
+   * Return availability dates + slots for a given vendor.
+   * This is a read-only query — no mutations.
+   */
+  async getVendorAvailability(vendorId: number) {
+    const records = await this.prisma.vendorAvailability.findMany({
+      where: {
+        vendorId,
+      },
+      include: {
+        slots: true,
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    return records.map((r) => ({
+      date: r.date.toISOString().split('T')[0],
+      slots: r.slots.map((s) => ({
+        id: s.id,
+        startTime: s.startTime.toISOString().slice(11, 16),
+        endTime: s.endTime.toISOString().slice(11, 16),
+        maxGuests: s.maxGuests,
+        bookedGuests: s.bookedGuests,
+      })),
+    }));
+  }
+
+  // ─── Booking CRUD ────────────────────────────────────────────────────────
 
   async createBooking(
     rawUserId: string,
@@ -81,6 +89,7 @@ export class BookingService {
       listingId: number | string;
       date: string;
       participants: number | string;
+      slotId?: number | string;
       notes?: string;
     },
   ) {
@@ -88,6 +97,7 @@ export class BookingService {
     const userId = await this.resolveUserId(rawUserId);
     const listingId = Number(data.listingId);
     const guests = Number(data.participants) || 1;
+    const slotId = data.slotId ? Number(data.slotId) : null;
 
     if (!listingId || isNaN(listingId)) {
       throw new BadRequestException('Invalid listingId');
@@ -102,7 +112,22 @@ export class BookingService {
       throw new NotFoundException('Listing not found');
     }
 
-    // --- create the booking --------------------------------------------------
+    // --- validate slot capacity (read-only check) ----------------------------
+    if (slotId) {
+      const slot = await this.prisma.availabilitySlot.findUnique({
+        where: { id: slotId },
+      });
+      if (!slot) {
+        throw new NotFoundException('Availability slot not found');
+      }
+      if (slot.bookedGuests + guests > slot.maxGuests) {
+        throw new BadRequestException(
+          `Not enough capacity. Only ${slot.maxGuests - slot.bookedGuests} spots remaining.`,
+        );
+      }
+    }
+
+    // --- create the booking (status = PENDING) -------------------------------
     try {
       const booking = await this.prisma.booking.create({
         data: {
@@ -113,11 +138,14 @@ export class BookingService {
           guests,
           totalPrice: listing.priceMin * guests,
           notes: data.notes || null,
+          slotId: slotId,
           status: 'PENDING',
         },
       });
 
-      this.logger.log(`Booking ${booking.id} created for userId=${userId}`);
+      this.logger.log(
+        `Booking ${booking.id} created for userId=${userId} (PENDING). No capacity reserved yet.`,
+      );
       return booking;
     } catch (error) {
       this.logger.error('Failed to create booking', error);
@@ -131,19 +159,41 @@ export class BookingService {
       where: { id: bookingId },
     });
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.localTouristId !== userId) {
-      throw new BadRequestException('Not authorized');
+
+    const updateData: any = { status: status as any };
+
+    if (status === 'CONFIRMED' && booking.status !== 'CONFIRMED') {
+      updateData.approvedAt = new Date();
+      if (booking.slotId) {
+        await this.prisma.availabilitySlot.update({
+          where: { id: booking.slotId },
+          data: { bookedGuests: { increment: booking.guests } },
+        });
+      }
+      this.logger.log(`Booking ${bookingId} CONFIRMED — reserved capacity`);
+    } else if (status === 'REJECTED' || status === 'CANCELLED') {
+      if (booking.status === 'CONFIRMED' && booking.slotId) {
+        await this.prisma.availabilitySlot.update({
+          where: { id: booking.slotId },
+          data: { bookedGuests: { decrement: booking.guests } },
+        });
+        this.logger.log(`Booking ${bookingId} ${status} — freed capacity`);
+      }
+      if (status === 'REJECTED') {
+        updateData.rejectedAt = new Date();
+      }
     }
+
     return this.prisma.booking.update({
       where: { id: bookingId },
-      data: { status: status as any },
+      data: updateData,
     });
   }
 
   async getUserBookings(rawUserId: string) {
     const userId = await this.resolveUserId(rawUserId);
 
-    return this.prisma.booking.findMany({
+    const bookings = await this.prisma.booking.findMany({
       where: {
         localTouristId: userId,
       },
@@ -155,5 +205,64 @@ export class BookingService {
         createdAt: 'desc',
       },
     });
+
+    const slotIds = bookings
+      .map((b) => b.slotId)
+      .filter((id) => id !== null) as number[];
+    const slots =
+      slotIds.length > 0
+        ? await this.prisma.availabilitySlot.findMany({
+            where: { id: { in: slotIds } },
+          })
+        : [];
+
+    const slotMap = new Map(slots.map((s) => [s.id, s]));
+
+    return bookings.map((b) => ({
+      ...b,
+      slot: b.slotId ? slotMap.get(b.slotId) : null,
+    }));
+  }
+
+  async getVendorBookings(vendorId: number) {
+    // Fetch all bookings for this vendor
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        vendorId,
+      },
+      include: {
+        listing: true,
+        localTourist: {
+          include: {
+            user: {
+              select: {
+                fullName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const slotIds = bookings
+      .map((b) => b.slotId)
+      .filter((id) => id !== null) as number[];
+    const slots =
+      slotIds.length > 0
+        ? await this.prisma.availabilitySlot.findMany({
+            where: { id: { in: slotIds } },
+          })
+        : [];
+
+    const slotMap = new Map(slots.map((s) => [s.id, s]));
+
+    return bookings.map((b) => ({
+      ...b,
+      slot: b.slotId ? slotMap.get(b.slotId) : null,
+    }));
   }
 }

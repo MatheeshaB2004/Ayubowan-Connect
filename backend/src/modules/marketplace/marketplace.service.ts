@@ -128,14 +128,19 @@ export class MarketplaceService {
       throw new NotFoundException(`Listing with ID ${id} not found`);
     }
 
-    // Transform to include contactEmail in vendor
+    // Transform to include contactEmail in vendor and ensure vendorId is at top level
     const result = {
       ...listing,
+      vendorId: listing.vendorId,
       vendor: listing.vendor
         ? {
-            ...listing.vendor,
-            contactEmail: listing.vendor.user.email,
-            contactPhone: '+94 77 123 4567', // Placeholder - add phone field to schema later
+            id: listing.vendor.id,
+            businessName: listing.vendor.businessName,
+            shortTagline: listing.vendor.shortTagline,
+            contactEmail: listing.vendor.user.email.includes('@placeholder.local') 
+              ? null 
+              : listing.vendor.user.email,
+            contactPhone: listing.vendor.contactPhone,
           }
         : null,
     };
