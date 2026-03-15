@@ -144,7 +144,8 @@ export default function CheckoutPage() {
     'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#0d9488] focus:outline-none focus:ring-2 focus:ring-[#0d9488]/30';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+    <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
+
       <div className="max-w-2xl mx-auto">
 
         {/* Back to Cart */}
@@ -164,7 +165,7 @@ export default function CheckoutPage() {
         </h1>
 
         {/* ORDER SUMMARY */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 mb-8">
+        <div className="bg-[#e8f5f2] rounded-lg shadow-sm border border-[#cfe7e1] p-6 mb-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             Order Summary
           </h2>
@@ -177,15 +178,20 @@ export default function CheckoutPage() {
               >
                 <div>
                   <p className="font-medium text-gray-900">
-                    {item.listing.title}
+                    {item.listing?.title ?? item.booking?.listing?.title ?? 'Experience'}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {item.listing?.vendor?.businessName ??
+                      item.booking?.listing?.vendor?.businessName ??
+                      'Unknown Vendor'}
                   </p>
 
                   <div className="flex items-center gap-2 mt-1">
-                    <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${item.listing.listingType === 'EXPERIENCE'
+                    <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${(item.listing?.listingType ?? item.booking?.listing?.listingType) === 'EXPERIENCE'
                       ? 'bg-purple-100 text-purple-700'
                       : 'bg-green-100 text-green-700'
                       }`}>
-                      {item.listing.listingType}
+                      {item.listing?.listingType ?? item.booking?.listing?.listingType ?? 'EXPERIENCE'}
                     </span>
                   </div>
 
@@ -193,11 +199,12 @@ export default function CheckoutPage() {
                     Qty: {item.quantity}
                   </p>
 
-                  {item.listing.listingType === "EXPERIENCE" && (
+                  {(item.listing?.listingType ?? item.booking?.listing?.listingType) === 'EXPERIENCE' && (
                     <div className="mt-1.5 space-y-0.5">
-                      <p className="text-sm text-green-600 font-medium">
+                      <p className="text-sm text-[#21a17a] font-medium">
                         Status: Approved
                       </p>
+
                       <p className="text-sm text-gray-500">
                         Booking Date: {new Date().toLocaleDateString()}
                       </p>
@@ -205,21 +212,24 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
-                <p className="font-medium text-gray-700">
-                  LKR {(item.quantity * item.listing.priceMin).toLocaleString()}
+                <p className="font-medium text-[#21a17a]">
+                  LKR {(item.quantity *
+                    (item.listing?.priceMin ?? item.booking?.listing?.priceMin ?? 0)
+                  ).toLocaleString()}
                 </p>
               </div>
             ))}
           </div>
 
-          <div className="flex justify-between mt-5 pt-4 border-t border-gray-200 font-bold text-lg text-gray-900">
+          <div className="flex justify-between mt-5 pt-4 border-t border-[#cfe7e1] font-bold text-lg text-[#21a17a]">
             <span>Total</span>
             <span>LKR {totalAmount.toLocaleString()}</span>
           </div>
         </div>
 
         {/* PAYMENT FORM */}
-        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+
           <h2 className="text-xl font-semibold text-gray-800 mb-6">
             Payment Details
           </h2>

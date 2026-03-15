@@ -51,11 +51,11 @@ export default function BookingsPage() {
         });
         if (response.ok) {
           const data: Booking[] = await response.json();
-          // Only show PENDING, CONFIRMED, REJECTED
+          // Show experience bookings in actionable/customer-visible states
           const filtered = (data || []).filter(
             (b) =>
               b.listing?.listingType === 'EXPERIENCE' &&
-              ['PENDING', 'CONFIRMED', 'REJECTED'].includes(b.status),
+              ['PENDING', 'CONFIRMED', 'REJECTED', 'COMPLETED'].includes(b.status),
           );
           setBookings(filtered);
         } else {
@@ -88,25 +88,18 @@ export default function BookingsPage() {
   const statusBadge = (status: string) => {
     const map: Record<string, string> = {
       PENDING: 'bg-yellow-100 text-yellow-800',
-      CONFIRMED: 'bg-green-100 text-green-800',
+      CONFIRMED: 'bg-[#0d9488]/15 text-[#0d9488]',
       REJECTED: 'bg-red-100 text-red-800',
+      COMPLETED: 'bg-[#21a17a]/15 text-[#21a17a]',
     };
     return map[status] ?? 'bg-gray-100 text-gray-800';
   };
 
   const formatTimeSlot = (booking: Booking) => {
-    if (!booking.slot?.startTime || !booking.slot?.endTime) return 'Not specified';
-    const start = new Date(booking.slot.startTime).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    const end = new Date(booking.slot.endTime).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-    return `${start} - ${end}`;
+    if (!booking.slot?.startTime || !booking.slot?.endTime) return '-';
+    const start = booking.slot.startTime.slice(0, 5);
+    const end = booking.slot.endTime.slice(0, 5);
+    return `${start} – ${end}`;
   };
 
   /* ── Loading ── */
@@ -134,9 +127,9 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+    <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+        <div className="bg-white rounded-lg border border-gray-100 shadow-sm p-6 mb-6">
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Dashboard</h1>
           <div className="mt-4 flex flex-wrap gap-3">
             <Link
@@ -161,7 +154,7 @@ export default function BookingsPage() {
 
         {bookings.length === 0 ? (
           /* ── Empty state ── */
-          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-12 text-center">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
               <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -177,7 +170,7 @@ export default function BookingsPage() {
           </div>
         ) : (
           /* ── Bookings table ── */
-          <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="table-auto w-full text-left border-collapse">
                 <thead>
@@ -193,7 +186,10 @@ export default function BookingsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {bookings.map((booking) => (
-                    <tr key={booking.id} className="hover:bg-gray-50/60 transition-colors">
+                    <tr
+                      key={booking.id}
+                      className={`transition-colors ${booking.status === 'COMPLETED' ? 'bg-green-50/30' : 'hover:bg-gray-50/60'}`}
+                    >
                       <td className="py-4 px-6 text-sm text-gray-900 font-medium">
                         {booking.listing?.title || 'Unknown Experience'}
                       </td>
@@ -215,7 +211,7 @@ export default function BookingsPage() {
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusBadge(booking.status)}`}
                         >
-                          {booking.status}
+                          {booking.status === 'COMPLETED' ? 'Payment Completed' : booking.status}
                         </span>
                       </td>
                       <td className="py-4 px-6">
@@ -238,6 +234,9 @@ export default function BookingsPage() {
                               Book Again
                             </button>
                           </Link>
+                        )}
+                        {booking.status === 'COMPLETED' && (
+                          <span className="text-sm text-gray-500">-</span>
                         )}
                       </td>
                     </tr>

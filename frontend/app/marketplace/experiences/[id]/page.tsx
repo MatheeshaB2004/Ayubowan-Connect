@@ -100,7 +100,6 @@ export default function ExperienceDetailPage() {
     date: '',
     slotId: null as number | null,
     participants: 1,
-    notes: '',
   });
   const [isBookingSubmitted, setIsBookingSubmitted] = useState(false);
 
@@ -216,7 +215,6 @@ export default function ExperienceDetailPage() {
           date: bookingForm.date,
           participants: bookingForm.participants,
           slotId: bookingForm.slotId,
-          notes: bookingForm.notes,
         }),
       });
 
@@ -761,20 +759,6 @@ export default function ExperienceDetailPage() {
                       </p>
                     );
                   })()}
-                </div>
-
-                {/* Special Requests */}
-                <div className="form-field mt-4">
-                  <label className="field-label" htmlFor="booking-notes">Special Requests (optional)</label>
-                  <textarea
-                    id="booking-notes"
-                    title="Special Requests"
-                    placeholder="Any special requirements..."
-                    className="field-input mt-1"
-                    rows={3}
-                    value={bookingForm.notes}
-                    onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
-                  />
                 </div>
 
                 <button

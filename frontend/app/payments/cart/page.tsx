@@ -26,7 +26,7 @@ export default function CartPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
+    <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
       <div className="max-w-3xl mx-auto">
 
         {/* Continue Shopping */}
@@ -87,6 +87,8 @@ export default function CartPage() {
                     const title = listingData?.title ?? 'Unknown Item';
                     const price = listingData?.priceMin ?? 0;
                     const listingType = listingData?.listingType ?? 'PRODUCT';
+                    const vendorNameForItem =
+                      listingData?.vendor?.businessName ?? 'Unknown Vendor';
 
                     return (
                       <div
@@ -109,6 +111,9 @@ export default function CartPage() {
                           <h3 className="text-base font-semibold text-gray-900 truncate">
                             {title}
                           </h3>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {vendorNameForItem}
+                          </p>
 
                           <div className="flex items-center gap-3 mt-2">
                             <span className={`inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-full ${listingType === 'EXPERIENCE'
@@ -123,7 +128,7 @@ export default function CartPage() {
                             </span>
                           </div>
 
-                          <p className="text-base font-bold text-gray-900 mt-2">
+                          <p className="text-base font-bold text-[#21a17a] mt-2">
                             LKR {(price * item.quantity).toLocaleString()}
                           </p>
                         </div>
@@ -143,10 +148,10 @@ export default function CartPage() {
             ))}
 
             {/* ── Total Section ── */}
-            <div className="bg-white rounded-xl shadow-md border border-gray-100 p-6">
+            <div className="bg-[#e8f5f2] rounded-lg shadow-sm border border-[#cfe7e1] p-6">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-lg font-semibold text-gray-700">Total Amount</span>
-                <span className="text-2xl font-bold text-gray-900">
+                <span className="text-2xl font-bold text-[#21a17a]">
                   LKR {totalAmount.toLocaleString()}
                 </span>
               </div>
