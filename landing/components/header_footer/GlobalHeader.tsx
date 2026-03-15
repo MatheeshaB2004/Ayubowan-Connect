@@ -3,13 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
-import NavbarGuest from './NavbarGuest';
-import NavbarTraveller from './NavbarTraveller';
-import NavbarVendor from './NavbarVendor';
+
+const navItems = [
+  { href: '/landing#experiences', label: 'Experiences' },
+  { href: '/landing#events', label: 'Events' },
+  { href: '/landing#marketplace', label: 'Marketplace' },
+  { href: '/landing#pro', label: 'Pro' },
+  { href: '/landing#team', label: 'Team' },
+];
+
+const appHomeHref = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'http://localhost:3000/';
 
 const GlobalHeader: React.FC = () => {
-  const { role } = useAuth();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -83,9 +88,21 @@ const GlobalHeader: React.FC = () => {
 
           {/* Desktop Navigation */}
           <div className="desktop-nav">
-            {role === 'guest' && <NavbarGuest textColorClass={textColorClass} />}
-            {role === 'traveller' && <NavbarTraveller textColorClass={textColorClass} />}
-            {role === 'vendor' && <NavbarVendor textColorClass={textColorClass} />}
+            <div className="nav-guest-container">
+              <div className="nav-links-center">
+                {navItems.map((item) => (
+                  <Link key={item.href} href={item.href} className={`nav-link ${textColorClass}`}>
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="auth-buttons">
+                <Link href={appHomeHref} className="app-home-button">
+                  Go to App
+                </Link>
+              </div>
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -109,35 +126,22 @@ const GlobalHeader: React.FC = () => {
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
         <div className="mobile-menu absolute top-full left-0 w-full z-50">
-          <span className="section-tag">Menu ({role})</span>
-             
-             {role === 'guest' && (
-                 <>
-                    <Link href="/experiences" className="mobile-link">Experiences</Link>
-                    <Link href="/events" className="mobile-link">Events</Link>
-                    <Link href="/marketplace" className="mobile-link">Marketplace</Link>
-                    <div className="mobile-menu-divider">
-                      <button className="btn-login" style={{ color: '#374151', borderColor: '#d1d5db' }}>Log in</button>
-                      <button className="btn-signup">Sign up</button>
-                    </div>
-                 </>
-             )}
-
-             {role === 'traveller' && (
-               <>
-                 <Link href="/trips" className="mobile-link">My Trips</Link>
-                 <Link href="/saved" className="mobile-link">Saved</Link>
-                 <Link href="/messages" className="mobile-link">Messages</Link>
-               </>
-             )}
-
-             {role === 'vendor' && (
-               <>
-                 <Link href="/dashboard" className="mobile-link">Dashboard</Link>
-                 <Link href="/listings" className="mobile-link">My Listings</Link>
-                 <Link href="/orders" className="mobile-link">Orders</Link>
-               </>
-             )}
+          <span className="section-tag">Menu</span>
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="mobile-link"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {item.label}
+            </Link>
+          ))}
+          <div className="mobile-menu-divider">
+            <Link href={appHomeHref} className="app-home-button mobile-app-home-button">
+              Go to App
+            </Link>
+          </div>
         </div>
       )}
     </header>

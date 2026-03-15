@@ -3,7 +3,6 @@ import { Inter, Playfair_Display, Arima, Nunito } from "next/font/google";
 import "../styles/globals.css";
 import "../styles/components/Header.css";
 import "../styles/components/Footer.css";
-import { AuthProvider } from "../context/AuthContext";
 import GlobalHeader from "../components/header_footer/GlobalHeader";
 import Footer from "../components/header_footer/Footer";
 import ScrollToTopButton from "../components/common/ScrollToTopButton";
@@ -29,14 +28,12 @@ export default function RootLayout({
         className={`${inter.variable} ${playfair.variable} ${arima.variable} ${nunito.variable} font-sans antialiased flex flex-col min-h-screen`}
         suppressHydrationWarning={true}
       >
-        <AuthProvider>
-          <GlobalHeader />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-          <ScrollToTopButton />
-        </AuthProvider>
+        <GlobalHeader />
+        <main className="flex-grow">
+          {children}
+        </main>
+        <Footer />
+        <ScrollToTopButton />
       </body>
     </html>
   );
