@@ -171,54 +171,57 @@ export default function CheckoutPage() {
           </h2>
 
           <div className="divide-y divide-gray-100">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="flex justify-between items-center py-3"
-              >
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {item.listing?.title ?? item.booking?.listing?.title ?? 'Experience'}
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {item.listing?.vendor?.businessName ??
-                      item.booking?.listing?.vendor?.businessName ??
-                      'Unknown Vendor'}
-                  </p>
+            {items.map((item) => {
+              const listing = item.listing ?? item.booking?.listing;
+              const listingType = listing?.listingType ?? 'EXPERIENCE';
+              const vendorName = listing?.vendor?.businessName ?? 'Vendor';
+              const price = listing?.priceMin ?? 0;
 
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${(item.listing?.listingType ?? item.booking?.listing?.listingType) === 'EXPERIENCE'
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'bg-green-100 text-green-700'
-                      }`}>
-                      {item.listing?.listingType ?? item.booking?.listing?.listingType ?? 'EXPERIENCE'}
-                    </span>
+              return (
+                <div
+                  key={item.id}
+                  className="flex justify-between items-center py-3"
+                >
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {listing?.title ?? 'Experience'}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {vendorName}
+                    </p>
+
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${listingType === 'EXPERIENCE'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-green-100 text-green-700'
+                        }`}>
+                        {listingType}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-500 mt-1">
+                      Qty: {item.quantity}
+                    </p>
+
+                    {listingType === 'EXPERIENCE' && (
+                      <div className="mt-1.5 space-y-0.5">
+                        <p className="text-sm text-[#21a17a] font-medium">
+                          Status: Approved
+                        </p>
+
+                        <p className="text-sm text-gray-500">
+                          Booking Date: {new Date().toLocaleDateString()}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
-                  <p className="text-sm text-gray-500 mt-1">
-                    Qty: {item.quantity}
+                  <p className="font-medium text-[#21a17a]">
+                    LKR {(item.quantity * price).toLocaleString()}
                   </p>
-
-                  {(item.listing?.listingType ?? item.booking?.listing?.listingType) === 'EXPERIENCE' && (
-                    <div className="mt-1.5 space-y-0.5">
-                      <p className="text-sm text-[#21a17a] font-medium">
-                        Status: Approved
-                      </p>
-
-                      <p className="text-sm text-gray-500">
-                        Booking Date: {new Date().toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
                 </div>
-
-                <p className="font-medium text-[#21a17a]">
-                  LKR {(item.quantity *
-                    (item.listing?.priceMin ?? item.booking?.listing?.priceMin ?? 0)
-                  ).toLocaleString()}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="flex justify-between mt-5 pt-4 border-t border-[#cfe7e1] font-bold text-lg text-[#21a17a]">
@@ -324,7 +327,7 @@ export default function CheckoutPage() {
               onClick={handlePay}
               className="w-full rounded-xl bg-[#0d9488] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
             >
-              Pay Now — LKR {totalAmount.toLocaleString()}
+              Pay LKR {totalAmount.toLocaleString()}
             </button>
 
           </div>
