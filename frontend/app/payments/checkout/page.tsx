@@ -3,11 +3,9 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import { useUser } from '@clerk/nextjs';
-
-export const dynamic = 'force-dynamic';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
@@ -23,7 +21,7 @@ type DirectBooking = {
   } | null;
 };
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const { items, totalAmount, clearCart } = useCart();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -383,5 +381,13 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f9fafb] py-12 px-4 flex items-center justify-center"><div className="text-gray-900">Loading...</div></div>}>
+      <CheckoutPageContent />
+    </Suspense>
   );
 }
