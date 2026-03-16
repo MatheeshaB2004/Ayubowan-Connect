@@ -63,7 +63,9 @@ export const useCart = () => {
 };
 
 const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    'http://localhost:3001';
 
 /* =======================
    Provider
@@ -94,7 +96,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             });
 
             if (!response.ok) {
-                console.error('Failed to fetch cart');
+                console.error('Cart fetch failed', response.status);
                 return;
             }
 
@@ -102,6 +104,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setItems(data.items || []);
         } catch (error) {
             console.error('Fetch cart error:', error);
+            setItems([]);
         }
     };
 

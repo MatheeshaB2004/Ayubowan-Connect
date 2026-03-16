@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { ListingType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -23,7 +24,9 @@ export class OrdersService {
       where: { clerkUserId: rawId },
     });
     if (vendor) {
-      this.logger.log(`Resolved Clerk ID "${rawId}" via vendor → userId=${vendor.userId}`);
+      this.logger.log(
+        `Resolved Clerk ID "${rawId}" via vendor → userId=${vendor.userId}`,
+      );
       return vendor.userId;
     }
 
@@ -37,7 +40,9 @@ export class OrdersService {
 
     if (existingUser) {
       userId = existingUser.id;
-      this.logger.log(`Resolved Clerk ID "${rawId}" via placeholder email → userId=${userId}`);
+      this.logger.log(
+        `Resolved Clerk ID "${rawId}" via placeholder email → userId=${userId}`,
+      );
     } else {
       // Step 3 — Create a new User record
       const newUser = await this.prisma.user.create({
@@ -48,7 +53,9 @@ export class OrdersService {
         },
       });
       userId = newUser.id;
-      this.logger.log(`Auto-created User for Clerk ID "${rawId}" → userId=${userId}`);
+      this.logger.log(
+        `Auto-created User for Clerk ID "${rawId}" → userId=${userId}`,
+      );
     }
 
     // Step 4 — Ensure LocalTourist record exists
@@ -102,5 +109,95 @@ export class OrdersService {
       amount: b.totalPrice,
       status: b.status === 'COMPLETED' ? 'COMPLETED' : 'PAID',
     }));
+  }
+
+  async completeOrder(
+    rawUserId: string,
+    cartItems: Array<{
+      listingId?: number | null;
+      quantity?: number;
+    }>,
+  ) {
+    const userId = await this.resolveUserId(rawUserId);
+    console.log('Received cartItems:', cartItems);
+    let updatedListings = 0;
+
+    await this.prisma.$transaction(async (tx) => {
+      for (const item of cartItems ?? []) {
+        console.log('Processing cart item:', item);
+
+        if (!item?.listingId) {
+          console.log('Skipping item without listingId', item);
+          continue;
+        }
+        if (!Number.isInteger(item.listingId)) {
+          continue;
+        }
+        const quantity = Number(item?.quantity ?? 0);
+        if (quantity <= 0) {
+          continue;
+        }
+
+        const listing = await tx.listing.findUnique({
+          where: { id: item.listingId },
+          select: {
+            id: true,
+            listingType: true,
+            stock: true,
+          },
+        });
+        if (!listing) {
+          console.log('Listing not found:', item.listingId);
+          continue;
+        }
+
+        console.log('Listing ID:', listing.id);
+        console.log('Processing listing:', listing.id);
+        console.log('Listing type:', listing.listingType);
+
+        if (listing.listingType !== ListingType.PRODUCT) {
+          console.log('Skipping non-product listing:', listing.listingType);
+          continue;
+        }
+
+        const currentStock = listing.stock ?? 0;
+        console.log('Current stock:', currentStock);
+
+        if (currentStock < quantity) {
+          throw new BadRequestException(
+            `Not enough stock for listing ${listing.id}`,
+          );
+        }
+
+        console.log('Reducing stock by:', quantity);
+        await tx.listing.update({
+          where: { id: listing.id },
+          data: {
+            stock: {
+              decrement: quantity,
+            },
+          },
+        });
+        const updated = await tx.listing.findUnique({
+          where: { id: listing.id },
+          select: { stock: true },
+        });
+        console.log('Updated stock:', updated?.stock);
+        updatedListings += 1;
+      }
+
+      await tx.cartItem.deleteMany({
+        where: {
+          cart: {
+            userId,
+          },
+        },
+      });
+    });
+
+    return {
+      message: 'Product purchase completed',
+      updatedListings,
+    };
   }
 }

@@ -28,6 +28,13 @@ export default function CheckoutPage() {
   const { user } = useUser();
   const bookingIdParam = searchParams.get('bookingId');
   const directBookingId = bookingIdParam ? Number(bookingIdParam) : null;
+  const type = searchParams.get('type');
+  const plan = searchParams.get('plan');
+  const cycle = searchParams.get('cycle');
+  const isSubscriptionCheckout =
+    type === 'subscription' &&
+    (plan === 'user' || plan === 'vendor') &&
+    (cycle === 'monthly' || cycle === 'yearly');
 
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -117,6 +124,11 @@ export default function CheckoutPage() {
 
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    if (isSubscriptionCheckout) {
+      router.push(`/payments/success?type=subscription&plan=${plan}&cycle=${cycle}`);
+      return;
+    }
+
     if (user && directBooking) {
       try {
         const response = await fetch(`${API_BASE}/bookings/${directBooking.id}/status`, {
@@ -186,15 +198,37 @@ export default function CheckoutPage() {
       }
     }
 
+    localStorage.setItem(
+      'checkout_items',
+      JSON.stringify(
+        items.map((item) => ({
+          listingId: item.listingId,
+          quantity: item.quantity ?? 1,
+          title: item.listing?.title ?? 'Product',
+          vendorName: item.listing?.vendor?.businessName ?? 'Vendor',
+          priceMin: item.listing?.priceMin ?? 0,
+        })),
+      ),
+    );
     await clearCart();
     router.push('/payments/success');
   };
 
   const inputBase =
     'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#0d9488] focus:outline-none focus:ring-2 focus:ring-[#0d9488]/30';
-  const payableAmount = directBooking
-    ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
-    : totalAmount;
+  const subscriptionPrice =
+    isSubscriptionCheckout
+      ? (plan === 'vendor'
+        ? (cycle === 'yearly' ? 25000 : 2500)
+        : (cycle === 'yearly' ? 9000 : 900))
+      : 0;
+  const payableAmount = isSubscriptionCheckout
+    ? subscriptionPrice
+    : (directBooking
+      ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
+      : totalAmount);
+  const subscriptionPlanLabel = plan === 'vendor' ? 'Vendor Pro' : 'User Pro';
+  const subscriptionCycleLabel = cycle === 'yearly' ? 'Yearly' : 'Monthly';
 
   return (
     <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
@@ -215,50 +249,58 @@ export default function CheckoutPage() {
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6 mb-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h2>
-          <div className="divide-y divide-gray-100">
-            {directBooking ? (
-              (() => {
-                const listing = directBooking.listing;
-                const listingType = listing?.listingType ?? 'EXPERIENCE';
-                const vendorName = listing?.vendor?.businessName ?? 'Vendor';
-                const basePrice = listing?.priceMin ?? 0;
-                const guests = directBooking.guests ?? 1;
-                const totalPrice = basePrice * guests;
-                const slotText = formatTimeSlot(directBooking.slot?.startTime, directBooking.slot?.endTime);
-                return (
-                  <div className="flex justify-between items-center py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{listing?.title ?? 'Experience'}</p>
-                      <p className="text-sm text-gray-600 mt-1">{vendorName}</p>
-                      <p className="text-sm text-gray-600 mt-1">Qty: {guests}</p>
-                      <p className="text-sm text-gray-600 mt-1">Time Slot: {slotText}</p>
-                    </div>
-                    <p className="text-sm font-semibold text-[#21a17a]">LKR {totalPrice.toLocaleString()}</p>
+          {isSubscriptionCheckout ? (
+            <div className="space-y-0">
+              <div className="py-4 border-b border-gray-100">
+                <p className="font-medium text-gray-900">Plan: {subscriptionPlanLabel}</p>
+                <p className="text-sm text-gray-600 mt-1">Billing: {subscriptionCycleLabel}</p>
+              </div>
+              <div className="py-4 flex items-center justify-between">
+                <span className="text-sm text-gray-600">Price</span>
+                <span className="text-sm font-semibold text-[#21a17a]">LKR {subscriptionPrice.toLocaleString()}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {directBooking ? (
+                <div className="flex justify-between items-center py-4">
+                  <div>
+                    <p className="font-medium text-gray-900">{directBooking.listing?.title ?? 'Experience'}</p>
+                    <p className="text-sm text-gray-600 mt-1">{directBooking.listing?.vendor?.businessName ?? 'Vendor'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Qty: {directBooking.guests ?? 1}</p>
+                    <p className="text-sm text-gray-600 mt-1">Time Slot: {formatTimeSlot(directBooking.slot?.startTime, directBooking.slot?.endTime)}</p>
                   </div>
-                );
-              })()
-            ) : (
-              items.map((item) => {
-                const listing = item.listing ?? item.booking?.listing;
-                const vendorName = listing?.vendor?.businessName ?? 'Vendor';
-                const basePrice = listing?.priceMin ?? 0;
-                const guests = item.booking?.guests ?? item.quantity ?? 1;
-                const totalPrice = basePrice * guests;
-                const slotText = formatTimeSlot(item.booking?.slot?.startTime, item.booking?.slot?.endTime);
-                return (
-                  <div key={item.id} className="flex justify-between items-center py-4">
-                    <div>
-                      <p className="font-medium text-gray-900">{listing?.title ?? 'Experience'}</p>
-                      <p className="text-sm text-gray-600 mt-1">{vendorName}</p>
-                      <p className="text-sm text-gray-600 mt-1">Qty: {guests}</p>
-                      <p className="text-sm text-gray-600 mt-1">Time Slot: {slotText}</p>
+                  <p className="text-sm font-semibold text-[#21a17a]">
+                    LKR {((directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)).toLocaleString()}
+
+                  </p>
+                </div>
+              ) : (
+                items.map((item) => {
+                  const listing = item.listing ?? item.booking?.listing;
+                  const vendorName = listing?.vendor?.businessName ?? 'Vendor';
+                  const basePrice = listing?.priceMin ?? 0;
+                  const guests = item.booking?.guests ?? item.quantity ?? 1;
+                  const totalPrice = basePrice * guests;
+                  const slotText = formatTimeSlot(item.booking?.slot?.startTime, item.booking?.slot?.endTime);
+
+                  return (
+                    <div key={item.id} className="flex justify-between items-center py-4">
+                      <div>
+                        <p className="font-medium text-gray-900">{listing?.title ?? 'Experience'}</p>
+                        <p className="text-sm text-gray-600 mt-1">{vendorName}</p>
+                        <p className="text-sm text-gray-600 mt-1">Qty: {guests}</p>
+                        <p className="text-sm text-gray-600 mt-1">Time Slot: {slotText}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-[#21a17a]">
+                        LKR {totalPrice.toLocaleString()}
+                      </p>
                     </div>
-                    <p className="text-sm font-semibold text-[#21a17a]">LKR {totalPrice.toLocaleString()}</p>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                  );
+                })
+              )}
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6 mb-6">
