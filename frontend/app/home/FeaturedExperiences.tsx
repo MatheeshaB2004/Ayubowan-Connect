@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Star } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
 
 type MarketplaceListing = {
   id: number;
@@ -20,7 +21,6 @@ type MarketplaceResponse = {
   items: MarketplaceListing[];
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 const FALLBACK_IMAGE = "/assets/photos/B4.webp";
 const FEATURED_LIMIT = 4;
 
@@ -42,8 +42,14 @@ async function getFeaturedExperiences() {
       limit: "24",
     });
 
-    const response = await fetch(`${API_BASE}/marketplace?${params.toString()}`, {
-      cache: "no-store",
+    const url = getApiUrl(`/marketplace?${params.toString()}`);
+
+    if (!url) {
+      return [];
+    }
+
+    const response = await fetch(url, {
+      next: { revalidate: 300 },
     });
 
     if (!response.ok) {

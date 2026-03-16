@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { API_BASE_URL } from '@/lib/api';
 import {
   MapPin,
   Star,
@@ -78,7 +79,7 @@ type InclusionItem = {
   description: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+const API_BASE = API_BASE_URL;
 const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 
 export default function ExperienceDetailPage() {

@@ -1,4 +1,4 @@
-const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+import { requireApiUrl } from "@/lib/api";
 
 function authHeaders(token?: string): HeadersInit {
   return token
@@ -17,13 +17,13 @@ export async function fetchAllEvents(params?: {
   if (params?.category) q.set("category", params.category);
   if (params?.location) q.set("location", params.location);
 
-  const res = await fetch(`${BASE}/events?${q.toString()}`, { cache: "no-store" });
+  const res = await fetch(requireApiUrl(`/events?${q.toString()}`), { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch events");
   return res.json();
 }
 
 export async function fetchEventById(id: number) {
-  const res = await fetch(`${BASE}/events/${id}`, { cache: "no-store" });
+  const res = await fetch(requireApiUrl(`/events/${id}`), { cache: "no-store" });
   if (!res.ok) throw new Error("Event not found");
   return res.json();
 }
@@ -31,7 +31,7 @@ export async function fetchEventById(id: number) {
 // Vendor
 
 export async function fetchVendorEvents(token: string) {
-  const res = await fetch(`${BASE}/events/vendor/mine`, {
+  const res = await fetch(requireApiUrl("/events/vendor/mine"), {
     headers: authHeaders(token),
     cache: "no-store",
   });
@@ -43,7 +43,7 @@ export async function createEvent(
   token: string,
   data: Record<string, unknown>
 ) {
-  const res = await fetch(`${BASE}/events`, {
+  const res = await fetch(requireApiUrl("/events"), {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(data),
@@ -69,7 +69,7 @@ export async function uploadEventImage(
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${BASE}/events/upload-image`, {
+  const res = await fetch(requireApiUrl("/events/upload-image"), {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
@@ -87,7 +87,7 @@ export async function uploadEventImage(
 // User
 
 export async function fetchUserRegisteredEvents(token: string) {
-  const res = await fetch(`${BASE}/events/user/registered`, {
+  const res = await fetch(requireApiUrl("/events/user/registered"), {
     headers: authHeaders(token),
     cache: "no-store",
   });
@@ -96,7 +96,7 @@ export async function fetchUserRegisteredEvents(token: string) {
 }
 
 export async function registerForEvent(token: string, eventId: number) {
-  const res = await fetch(`${BASE}/events/${eventId}/register`, {
+  const res = await fetch(requireApiUrl(`/events/${eventId}/register`), {
     method: "POST",
     headers: authHeaders(token),
   });
@@ -105,7 +105,7 @@ export async function registerForEvent(token: string, eventId: number) {
 }
 
 export async function unregisterFromEvent(token: string, eventId: number) {
-  const res = await fetch(`${BASE}/events/${eventId}/register`, {
+  const res = await fetch(requireApiUrl(`/events/${eventId}/register`), {
     method: "DELETE",
     headers: authHeaders(token),
   });

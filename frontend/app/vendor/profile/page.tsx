@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import LocationPicker from "@/components/maps/LocationPicker";
+import { API_BASE_URL } from "@/lib/api";
 import "../../auth/login/login.css";
 
 const PROVINCES = [
@@ -90,7 +91,7 @@ function getVendorProfileSeed(metadata: unknown): VendorProfile | null {
 export default function VendorProfilePage() {
     const { isLoaded, isSignedIn, user } = useUser();
     const router = useRouter();
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+    const API_BASE = API_BASE_URL;
 
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);

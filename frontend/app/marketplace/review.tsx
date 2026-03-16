@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Camera, ShieldCheck, Star, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { API_BASE_URL } from '@/lib/api';
 import './review.css';
 
 type ReviewMedia = {
@@ -36,7 +37,7 @@ type ReviewSectionProps = {
   onListingUpdate?: React.Dispatch<React.SetStateAction<any>>;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+const API_BASE = API_BASE_URL;
 
 export default function ReviewSection({ listingId, ratingAverage, onListingUpdate }: ReviewSectionProps) {
   const { user } = useAuth();

@@ -6,8 +6,9 @@ import { useCart } from '@/context/CartContext';
 import { useEffect, useState, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import { useUser } from '@clerk/nextjs';
+import { API_BASE_URL } from '@/lib/api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+const API_BASE = API_BASE_URL;
 
 type DirectBooking = {
   id: number;

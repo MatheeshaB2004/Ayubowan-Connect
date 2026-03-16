@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { API_BASE_URL } from '@/lib/api';
 import './Pro.css';
 
 import {
@@ -19,7 +20,7 @@ import {
   Search
 } from 'lucide-react';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+const API_BASE = API_BASE_URL;
 
 export default function ProPage() {
   const { user, role } = useAuth();

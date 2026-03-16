@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSignUp, useUser } from "@clerk/nextjs";
 import LocationPicker from "@/components/maps/LocationPicker";
+import { API_BASE_URL } from "@/lib/api";
 import "../../login/login.css";
 
 // Sri Lankan Provinces
@@ -183,7 +184,7 @@ export default function VendorRegisterPage() {
           ...vendorProfileSeed,
         };
 
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+        const API_BASE = API_BASE_URL;
         const response = await fetch(`${API_BASE}/vendor/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
