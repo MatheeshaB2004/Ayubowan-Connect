@@ -1,0 +1,189 @@
+@reference "../globals.css";
+
+.planner-container {
+    @apply min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8;
+}
+
+.planner-content {
+    @apply max-w-4xl mx-auto;
+}
+
+.planner-header {
+    @apply text-center mb-12;
+}
+
+.planner-title {
+    @apply text-4xl font-bold text-gray-900 mb-4;
+}
+
+.planner-subtitle {
+    @apply text-teal-600 block text-2xl mt-2 font-normal;
+}
+
+.planner-description {
+    @apply text-lg text-gray-600;
+}
+
+.planner-card {
+    @apply bg-white rounded-2xl shadow-xl overflow-hidden;
+}
+
+.planner-body {
+    @apply p-8;
+}
+
+.planner-form {
+    @apply space-y-8;
+}
+
+.planner-form-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-8;
+}
+
+.form-group {
+    @apply space-y-2;
+}
+
+.form-label {
+    @apply block text-sm font-medium text-gray-700 flex items-center gap-2;
+}
+
+.form-icon {
+    @apply w-4 h-4;
+}
+
+.form-input {
+    @apply w-full px-4 py-3 text-black rounded-lg border border-gray-300 focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all outline-none;
+}
+
+.button-group {
+    @apply flex gap-2;
+}
+
+.option-button {
+    @apply flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all;
+}
+
+.option-button-active {
+    @apply bg-teal-600 text-white shadow-md;
+}
+
+.option-button-inactive {
+    @apply bg-gray-100 text-gray-600 hover:bg-gray-200;
+}
+
+.interests-container {
+    @apply space-y-3;
+}
+
+.interests-label {
+    @apply block text-sm font-medium text-gray-700;
+}
+
+.interests-list {
+    @apply flex flex-wrap gap-2;
+}
+
+.interest-tag {
+    @apply px-4 py-2 rounded-full text-sm font-medium transition-all border;
+}
+
+.interest-tag-active {
+    @apply bg-teal-100 text-teal-800 border-teal-500;
+}
+
+.interest-tag-inactive {
+    @apply bg-white border-gray-200 text-gray-600 hover:border-teal-300;
+}
+
+.submit-container {
+    @apply pt-4;
+}
+
+.submit-button {
+    @apply w-full bg-gradient-to-r from-teal-600 to-emerald-600 text-white py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2;
+}
+
+.error-message {
+    @apply mt-8 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 text-center;
+}
+
+.itinerary-container {
+    @apply mt-12 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700;
+}
+
+.itinerary-header {
+    @apply text-center space-y-4;
+}
+
+.itinerary-title {
+    @apply text-3xl font-bold text-gray-900;
+}
+
+.itinerary-summary {
+    @apply text-xl text-gray-600 italic;
+}
+
+.itinerary-cost {
+    @apply inline-block bg-teal-100 text-teal-800 px-4 py-2 rounded-full font-medium;
+}
+
+.itinerary-days {
+    @apply space-y-6;
+}
+
+.day-card {
+    @apply bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow;
+}
+
+.day-header {
+    @apply bg-teal-600 px-6 py-4 flex justify-between items-center text-white;
+}
+
+.day-title {
+    @apply text-lg font-bold;
+}
+
+.day-subtitle {
+    @apply opacity-90;
+}
+
+.day-body {
+    @apply p-6 grid md:grid-cols-2 gap-6;
+}
+
+.day-section-title {
+    @apply font-semibold text-gray-900 mb-3 flex items-center gap-2;
+}
+
+.day-section-title-teal {
+    @apply w-4 h-4 text-teal-600;
+}
+
+.day-section-title-pink {
+    @apply w-4 h-4 text-pink-500;
+}
+
+.day-list {
+    @apply space-y-2;
+}
+
+.day-list-item {
+    @apply text-gray-600 flex items-start gap-2;
+}
+
+.day-list-bullet-teal {
+    @apply text-teal-500 mt-1.5;
+}
+
+.day-list-bullet-pink {
+    @apply text-pink-400 mt-1.5;
+}
+
+.print-container {
+    @apply flex justify-center pt-8 pb-12;
+}
+
+.print-button {
+    @apply px-8 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors shadow-lg;
+}
