@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -35,7 +35,7 @@ type ProductSummaryItem = {
   totalPrice: number;
 };
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessPageContent() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const bookingIdParam = searchParams.get('bookingId');
@@ -385,5 +385,13 @@ export default function PaymentSuccessPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f9fafb] py-12 px-4 flex items-center justify-center"><div className="text-gray-900">Loading...</div></div>}>
+      <PaymentSuccessPageContent />
+    </Suspense>
   );
 }
