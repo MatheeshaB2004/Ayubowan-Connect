@@ -21,7 +21,7 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import './ExperienceDetail.css';
 import ReviewSection from '../../review';
 import VendorLocationMap from '@/components/maps/VendorLocationMap';
@@ -84,7 +84,6 @@ const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 export default function ExperienceDetailPage() {
   const { isSignedIn, user } = useUser();
   const params = useParams();
-  const router = useRouter();
   const idStr = Array.isArray(params?.id) ? params?.id[0] : params?.id;
 
   const [listing, setListing] = useState<ApiListing | null>(null);
@@ -191,6 +190,7 @@ export default function ExperienceDetailPage() {
   };
 
   const handleBookingSubmit = async () => {
+    setIsBookingSubmitted(false);
     if (!isSignedIn || !user) {
       toast.error("Please log in to book this experience");
       return;
@@ -668,25 +668,6 @@ export default function ExperienceDetailPage() {
           <div className="booking-card">
             <h3 className="booking-title">Booking card</h3>
 
-            {isBookingSubmitted ? (
-              <div className="success-message py-8">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ShieldCheck size={32} className="text-green-600" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-center text-gray-900">
-                  Booking request sent successfully.
-                </h3>
-                <p className="text-gray-600 text-center mb-6">
-                  The vendor will confirm your booking within 24 hours.
-                </p>
-                <button
-                  className="btn-primary w-full"
-                  onClick={() => router.push('/dashboard/bookings')}
-                >
-                  View My Pending Bookings
-                </button>
-              </div>
-            ) : (
               <div className="booking-form">
                 {/* Date picker — only show dates that have available slots */}
                 <div className="form-field">
@@ -784,6 +765,23 @@ export default function ExperienceDetailPage() {
                   })()}
                 </div>
 
+                {isBookingSubmitted && (
+                  <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ShieldCheck size={18} className="text-green-600 shrink-0" />
+                      <p className="text-sm font-semibold text-green-800">Booking request sent successfully.</p>
+                    </div>
+                    <p className="text-sm text-green-700 mb-3">
+                      Your booking request has been sent to the vendor. You can track its status in Pending Bookings.
+                    </p>
+                    <Link href="/dashboard/bookings">
+                      <button className="w-full rounded-lg bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78]">
+                        View Pending Bookings
+                      </button>
+                    </Link>
+                  </div>
+                )}
+
                 <button
                   className="btn-book-now mt-4"
                   disabled={
@@ -800,7 +798,6 @@ export default function ExperienceDetailPage() {
                 </button>
 
               </div>
-            )}
           </div>
         </aside>
       </div>

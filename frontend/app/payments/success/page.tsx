@@ -274,7 +274,7 @@ export default function PaymentSuccessPage() {
           </h1>
           <p className="text-sm text-gray-600 text-center mb-6">
             {bookingId
-              ? 'Your booking request has been sent to the vendor. You will be notified once the vendor responds.'
+              ? 'Your booking request has been sent to the vendor. You can track its status in Pending Bookings.'
               : 'Your order has been completed.'}
           </p>
 
@@ -284,7 +284,9 @@ export default function PaymentSuccessPage() {
             </p>
           ) : (
             <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6 mt-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4">Order Summary</h2>
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                {booking ? 'Booking Details' : 'Order Summary'}
+              </h2>
               {isSubscriptionSuccess ? (
                 <div className="space-y-0">
                   <div className="py-4 border-b border-gray-100">
@@ -346,21 +348,39 @@ export default function PaymentSuccessPage() {
           )}
 
           <div className="mt-6 grid gap-3">
-            <Link href="/dashboard/upcoming">
-              <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                View Upcoming Experiences
-              </button>
-            </Link>
-            <Link href="/dashboard/orders">
-              <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                View Orders
-              </button>
-            </Link>
-            <Link href="/marketplace">
-              <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                Back to Marketplace
-              </button>
-            </Link>
+            {bookingId ? (
+              <>
+                <Link href="/dashboard/bookings">
+                  <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                    View Pending Bookings
+                  </button>
+                </Link>
+                <Link href="/marketplace">
+                  <button className="w-full rounded-xl border border-[#0d9488] px-5 py-2.5 text-sm font-semibold text-[#0d9488] shadow-sm transition-all hover:bg-[#0d9488]/5 active:scale-[0.98]">
+                    Browse Experiences
+                  </button>
+                </Link>
+              </>
+            ) : isSubscriptionSuccess ? (
+              <Link href="/marketplace">
+                <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                  Back to Marketplace
+                </button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/dashboard/orders">
+                  <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                    View Orders
+                  </button>
+                </Link>
+                <Link href="/marketplace">
+                  <button className="w-full rounded-xl border border-[#0d9488] px-5 py-2.5 text-sm font-semibold text-[#0d9488] shadow-sm transition-all hover:bg-[#0d9488]/5 active:scale-[0.98]">
+                    Continue Shopping
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

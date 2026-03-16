@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -33,40 +33,49 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchBookings = useCallback(async () => {
+    if (!isSignedIn || !user) return;
+    try {
+      const response = await fetch(`${API_BASE}/bookings`, {
+        headers: { 'x-user-id': user.id },
+      });
+      if (response.ok) {
+        const data: Booking[] = await response.json();
+        // Show experience bookings in actionable/customer-visible states
+        const filtered = (data || []).filter(
+          (b) =>
+            b.listing?.listingType === 'EXPERIENCE' &&
+            ['PENDING', 'CONFIRMED', 'REJECTED'].includes(b.status),
+        );
+        setBookings(filtered);
+      } else {
+        console.error('Failed to fetch bookings');
+      }
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    }
+  }, [isSignedIn, user]);
+
   useEffect(() => {
     if (!isLoaded) return;
-
-    if (!isSignedIn || !user) {
-      setIsLoading(false);
-      return;
-    }
-
-    const fetchBookings = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': user.id },
-        });
-        if (response.ok) {
-          const data: Booking[] = await response.json();
-          // Show experience bookings in actionable/customer-visible states
-          const filtered = (data || []).filter(
-            (b) =>
-              b.listing?.listingType === 'EXPERIENCE' &&
-              ['PENDING', 'CONFIRMED', 'REJECTED'].includes(b.status),
-          );
-          setBookings(filtered);
-        } else {
-          console.error('Failed to fetch bookings');
-        }
-      } catch (error) {
-        console.error('Error fetching bookings:', error);
-      } finally {
+    const run = async () => {
+      if (!isSignedIn || !user) {
         setIsLoading(false);
+        return;
       }
+      await fetchBookings();
+      setIsLoading(false);
     };
+    run();
+  }, [isLoaded, isSignedIn, user, fetchBookings]);
 
-    fetchBookings();
-  }, [isSignedIn, user, isLoaded]);
+  useEffect(() => {
+    if (!isSignedIn || !user) return;
+    const interval = setInterval(() => {
+      fetchBookings();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [isSignedIn, user, fetchBookings]);
 
   const handleCancelBooking = async (bookingId: number) => {
     if (!user) return;
