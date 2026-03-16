@@ -79,6 +79,23 @@ export default function VendorRegisterPage() {
     }
   }, [province, district, availableDistricts]);
 
+  const vendorProfileSeed = {
+    businessName,
+    shortTagline,
+    contactPhone,
+    establishedYear: establishedYear ? parseInt(establishedYear, 10) : null,
+    location: {
+      addressLine1,
+      addressLine2,
+      city,
+      district,
+      province,
+      postalCode,
+      latitude,
+      longitude,
+    },
+  };
+
   // Redirect if already signed in and profile is complete
   React.useEffect(() => {
     if (isSignedIn && user?.unsafeMetadata?.role) {
@@ -129,6 +146,7 @@ export default function VendorRegisterPage() {
         lastName: lastName,
         unsafeMetadata: {
           role: "vendor",
+          vendorProfile: vendorProfileSeed,
         },
       });
 
@@ -162,20 +180,7 @@ export default function VendorRegisterPage() {
         // After successful verification, register vendor in backend
         const payload = {
           userId: userId,
-          businessName,
-          shortTagline,
-          contactPhone,
-          establishedYear: establishedYear ? parseInt(establishedYear) : null,
-          location: {
-            addressLine1,
-            addressLine2,
-            city,
-            district,
-            province,
-            postalCode,
-            latitude,
-            longitude
-          }
+          ...vendorProfileSeed,
         };
 
         const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
