@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2, Calendar, DollarSign, MapPin, Heart } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from "@/lib/api";
 import "./planner.css";
 
 interface Itinerary {
@@ -17,6 +18,8 @@ interface Itinerary {
     }>;
     estimatedTotalCost: string;
 }
+
+const API_BASE = API_BASE_URL;
 
 export default function ItineraryPlanner() {
     const { isSignedIn } = useUser();
@@ -67,7 +70,7 @@ export default function ItineraryPlanner() {
 
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/ai-services/generate-itinerary`,
+                `${API_BASE}/ai-services/generate-itinerary`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

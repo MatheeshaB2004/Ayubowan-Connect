@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSignUp, useUser } from "@clerk/nextjs";
+import { API_BASE_URL } from "@/lib/api";
 import "../../login/login.css";
 
 export default function UserRegisterPage() {
@@ -115,7 +116,7 @@ export default function UserRegisterPage() {
           preferredLanguage,
         };
 
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+        const API_BASE = API_BASE_URL;
         const response = await fetch(`${API_BASE}/user/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

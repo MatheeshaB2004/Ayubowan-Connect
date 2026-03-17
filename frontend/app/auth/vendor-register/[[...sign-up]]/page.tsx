@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSignUp, useUser } from "@clerk/nextjs";
 import LocationPicker from "@/components/maps/LocationPicker";
+import { API_BASE_URL } from "@/lib/api";
 import "../../login/login.css";
 
 // Sri Lankan Provinces
@@ -79,6 +80,23 @@ export default function VendorRegisterPage() {
     }
   }, [province, district, availableDistricts]);
 
+  const vendorProfileSeed = {
+    businessName,
+    shortTagline,
+    contactPhone,
+    establishedYear: establishedYear ? parseInt(establishedYear, 10) : null,
+    location: {
+      addressLine1,
+      addressLine2,
+      city,
+      district,
+      province,
+      postalCode,
+      latitude,
+      longitude,
+    },
+  };
+
   // Redirect if already signed in and profile is complete
   React.useEffect(() => {
     if (isSignedIn && user?.unsafeMetadata?.role) {
@@ -129,6 +147,7 @@ export default function VendorRegisterPage() {
         lastName: lastName,
         unsafeMetadata: {
           role: "vendor",
+          vendorProfile: vendorProfileSeed,
         },
       });
 
@@ -162,23 +181,10 @@ export default function VendorRegisterPage() {
         // After successful verification, register vendor in backend
         const payload = {
           userId: userId,
-          businessName,
-          shortTagline,
-          contactPhone,
-          establishedYear: establishedYear ? parseInt(establishedYear) : null,
-          location: {
-            addressLine1,
-            addressLine2,
-            city,
-            district,
-            province,
-            postalCode,
-            latitude,
-            longitude
-          }
+          ...vendorProfileSeed,
         };
 
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+        const API_BASE = API_BASE_URL;
         const response = await fetch(`${API_BASE}/vendor/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

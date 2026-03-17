@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { API_BASE_URL } from "@/lib/api";
 import "./page.css";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useUser } from "@clerk/nextjs";
+
+const API_BASE = API_BASE_URL;
 
 export default function CreateListingsPage() {
 
@@ -87,7 +90,7 @@ export default function CreateListingsPage() {
     if (!vendorId) return;
 
     fetchListings();
-    fetchLocations(vendorId);
+    fetchLocations();
 
   }, [vendorId]);
 
@@ -101,7 +104,7 @@ export default function CreateListingsPage() {
 
   const fetchListings = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/vendor/${vendorId}/listings`);
+      const response = await fetch(`${API_BASE}/vendor/${vendorId}/listings`);
       const data = await response.json();
       console.log("LISTINGS:", data);
       setListings(data);
@@ -110,21 +113,19 @@ export default function CreateListingsPage() {
     }
   };
 
-  const fetchLocations = async (id: number) => {
-    const response = await fetch(
-      `http://localhost:3001/vendor/${id}/locations`
-    );
-
-    const data = await response.json();
-
-    console.log("LOCATIONS:", data);
-
-    setLocations(data);
+  const fetchLocations = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/vendor/${vendorId}/locations`);
+      const data = await response.json();
+      setLocations(data);
+    } catch (error) {
+      console.error("Location fetch error:", error);
+    }
   };
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("http://localhost:3001/vendor/categories");
+      const res = await fetch(`${API_BASE}/vendor/categories`);
       const data = await res.json();
       setCategories(data);
     } catch (err) {
@@ -453,7 +454,7 @@ export default function CreateListingsPage() {
                             <button
                               className="promote-btn"
                               onClick={async () => {
-                                await fetch(`http://localhost:3001/vendor/${vendorId}/listings/${listing.id}`, { method: "DELETE" });
+                                await fetch(`${API_BASE}/vendor/${vendorId}/listings/${listing.id}`, { method: "DELETE" });
                                 await fetchListings();
                               }}
                             >
@@ -822,8 +823,8 @@ export default function CreateListingsPage() {
                       if (fileInputRef.current?.files?.[0]) formDataToSend.append("image", fileInputRef.current.files[0]);
 
                       const url = editingListing
-                        ? `http://localhost:3001/vendor/${vendorId}/listings/${editingListing.id}`
-                        : `http://localhost:3001/vendor/${vendorId}/listings`;
+                        ? `${API_BASE}/vendor/${vendorId}/listings/${editingListing.id}`
+                        : `${API_BASE}/vendor/${vendorId}/listings`;
                       const response = await fetch(url, { method: editingListing ? "PUT" : "POST", body: formDataToSend });
                       const data = await response.json();
 
