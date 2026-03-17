@@ -1,57 +1,97 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import LocationPicker from "@/components/maps/LocationPicker";
+import { API_BASE_URL } from "@/lib/api";
 import "../../auth/login/login.css";
 
-// Sri Lankan Provinces
 const PROVINCES = [
-  "Western",
-  "Central",
-  "Southern",
-  "Northern",
-  "Eastern",
-  "North Western",
-  "North Central",
-  "Uva",
-  "Sabaragamuwa"
+    "Western",
+    "Central",
+    "Southern",
+    "Northern",
+    "Eastern",
+    "North Western",
+    "North Central",
+    "Uva",
+    "Sabaragamuwa",
 ];
 
-// Sri Lankan Districts by Province
 const DISTRICTS_BY_PROVINCE: { [key: string]: string[] } = {
-  "Western": ["Colombo", "Gampaha", "Kalutara"],
-  "Central": ["Kandy", "Matale", "Nuwara Eliya"],
-  "Southern": ["Galle", "Matara", "Hambantota"],
-  "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"],
-  "Eastern": ["Ampara", "Batticaloa", "Trincomalee"],
-  "North Western": ["Kurunegala", "Puttalam"],
-  "North Central": ["Anuradhapura", "Polonnaruwa"],
-  "Uva": ["Badulla", "Monaragala"],
-  "Sabaragamuwa": ["Ratnapura", "Kegalle"]
+    Western: ["Colombo", "Gampaha", "Kalutara"],
+    Central: ["Kandy", "Matale", "Nuwara Eliya"],
+    Southern: ["Galle", "Matara", "Hambantota"],
+    Northern: ["Jaffna", "Kilinochchi", "Mannar", "Mullaitivu", "Vavuniya"],
+    Eastern: ["Ampara", "Batticaloa", "Trincomalee"],
+    "North Western": ["Kurunegala", "Puttalam"],
+    "North Central": ["Anuradhapura", "Polonnaruwa"],
+    Uva: ["Badulla", "Monaragala"],
+    Sabaragamuwa: ["Ratnapura", "Kegalle"],
 };
+
+interface VendorLocationProfile {
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    district: string;
+    province: string;
+    postalCode: string;
+    latitude: number | null;
+    longitude: number | null;
+}
 
 interface VendorProfile {
     businessName: string;
     shortTagline: string;
     contactPhone: string;
     establishedYear: string;
-    location: {
-        addressLine1: string;
-        addressLine2: string;
-        city: string;
-        district: string;
-        province: string;
-        postalCode: string;
-        latitude: number | null;
-        longitude: number | null;
-    } | null;
+    location: VendorLocationProfile | null;
+}
+
+const EMPTY_LOCATION: VendorLocationProfile = {
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    district: "",
+    province: "",
+    postalCode: "",
+    latitude: null,
+    longitude: null,
+};
+
+function normalizeVendorProfile(data: any): VendorProfile {
+    return {
+        businessName: data?.businessName || "",
+        shortTagline: data?.shortTagline || "",
+        contactPhone: data?.contactPhone || "",
+        establishedYear: data?.establishedYear ? String(data.establishedYear) : "",
+        location: data?.location
+            ? {
+                  addressLine1: data.location.addressLine1 || "",
+                  addressLine2: data.location.addressLine2 || "",
+                  city: data.location.city || "",
+                  district: data.location.district || "",
+                  province: data.location.province || "",
+                  postalCode: data.location.postalCode || "",
+                  latitude: data.location.latitude ?? null,
+                  longitude: data.location.longitude ?? null,
+              }
+            : null,
+    };
+}
+
+function getVendorProfileSeed(metadata: unknown): VendorProfile | null {
+    const seed = (metadata as Record<string, any> | undefined)?.vendorProfile;
+    if (!seed) return null;
+    return normalizeVendorProfile(seed);
 }
 
 export default function VendorProfilePage() {
     const { isLoaded, isSignedIn, user } = useUser();
     const router = useRouter();
+    const API_BASE = API_BASE_URL;
 
     const [isEditing, setIsEditing] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -68,72 +108,139 @@ export default function VendorProfilePage() {
         location: null,
     });
 
-    // Edit form state (separate from displayed profile)
     const [editForm, setEditForm] = useState<VendorProfile>(profile);
     const [editLat, setEditLat] = useState<number | null>(null);
     const [editLng, setEditLng] = useState<number | null>(null);
 
-    // Available districts based on selected province
-    const availableDistricts = editForm.location?.province ? DISTRICTS_BY_PROVINCE[editForm.location.province] || [] : [];
+    const availableDistricts = editForm.location?.province
+        ? DISTRICTS_BY_PROVINCE[editForm.location.province] || []
+        : [];
 
-    // Reset district when province changes
+    const setField = (field: keyof Omit<VendorProfile, "location">, value: string) => {
+        setEditForm((current) => ({ ...current, [field]: value }));
+    };
+
+    const setLocField = (field: keyof VendorLocationProfile, value: string) => {
+        setEditForm((current) => ({
+            ...current,
+            location: {
+                ...(current.location || EMPTY_LOCATION),
+                [field]: value,
+            },
+        }));
+    };
+
     useEffect(() => {
         if (editForm.location?.province && editForm.location?.district && !availableDistricts.includes(editForm.location.district)) {
             setLocField("district", "");
         }
-    }, [editForm.location?.province]);
-
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+    }, [availableDistricts, editForm.location?.district, editForm.location?.province]);
 
     useEffect(() => {
         if (!isLoaded) return;
-        if (!isSignedIn) { router.push("/auth/login"); return; }
-        if (user?.unsafeMetadata?.role !== "vendor") { router.push("/User_profile_manager"); return; }
+        if (!isSignedIn) {
+            router.push("/auth/login");
+            return;
+        }
+        if (user?.unsafeMetadata?.role !== "vendor") {
+            router.push("/User_profile_manager");
+            return;
+        }
 
         const clerkUserId = user.id;
+        const metadataProfile = getVendorProfileSeed(user?.unsafeMetadata);
 
-        fetch(`${API_BASE}/vendor/profile?userId=${clerkUserId}`)
-            .then(async (res) => {
-                if (res.status === 404) { setNotFound(true); setIsLoading(false); return; }
-                if (!res.ok) throw new Error("Failed to load profile");
+        const applyLoadedProfile = (loaded: VendorProfile, missingRecord = false) => {
+            setProfile(loaded);
+            setEditForm(loaded);
+            setEditLat(loaded.location?.latitude ?? null);
+            setEditLng(loaded.location?.longitude ?? null);
+            setNotFound(missingRecord);
+            setIsEditing(missingRecord);
+            setIsLoading(false);
+        };
+
+        const restoreFromMetadata = async () => {
+            if (!metadataProfile) return false;
+
+            try {
+                const res = await fetch(`${API_BASE}/vendor/profile`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        clerkUserId,
+                        ...metadataProfile,
+                    }),
+                });
+
+                if (!res.ok) return false;
+
+                applyLoadedProfile(metadataProfile, false);
+                return true;
+            } catch {
+                return false;
+            }
+        };
+
+        const loadProfile = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/vendor/profile?userId=${clerkUserId}`);
+
+                if (res.status === 404) {
+                    const restored = await restoreFromMetadata();
+                    if (restored) return;
+
+                    if (metadataProfile) {
+                        applyLoadedProfile(metadataProfile, true);
+                        return;
+                    }
+
+                    applyLoadedProfile(
+                        {
+                            businessName: "",
+                            shortTagline: "",
+                            contactPhone: "",
+                            establishedYear: "",
+                            location: { ...EMPTY_LOCATION },
+                        },
+                        true,
+                    );
+                    return;
+                }
+
+                if (!res.ok) {
+                    throw new Error("Failed to load profile");
+                }
+
                 const data = await res.json();
-                const loaded: VendorProfile = {
-                    businessName: data.businessName || "",
-                    shortTagline: data.shortTagline || "",
-                    contactPhone: data.contactPhone || "",
-                    establishedYear: data.establishedYear ? String(data.establishedYear) : "",
-                    location: data.location ? {
-                        addressLine1: data.location.addressLine1 || "",
-                        addressLine2: data.location.addressLine2 || "",
-                        city: data.location.city || "",
-                        district: data.location.district || "",
-                        province: data.location.province || "",
-                        postalCode: data.location.postalCode || "",
-                        latitude: data.location.latitude || null,
-                        longitude: data.location.longitude || null,
-                    } : null,
-                };
-                setProfile(loaded);
-                setEditForm(loaded);
-                setEditLat(data.location?.latitude || null);
-                setEditLng(data.location?.longitude || null);
-                setIsLoading(false);
-            })
-            .catch(() => { setIsLoading(false); });
-    }, [isLoaded, isSignedIn, user]);
+                applyLoadedProfile(normalizeVendorProfile(data), false);
+            } catch {
+                if (metadataProfile) {
+                    applyLoadedProfile(metadataProfile, true);
+                } else {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        void loadProfile();
+    }, [API_BASE, isLoaded, isSignedIn, router, user]);
 
     const startEditing = () => {
         setEditForm(profile);
-        setEditLat(profile.location?.latitude || null);
-        setEditLng(profile.location?.longitude || null);
+        setEditLat(profile.location?.latitude ?? null);
+        setEditLng(profile.location?.longitude ?? null);
         setSuccessMsg("");
         setErrorMsg("");
         setIsEditing(true);
     };
 
     const cancelEditing = () => {
-        setIsEditing(false);
+        setEditForm(profile);
+        setEditLat(profile.location?.latitude ?? null);
+        setEditLng(profile.location?.longitude ?? null);
         setErrorMsg("");
+        setIsEditing(notFound);
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -143,8 +250,7 @@ export default function VendorProfilePage() {
         setErrorMsg("");
 
         try {
-            const payload = {
-                clerkUserId: user?.id,
+            const vendorProfilePayload = {
                 businessName: editForm.businessName,
                 shortTagline: editForm.shortTagline,
                 contactPhone: editForm.contactPhone,
@@ -164,46 +270,43 @@ export default function VendorProfilePage() {
             const res = await fetch(`${API_BASE}/vendor/profile`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({
+                    clerkUserId: user?.id,
+                    ...vendorProfilePayload,
+                }),
             });
 
-            if (res.ok) {
-                // Update displayed profile with saved values
-                const saved: VendorProfile = {
-                    ...editForm,
-                    location: {
-                        addressLine1: editForm.location?.addressLine1 || "",
-                        addressLine2: editForm.location?.addressLine2 || "",
-                        city: editForm.location?.city || "",
-                        district: editForm.location?.district || "",
-                        province: editForm.location?.province || "",
-                        postalCode: editForm.location?.postalCode || "",
-                        latitude: editLat,
-                        longitude: editLng,
-                    },
-                };
-                setProfile(saved);
-                setIsEditing(false);
-                setSuccessMsg("Profile updated successfully!");
-            } else {
+            if (!res.ok) {
                 const err = await res.json().catch(() => ({}));
                 setErrorMsg(err.message || "Failed to save. Please try again.");
+                return;
             }
+
+            if (user) {
+                try {
+                    await user.update({
+                        unsafeMetadata: {
+                            ...(user.unsafeMetadata as Record<string, unknown>),
+                            role: "vendor",
+                            vendorProfile: vendorProfilePayload,
+                        },
+                    });
+                } catch {
+                    // Backend save is the source of truth, so metadata sync failures are non-blocking.
+                }
+            }
+
+            const saved = normalizeVendorProfile(vendorProfilePayload);
+            setProfile(saved);
+            setEditForm(saved);
+            setNotFound(false);
+            setIsEditing(false);
+            setSuccessMsg("Profile updated successfully.");
         } catch {
             setErrorMsg("Network error. Please try again.");
         } finally {
             setIsSaving(false);
         }
-    };
-
-    const setField = (field: keyof Omit<VendorProfile, "location">, val: string) => {
-        setEditForm((f) => ({ ...f, [field]: val }));
-    };
-    const setLocField = (field: string, val: string) => {
-        setEditForm((f) => ({
-            ...f,
-            location: { ...(f.location || { addressLine1: "", addressLine2: "", city: "", district: "", province: "", postalCode: "", latitude: null, longitude: null }), [field]: val },
-        }));
     };
 
     if (!isLoaded || isLoading) {
@@ -220,12 +323,11 @@ export default function VendorProfilePage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="max-w-3xl mx-auto px-4 py-10">
-                {/* Header */}
                 <div className="flex items-start justify-between mb-8">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">Business Profile</h1>
                         <p className="text-sm text-gray-500 mt-1">
-                            {isEditing ? "Edit your business details below." : "Your business details as shown to travellers."}
+                            {isEditing || notFound ? "Edit your business details below." : "Your business details as shown to travellers."}
                         </p>
                     </div>
                     {!isEditing && !notFound && (
@@ -233,40 +335,34 @@ export default function VendorProfilePage() {
                             onClick={startEditing}
                             className="flex items-center gap-2 bg-teal-600 text-white px-5 py-2.5 rounded-lg hover:bg-teal-700 font-medium transition-colors text-sm"
                         >
-                            ✏️ Edit Profile
+                            Edit Profile
                         </button>
                     )}
                 </div>
 
-                {/* Messages */}
                 {successMsg && (
-                    <div className="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-medium flex items-center gap-2">
-                        ✅ {successMsg}
-                    </div>
-                )}
-                {errorMsg && (
-                    <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
-                        ❌ {errorMsg}
+                    <div className="mb-6 p-4 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm font-medium">
+                        {successMsg}
                     </div>
                 )}
 
-                {/* Not found state */}
-                {notFound ? (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-                        <p className="text-yellow-800 font-medium mb-2">⚠️ Vendor profile not found</p>
-                        <p className="text-yellow-700 text-sm">
-                            Your vendor account is registered with Clerk, but no matching record was found in our database.
-                            Please complete your vendor registration again.
-                        </p>
-                        <a
-                            href="/auth/vendor-register"
-                            className="mt-4 inline-block bg-teal-600 text-white px-6 py-2 rounded-lg hover:bg-teal-700 text-sm font-medium"
-                        >
-                            Complete Registration
-                        </a>
+                {errorMsg && (
+                    <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
+                        {errorMsg}
                     </div>
-                ) : !isEditing ? (
-                    /* ─── VIEW MODE ─── */
+                )}
+
+                {notFound && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center mb-6">
+                        <p className="text-yellow-800 font-medium mb-2">Vendor profile not found</p>
+                        <p className="text-yellow-700 text-sm">
+                            We could not find your vendor profile in the database, so we loaded any registration details we could recover.
+                            Review them below and save to finish setting up your business profile.
+                        </p>
+                    </div>
+                )}
+
+                {!isEditing && !notFound ? (
                     <div className="space-y-6">
                         <div className="bg-white rounded-xl shadow-sm p-6">
                             <h2 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-5">Business Details</h2>
@@ -292,9 +388,9 @@ export default function VendorProfilePage() {
                                         <ProfileField label="District" value={profile.location.district} />
                                         <ProfileField label="Province" value={profile.location.province} />
                                     </div>
-                                    {profile.location.latitude && profile.location.longitude && (
+                                    {profile.location.latitude !== null && profile.location.longitude !== null && (
                                         <div className="mt-2 p-3 bg-teal-50 rounded-lg text-sm text-teal-700">
-                                            📍 Map location: {profile.location.latitude.toFixed(5)}, {profile.location.longitude.toFixed(5)}
+                                            Map location: {profile.location.latitude.toFixed(5)}, {profile.location.longitude.toFixed(5)}
                                         </div>
                                     )}
                                 </div>
@@ -304,43 +400,66 @@ export default function VendorProfilePage() {
                         </div>
                     </div>
                 ) : (
-                    /* ─── EDIT MODE ─── */
                     <form onSubmit={handleSave} className="space-y-6">
                         <div className="bg-white rounded-xl shadow-sm p-6 space-y-5">
                             <h2 className="text-lg font-semibold text-gray-800 border-b pb-3">Business Details</h2>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="businessName">Business Name *</label>
-                                <input id="businessName" type="text" required
+                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="businessName">
+                                    Business Name *
+                                </label>
+                                <input
+                                    id="businessName"
+                                    type="text"
+                                    required
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                     value={editForm.businessName}
-                                    onChange={(e) => setField("businessName", e.target.value)} />
+                                    onChange={(e) => setField("businessName", e.target.value)}
+                                />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="shortTagline">Short Tagline</label>
-                                <input id="shortTagline" type="text"
+                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="shortTagline">
+                                    Short Tagline
+                                </label>
+                                <input
+                                    id="shortTagline"
+                                    type="text"
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                     value={editForm.shortTagline}
                                     onChange={(e) => setField("shortTagline", e.target.value)}
-                                    placeholder="e.g. Authentic Handcrafted Pottery" />
+                                    placeholder="e.g. Authentic Handcrafted Pottery"
+                                />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="contactPhone">Contact Phone *</label>
-                                    <input id="contactPhone" type="tel" required
+                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="contactPhone">
+                                        Contact Phone *
+                                    </label>
+                                    <input
+                                        id="contactPhone"
+                                        type="tel"
+                                        required
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                         value={editForm.contactPhone}
-                                        onChange={(e) => setField("contactPhone", e.target.value)} />
+                                        onChange={(e) => setField("contactPhone", e.target.value)}
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="establishedYear">Established Year</label>
-                                    <input id="establishedYear" type="number" min="1800" max={new Date().getFullYear()}
+                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="establishedYear">
+                                        Established Year
+                                    </label>
+                                    <input
+                                        id="establishedYear"
+                                        type="number"
+                                        min="1800"
+                                        max={new Date().getFullYear()}
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                         value={editForm.establishedYear}
                                         onChange={(e) => setField("establishedYear", e.target.value)}
-                                        placeholder="e.g. 2015" />
+                                        placeholder="e.g. 2015"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -349,65 +468,97 @@ export default function VendorProfilePage() {
                             <h2 className="text-lg font-semibold text-gray-800 border-b pb-3">Business Location</h2>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="addressLine1">Address Line 1 *</label>
-                                <input id="addressLine1" type="text" required
+                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="addressLine1">
+                                    Address Line 1 *
+                                </label>
+                                <input
+                                    id="addressLine1"
+                                    type="text"
+                                    required
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                     value={editForm.location?.addressLine1 || ""}
-                                    onChange={(e) => setLocField("addressLine1", e.target.value)} />
+                                    onChange={(e) => setLocField("addressLine1", e.target.value)}
+                                />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="addressLine2">Address Line 2</label>
-                                <input id="addressLine2" type="text"
+                                <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="addressLine2">
+                                    Address Line 2
+                                </label>
+                                <input
+                                    id="addressLine2"
+                                    type="text"
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                     value={editForm.location?.addressLine2 || ""}
                                     onChange={(e) => setLocField("addressLine2", e.target.value)}
-                                    placeholder="Apartment, suite, etc." />
+                                    placeholder="Apartment, suite, etc."
+                                />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="city">City *</label>
-                                    <input id="city" type="text" required
+                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="city">
+                                        City *
+                                    </label>
+                                    <input
+                                        id="city"
+                                        type="text"
+                                        required
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                         value={editForm.location?.city || ""}
-                                        onChange={(e) => setLocField("city", e.target.value)} />
+                                        onChange={(e) => setLocField("city", e.target.value)}
+                                    />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="postalCode">Postal Code</label>
-                                    <input id="postalCode" type="text"
+                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="postalCode">
+                                        Postal Code
+                                    </label>
+                                    <input
+                                        id="postalCode"
+                                        type="text"
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                         value={editForm.location?.postalCode || ""}
-                                        onChange={(e) => setLocField("postalCode", e.target.value)} />
+                                        onChange={(e) => setLocField("postalCode", e.target.value)}
+                                    />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="province">Province *</label>
-                                    <select id="province" required
+                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="province">
+                                        Province *
+                                    </label>
+                                    <select
+                                        id="province"
+                                        required
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                         value={editForm.location?.province || ""}
-                                        onChange={(e) => setLocField("province", e.target.value)}>
+                                        onChange={(e) => setLocField("province", e.target.value)}
+                                    >
                                         <option value="">Select Province</option>
-                                        {PROVINCES.map((prov) => (
-                                            <option key={prov} value={prov}>
-                                                {prov}
+                                        {PROVINCES.map((province) => (
+                                            <option key={province} value={province}>
+                                                {province}
                                             </option>
                                         ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="district">District *</label>
-                                    <select id="district" required
+                                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="district">
+                                        District *
+                                    </label>
+                                    <select
+                                        id="district"
+                                        required
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                                         value={editForm.location?.district || ""}
                                         onChange={(e) => setLocField("district", e.target.value)}
-                                        disabled={!editForm.location?.province}>
+                                        disabled={!editForm.location?.province}
+                                    >
                                         <option value="">{editForm.location?.province ? "Select District" : "Select Province First"}</option>
-                                        {availableDistricts.map((dist) => (
-                                            <option key={dist} value={dist}>
-                                                {dist}
+                                        {availableDistricts.map((district) => (
+                                            <option key={district} value={district}>
+                                                {district}
                                             </option>
                                         ))}
                                     </select>
@@ -422,9 +573,9 @@ export default function VendorProfilePage() {
                                         setEditLng(lng);
                                     }}
                                 />
-                                {editLat && editLng ? (
+                                {editLat !== null && editLng !== null ? (
                                     <p className="text-sm text-teal-600 mt-2 font-medium">
-                                        ✓ Location: {editLat.toFixed(5)}, {editLng.toFixed(5)}
+                                        Location: {editLat.toFixed(5)}, {editLng.toFixed(5)}
                                     </p>
                                 ) : (
                                     <p className="text-sm text-gray-400 mt-2">Click on the map to set your location.</p>
@@ -455,7 +606,15 @@ export default function VendorProfilePage() {
     );
 }
 
-function ProfileField({ label, value, placeholder = "—" }: { label: string; value: string; placeholder?: string }) {
+function ProfileField({
+    label,
+    value,
+    placeholder = "-",
+}: {
+    label: string;
+    value: string;
+    placeholder?: string;
+}) {
     return (
         <div>
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>

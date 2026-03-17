@@ -29,13 +29,14 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
       <Link href="/" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/') ? 'active' : ''}`}>Home</Link>
       <Link href="/marketplace" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/marketplace') ? 'active' : ''}`}>Marketplace</Link>
       <Link href="/events" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/events') ? 'active' : ''}`}>Events</Link>
+      <Link href="/dashboard/bookings" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/dashboard') ? 'active' : ''}`}>Dashboard</Link>
       <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/pro') ? 'active' : ''}`}>Pro</Link>
-      <Link href="/faq" className={`nav-link ${textColorClass} ${isActive('/faqs') ? 'active' : ''}`}>FAQs</Link>
+      <Link href="/faq" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/faq') ? 'active' : ''}`}>FAQs</Link>
       <Link href="/User_profile_manager" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/User_profile_manager') ? 'active' : ''}`}>My Profile</Link>
 
       <div className={`h-6 w-px ${textColorClass.includes('white') ? 'bg-white/30' : 'bg-gray-300'}`}></div>
 
-      <Link href="/cart" className={`relative p-2 rounded-full hover:bg-black/5 transition ${textColorClass}`}>
+      <Link href="/payments/cart" className={`relative p-2 rounded-full hover:bg-black/5 transition ${textColorClass}`}>
         <ShoppingBag size={20} />
         {cartCount > 0 && (
           <span className="absolute top-0 right-0 h-4 w-4 flex items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold">

@@ -107,6 +107,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <div className="radio-group">
           <label className="radio-label">
             <input
+              suppressHydrationWarning
               type="radio"
               name="type"
               checked={selectedType === "All"}
@@ -116,6 +117,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </label>
           <label className="radio-label">
             <input
+              suppressHydrationWarning
               type="radio"
               name="type"
               checked={selectedType === "experience"}
@@ -125,6 +127,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </label>
           <label className="radio-label">
             <input
+              suppressHydrationWarning
               type="radio"
               name="type"
               checked={selectedType === "product"}
@@ -139,7 +142,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
       <div className="filter-group">
         <h3 className="filter-title">Search</h3>
         <input
+          suppressHydrationWarning
           type="text"
+          autoComplete="off"
           placeholder="Search experiences..."
           className="custom-input"
           value={searchQuery}
@@ -162,7 +167,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             <div className="dropdown-list">
               <div className="location-search-sticky">
                 <input
+                  suppressHydrationWarning
                   type="text"
+                  autoComplete="off"
                   placeholder="Search provinces or districts..."
                   className="custom-input location-search-input"
                   value={locationSearch}
@@ -223,6 +230,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             categories.map((category) => (
               <label className="checkbox-label" key={category}>
                 <input
+                  suppressHydrationWarning
                   type="checkbox"
                   checked={selectedCategories.includes(category)}
                   onChange={() => handleCategoryChange(category)}
@@ -242,6 +250,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <div className="radio-group">
           <label className="radio-label">
             <input
+              suppressHydrationWarning
               type="radio"
               name="price"
               value="all"
@@ -252,6 +261,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </label>
           <label className="radio-label">
             <input
+              suppressHydrationWarning
               type="radio"
               name="price"
               value="under-2000"
@@ -262,6 +272,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </label>
           <label className="radio-label">
             <input
+              suppressHydrationWarning
               type="radio"
               name="price"
               value="2000-5000"
@@ -272,6 +283,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           </label>
           <label className="radio-label">
             <input
+              suppressHydrationWarning
               type="radio"
               name="price"
               value="5000-plus"
@@ -284,14 +296,18 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
         <div className="price-inputs price-inputs-row">
           <input
+            suppressHydrationWarning
             type="number"
+            autoComplete="off"
             placeholder="Min"
             className="custom-input price-input-field"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
           />
           <input
+            suppressHydrationWarning
             type="number"
+            autoComplete="off"
             placeholder="Max"
             className="custom-input price-input-field"
             value={maxPrice}

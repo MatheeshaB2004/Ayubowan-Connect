@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Calendar, MapPin, Users, Clock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { API_BASE_URL } from '@/lib/api';
 
 // Type definition based on backend response
 interface Booking {
@@ -18,7 +19,7 @@ interface Booking {
     };
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+const API_BASE = API_BASE_URL;
 
 export default function TripsPage() {
     const { user } = useAuth();

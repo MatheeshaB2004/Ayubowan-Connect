@@ -1224,6 +1224,7 @@ export class DashboardService {
         await this.prisma.availabilitySlot.create({
           data: {
             availabilityId: availabilityRecord.id,
+            listingId: slot.listingId,
             startTime: new Date(`${d.date}T${slot.start}`),
             endTime: new Date(`${d.date}T${slot.end}`)
           }

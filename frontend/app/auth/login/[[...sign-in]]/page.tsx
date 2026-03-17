@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSignIn, useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import "../login.css";
 
 export default function LoginPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const { isSignedIn, isLoaded: userLoaded } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Redirect if already signed in
   useEffect(() => {
@@ -22,6 +23,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const getSafeRedirectPath = (): string | null => {
+    const redirect = searchParams.get("redirect");
+    if (!redirect) return null;
+    // Only allow in-app relative paths to prevent open redirects.
+    if (!redirect.startsWith("/")) return null;
+    if (redirect.startsWith("//")) return null;
+    return redirect;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +49,36 @@ export default function LoginPage() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/");
+        router.push(getSafeRedirectPath() ?? "/");
       } else {
         setError("Sign in incomplete. Please try again.");
       }
     } catch (err: any) {
-      console.error("Login error:", err);
-      setError(err.errors?.[0]?.message || "Invalid email or password. Please try again.");
+      const clerkError = err?.errors?.[0];
+      const code = clerkError?.code ?? "";
+      const message = clerkError?.message ?? "";
+      const accountNotFound =
+        code === "form_identifier_not_found" ||
+        /couldn['’]t find your account/i.test(message);
+
+      if (accountNotFound) {
+        const redirectPath = getSafeRedirectPath();
+        const registerUrl = redirectPath
+          ? `/auth/register?error=not_registered&redirect=${encodeURIComponent(redirectPath)}`
+          : "/auth/register?error=not_registered";
+        router.push(registerUrl);
+        return;
+      }
+
+      const wrongCredentials =
+        code === "form_password_incorrect" ||
+        /invalid|incorrect|password/i.test(message);
+
+      if (!wrongCredentials) {
+        console.log("Unexpected login error:", err);
+      }
+
+      setError(wrongCredentials ? "Invalid email or password. Please try again." : (message || "Sign in failed. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -79,12 +112,15 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              <div id="clerk-captcha"></div>
+
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email address
                 </label>
                 <input
                   id="email"
+                  suppressHydrationWarning
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -108,6 +144,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="password"
+                  suppressHydrationWarning
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -118,6 +155,7 @@ export default function LoginPage() {
               </div>
 
               <button
+                suppressHydrationWarning
                 type="submit"
                 disabled={isLoading}
                 className="w-full bg-teal-600 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

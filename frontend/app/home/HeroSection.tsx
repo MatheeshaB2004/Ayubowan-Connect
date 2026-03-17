@@ -92,6 +92,8 @@ export default function HeroSection() {
 
           {/* Navigation Arrows */}
           <button
+            type="button"
+            suppressHydrationWarning
             onClick={prev}
             className="absolute left-3 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all hover:scale-105"
             aria-label="Previous slide"
@@ -100,6 +102,8 @@ export default function HeroSection() {
           </button>
 
           <button
+            type="button"
+            suppressHydrationWarning
             onClick={next}
             className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white text-gray-800 rounded-full w-10 h-10 flex items-center justify-center shadow-md transition-all hover:scale-105"
             aria-label="Next slide"
@@ -112,6 +116,8 @@ export default function HeroSection() {
             {heroSlides.map((_, i) => (
               <button
                 key={i}
+                type="button"
+                suppressHydrationWarning
                 onClick={() => goTo(i)}
                 className={`rounded-full transition-all duration-300 ${
                   i === current
@@ -132,6 +138,7 @@ export default function HeroSection() {
             <Search size={18} className="text-gray-400" />
             <input
               type="text"
+              suppressHydrationWarning
               placeholder="What do you want to experience?"
               className="w-full outline-none text-sm text-gray-700 bg-transparent"
               value={query}
@@ -142,13 +149,18 @@ export default function HeroSection() {
             <MapPin size={18} className="text-gray-400" />
             <input
               type="text"
+              suppressHydrationWarning
               placeholder="Location"
               className="w-full outline-none text-sm text-gray-700 bg-transparent"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
           </div>
-          <button className="bg-[#0d9488] hover:bg-[#0b7a6e] text-white font-semibold px-6 py-2 rounded-lg transition-colors text-sm">
+          <button
+            type="button"
+            suppressHydrationWarning
+            className="bg-[#0d9488] hover:bg-[#0b7a6e] text-white font-semibold px-6 py-2 rounded-lg transition-colors text-sm"
+          >
             Search
           </button>
         </div>

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { API_BASE_URL } from '@/lib/api';
 import {
   MapPin,
   Star,
@@ -13,10 +14,11 @@ import {
   Phone,
   Mail,
 } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import './ProductDetail.css';
 import ReviewSection from '../../review';
 import { useCart } from '@/context/CartContext';
+import toast from 'react-hot-toast';
 
 type ApiListing = {
   id: number;
@@ -24,6 +26,7 @@ type ApiListing = {
   shortDescription: string;
   longDescription?: string | null;
   priceMin: number;
+  stock?: number | null;
   ratingAverage: number;
   ratingCount: number;
   tags: string[];
@@ -53,18 +56,21 @@ type ProductSpecs = {
   care?: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+const API_BASE = API_BASE_URL;
 const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 
 export default function ProductDetailPage() {
   const { addToCart } = useCart();
   const params = useParams();
+  const router = useRouter();
   const idStr = Array.isArray(params?.id) ? params?.id[0] : params?.id;
 
   const [listing, setListing] = useState<ApiListing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [quantity, setQuantity] = useState(1);
+  const addedRef = useRef(false);
 
   useEffect(() => {
     if (!idStr) return;
@@ -149,6 +155,8 @@ export default function ProductDetailPage() {
   const includes = normalizeIncludes(listing.inclusions, listing.tags);
   const specs = normalizeSpecs(listing.specs);
   const vendorName = listing.vendor?.businessName ?? 'Vendor';
+  const currentStock = listing.stock ?? 0;
+  const isOutOfStock = currentStock <= 0;
   const locationLabel = listing.location
     ? `${listing.location.city}, ${listing.location.district}`
     : 'Sri Lanka';
@@ -264,15 +272,59 @@ export default function ProductDetailPage() {
             <div className="price-main-display">
               LKR {listing.priceMin.toLocaleString()}
             </div>
-            <div className="pricing-actions">
+
+            <p className={`text-sm font-medium mt-2 ${isOutOfStock ? 'text-red-600' : 'text-green-600'}`}>
+              {isOutOfStock ? 'Out of stock' : `✓ In Stock (${currentStock})`}
+            </p>
+
+            {/* Quantity selector */}
+            <div className="flex items-center gap-3 mt-4">
+              <span className="text-sm font-medium text-gray-700">Qty:</span>
               <button
-                className="add-to-cart-btn"
-                style={{ flex: 1 }}
-                onClick={() => listing && addToCart(listing.id, 1)}
+                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                disabled={isOutOfStock}
+                className="px-3 py-1 border rounded hover:bg-gray-100 transition"
               >
-                Add to cart
+                -
               </button>
-              <button className="buy-now-btn" style={{ flex: 1 }}>Buy now</button>
+              <span className="text-base font-semibold min-w-[1.5rem] text-center">{quantity}</span>
+              <button
+                onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
+                disabled={isOutOfStock || quantity >= currentStock}
+                className="px-3 py-1 border rounded hover:bg-gray-100 transition"
+              >
+                +
+              </button>
+            </div>
+
+            <div className="pricing-actions" style={{ marginTop: '1rem' }}>
+              <button
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ flex: 1 }}
+                disabled={isOutOfStock}
+                onClick={async () => {
+                  if (!listing || isOutOfStock) return;
+                  await addToCart(listing.id, quantity);
+                  addedRef.current = true;
+                  toast.success('Added to cart!');
+                }}
+              >
+                {isOutOfStock ? 'Out of stock' : 'Add to cart'}
+              </button>
+              <button
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-[#21a17a] text-white hover:bg-[#1b8b67] disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ flex: 1 }}
+                disabled={isOutOfStock}
+                onClick={async () => {
+                  if (!listing || isOutOfStock) return;
+                  if (!addedRef.current) {
+                    await addToCart(listing.id, quantity);
+                  }
+                  router.push('/payments/cart');
+                }}
+              >
+                {isOutOfStock ? 'Out of stock' : 'Buy now'}
+              </button>
             </div>
           </div>
 

@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { API_BASE_URL } from "@/lib/api";
 import "./page.css";
+
+const API_BASE = API_BASE_URL;
 
 export default function CreateListingsPage() {
 
@@ -52,7 +55,7 @@ export default function CreateListingsPage() {
 
   const fetchListings = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/vendor/${vendorId}/listings`);
+      const response = await fetch(`${API_BASE}/vendor/${vendorId}/listings`);
       const data = await response.json();
       setListings(data);
     } catch (error) {
@@ -62,7 +65,7 @@ export default function CreateListingsPage() {
 
   const fetchLocations = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/vendor/${vendorId}/locations`);
+      const response = await fetch(`${API_BASE}/vendor/${vendorId}/locations`);
       const data = await response.json();
       setLocations(data);
     } catch (error) {
@@ -72,7 +75,7 @@ export default function CreateListingsPage() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch("http://localhost:3001/vendor/categories");
+      const res = await fetch(`${API_BASE}/vendor/categories`);
       const data = await res.json();
       setCategories(data);
     } catch (err) {
@@ -333,7 +336,7 @@ export default function CreateListingsPage() {
                             <button
                               className="promote-btn"
                               onClick={async () => {
-                                await fetch(`http://localhost:3001/vendor/${vendorId}/listings/${listing.id}`, { method: "DELETE" });
+                                await fetch(`${API_BASE}/vendor/${vendorId}/listings/${listing.id}`, { method: "DELETE" });
                                 await fetchListings();
                               }}
                             >
@@ -591,8 +594,8 @@ export default function CreateListingsPage() {
                       if (fileInputRef.current?.files?.[0]) formDataToSend.append("image", fileInputRef.current.files[0]);
 
                       const url = editingListing
-                        ? `http://localhost:3001/vendor/${vendorId}/listings/${editingListing.id}`
-                        : `http://localhost:3001/vendor/${vendorId}/listings`;
+                        ? `${API_BASE}/vendor/${vendorId}/listings/${editingListing.id}`
+                        : `${API_BASE}/vendor/${vendorId}/listings`;
                       const response = await fetch(url, { method: editingListing ? "PUT" : "POST", body: formDataToSend });
                       const data = await response.json();
 

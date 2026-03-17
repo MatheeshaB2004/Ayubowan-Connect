@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSignUp, useUser } from "@clerk/nextjs";
 import LocationPicker from "@/components/maps/LocationPicker";
+import { API_BASE_URL } from "@/lib/api";
 import "../../login/login.css";
 
 // Sri Lankan Provinces
@@ -79,6 +80,23 @@ export default function VendorRegisterPage() {
     }
   }, [province, district, availableDistricts]);
 
+  const vendorProfileSeed = {
+    businessName,
+    shortTagline,
+    contactPhone,
+    establishedYear: establishedYear ? parseInt(establishedYear, 10) : null,
+    location: {
+      addressLine1,
+      addressLine2,
+      city,
+      district,
+      province,
+      postalCode,
+      latitude,
+      longitude,
+    },
+  };
+
   // Redirect if already signed in and profile is complete
   React.useEffect(() => {
     if (isSignedIn && user?.unsafeMetadata?.role) {
@@ -129,13 +147,14 @@ export default function VendorRegisterPage() {
         lastName: lastName,
         unsafeMetadata: {
           role: "vendor",
+          vendorProfile: vendorProfileSeed,
         },
       });
 
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setCurrentStep(4); // Move to verification
     } catch (err: any) {
-      console.error("Sign up error:", err);
+      console.log("Sign up error:", err);
       setError(err.errors?.[0]?.message || "Failed to create account. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -162,23 +181,10 @@ export default function VendorRegisterPage() {
         // After successful verification, register vendor in backend
         const payload = {
           userId: userId,
-          businessName,
-          shortTagline,
-          contactPhone,
-          establishedYear: establishedYear ? parseInt(establishedYear) : null,
-          location: {
-            addressLine1,
-            addressLine2,
-            city,
-            district,
-            province,
-            postalCode,
-            latitude,
-            longitude
-          }
+          ...vendorProfileSeed,
         };
 
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
+        const API_BASE = API_BASE_URL;
         const response = await fetch(`${API_BASE}/vendor/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -204,7 +210,7 @@ export default function VendorRegisterPage() {
         setError("Verification incomplete. Please try again.");
       }
     } catch (err: any) {
-      console.error("Verification error:", err);
+      console.log("Verification error:", err);
       setError(err.errors?.[0]?.message || "Invalid verification code.");
     } finally {
       setIsSubmitting(false);
@@ -258,7 +264,6 @@ export default function VendorRegisterPage() {
                 <p className="text-gray-600 mb-8 text-center">Set up your login details.</p>
 
                 <form onSubmit={handleNextStep1} className="space-y-5">
-                  <div id="clerk-captcha"></div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
@@ -425,6 +430,8 @@ export default function VendorRegisterPage() {
                 <p className="text-gray-600 mb-8 text-center">Where is your business located?</p>
 
                 <form onSubmit={handleSignUpSubmit}>
+                  <div id="clerk-captcha"></div>
+
                   <div className="form-group mb-5">
                     <label htmlFor="addressLine1" className="block text-sm font-medium text-gray-700 mb-1">Address Line 1 *</label>
                     <input

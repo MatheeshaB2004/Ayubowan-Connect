@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 import './ChatWidget.css';
 
 interface Message {
@@ -39,8 +40,14 @@ export default function ChatWidget() {
         setIsLoading(true);
 
         try {
+            const webhookUrl = getApiUrl('/chatbot/webhook');
+
+            if (!webhookUrl) {
+                throw new Error('Chatbot backend URL is not configured.');
+            }
+
             // Send to backend webhook
-            const response = await fetch('http://localhost:3001/chatbot/webhook', {
+            const response = await fetch(webhookUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
