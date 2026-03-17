@@ -20,7 +20,6 @@ import TopListings from "./TopListings";
 import RatingAnalytics from "./RatingAnalytics";
 import EngagementInsights from "./EngagementInsights";
 import GoalTracker from "./GoalTracker";
-import { useUser } from "@clerk/nextjs";
 import {
   Period,
   dashboardData,
@@ -28,6 +27,7 @@ import {
 } from './datas';
 import './page.css';
 import { Inter } from "next/font/google";
+import { useUser } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -346,6 +346,7 @@ export default function DashboardClient({
             </div>
             <div ref={dropdownRef} className="dropdown-container">
               <button
+                suppressHydrationWarning
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();

@@ -13,7 +13,7 @@ function AuthCallbackContent() {
     const error = searchParams.get("error");
 
     if (error) {
-      console.error("Authentication error:", error);
+      console.log("Authentication error:", error);
       router.push("/auth/login?error=" + error);
       return;
     }
