@@ -1,4 +1,40 @@
 import DashboardClient from "./DashboardClient";
+import { getApiUrl } from "@/lib/api";
+
+const emptySummary = {
+  experiences: 0,
+  bookings: 0,
+  products: 0,
+  events: 0,
+};
+
+const emptyRatings = {
+  avgRating: 0,
+  totalReviews: 0,
+  satisfaction: 0,
+  breakdown: [],
+};
+
+async function fetchJson<T>(path: string, fallback: T): Promise<T> {
+  const url = getApiUrl(path);
+
+  if (!url) {
+    return fallback;
+  }
+
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+
+    if (!response.ok) {
+      return fallback;
+    }
+
+    return (await response.json()) as T;
+  } catch (error) {
+    console.error(`Failed to load ${path}`, error);
+    return fallback;
+  }
+}
 
 export default async function Page({
   searchParams,
@@ -8,47 +44,27 @@ export default async function Page({
 
   const params = await searchParams;
   const period = params.period || "thisMonth";
+  const [
+    summary,
+    bookingTrend,
+    topListings,
+    ratings,
+    insights,
+    viewsVsBookingsJson,
+  ] = await Promise.all([
+    fetchJson(`/dashboard/vendor/summary?userId=2&period=${period}`, emptySummary),
+    fetchJson(`/dashboard/vendor/booking-trend?userId=2&period=${period}`, []),
+    fetchJson(`/dashboard/vendor/top-listings?userId=2&period=${period}`, []),
+    fetchJson(`/dashboard/vendor/ratings?userId=2&period=${period}`, emptyRatings),
+    fetchJson(`/dashboard/vendor/insights?userId=2&period=${period}`, []),
+    fetchJson(`/dashboard/vendor/views-vs-bookings?userId=2&period=${period}`, {
+      data: [],
+      conversionRate: 0,
+    }),
+  ]);
 
-  const summaryRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/summary?userId=2&period=${period}`,
-    { cache: "no-store" }
-  );
-
-  const trendRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/booking-trend?userId=2&period=${period}`,
-    { cache: "no-store" }
-  );
-
-  const topListingsRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/top-listings?userId=2&period=${period}`,
-    { cache: "no-store" }
-  );
-
-  const ratingRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/ratings?userId=2&period=${period}`,
-    { cache: "no-store" }
-  );
-
-  const insightsRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/insights?userId=2&period=${period}`,
-    { cache: "no-store" }
-  );
-
-  const viewsVsBookingsRes = await fetch(
-    `http://localhost:3001/dashboard/vendor/views-vs-bookings?userId=2&period=${period}`,
-    { cache: "no-store" }
-  );
-
-  const viewsVsBookingsJson = await viewsVsBookingsRes.json();
   const viewsVsBookings = viewsVsBookingsJson.data;
   const conversionRate = viewsVsBookingsJson.conversionRate;
-  const insights = await insightsRes.json();
-  const topListings = await topListingsRes.json();
-  console.log("TOP LISTINGS RESPONSE:", topListings);
-  const summary = await summaryRes.json();
-  const bookingTrend = await trendRes.json();
-  const ratings = await ratingRes.json();
-
 
   return (
     <DashboardClient

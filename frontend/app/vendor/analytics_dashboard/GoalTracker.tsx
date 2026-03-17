@@ -11,6 +11,7 @@ import {
 } from
     'lucide-react';
 import { useRouter } from "next/navigation";
+import { API_BASE_URL } from '@/lib/api';
 
 interface GoalData {
     exists: boolean;
@@ -21,6 +22,7 @@ interface GoalData {
     expiresAt?: string;
 }
 
+const API_BASE = API_BASE_URL;
 
 const USER_ID = 2;
 export default function GoalTracker() {
@@ -66,7 +68,7 @@ export default function GoalTracker() {
     const progress = Math.min(percentage, 100) / 100 * circumference;
 
     const fetchGoal = async () => {
-        const res = await fetch(`http://localhost:3001/vendor/dashboard?userId=${USER_ID}`);
+        const res = await fetch(`${API_BASE}/vendor/dashboard?userId=${USER_ID}`);
         const data = await res.json();
         setLocalGoal(data.goal);
         setHasGoal(data.goal?.exists ?? false);
@@ -77,7 +79,7 @@ export default function GoalTracker() {
     const saveGoal = async (val: number) => {
         const method = hasGoal ? "PATCH" : "POST";
 
-        await fetch("http://localhost:3001/vendor/dashboard/goal", {
+        await fetch(`${API_BASE}/vendor/dashboard/goal`, {
             method,
             headers: {
                 "Content-Type": "application/json",
@@ -93,7 +95,7 @@ export default function GoalTracker() {
 
     // DELETE GOAL
     const deleteGoal = async () => {
-        await fetch("http://localhost:3001/vendor/dashboard/goal", {
+        await fetch(`${API_BASE}/vendor/dashboard/goal`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",

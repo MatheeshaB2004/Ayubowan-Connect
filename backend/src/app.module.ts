@@ -13,6 +13,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventsModule } from './modules/events/events.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { OrdersModule } from './modules/orders/orders.module';
+import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { OrdersModule } from './modules/orders/orders.module';
     ChatbotModule,
     BookingModule,
     OrdersModule,
+    VendorManagementModule,
   ],
 })
 export class AppModule {}

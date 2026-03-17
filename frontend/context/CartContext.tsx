@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useUser } from '@clerk/nextjs';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '@/lib/api';
 
 /* =======================
    Types
@@ -63,9 +64,7 @@ export const useCart = () => {
 };
 
 const API_BASE =
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    'http://localhost:3001';
+    API_BASE_URL;
 
 /* =======================
    Provider

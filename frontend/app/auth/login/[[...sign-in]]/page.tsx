@@ -120,6 +120,7 @@ export default function LoginPage() {
                 </label>
                 <input
                   id="email"
+                  suppressHydrationWarning
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -143,6 +144,7 @@ export default function LoginPage() {
                 </div>
                 <input
                   id="password"
+                  suppressHydrationWarning
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -153,6 +155,7 @@ export default function LoginPage() {
               </div>
 
               <button
+                suppressHydrationWarning
                 type="submit"
                 disabled={isLoading}
                 className="w-full bg-teal-600 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
