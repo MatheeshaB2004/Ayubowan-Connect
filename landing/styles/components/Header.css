@@ -281,6 +281,25 @@
   margin-right: -0.5rem;
 }
 
+.app-home-button {
+  background-color: var(--lochinvar);
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.125rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.app-home-button:hover {
+  background-color: var(--lochinvar-dark);
+  box-shadow: 0 4px 6px -1px rgba(55, 150, 131, 0.2);
+}
+
 .btn-login {
   padding: 0.5rem 1.25rem;
   border-radius: 0.125rem;
@@ -357,6 +376,15 @@
     color: #9ca3af;
     text-transform: uppercase;
     margin-bottom: 0.5rem;
+}
+
+.mobile-menu-divider {
+  padding-top: 0.5rem;
+}
+
+.mobile-app-home-button {
+  display: block;
+  text-align: center;
 }
 
 .mobile-link {

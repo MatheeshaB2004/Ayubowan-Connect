@@ -24,7 +24,7 @@ const NavbarVendor: React.FC<NavbarVendorProps> = ({ textColorClass = '' }) => {
       <Link href="/" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/') ? 'active' : ''}`}>Home</Link>
       <Link href="/vendor/freeDashboad" className={`nav-link ${textColorClass} ${hoverColorClass} ${isActive('/vendor/dashboard') ? 'active' : ''}`}>Dashboard</Link>
       <Link href="/events" className={`nav-link ${textColorClass} ${hoverColorClass} ${isActive('/events') ? 'active' : ''}`}>Events</Link>
-      <Link href="/faq" className={`nav-link ${textColorClass} ${isActive('/faqs') ? 'active' : ''}`}>FAQs</Link>
+      <Link href="/faq" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/faq') ? 'active' : ''}`}>FAQs</Link>
       <Link href="/vendor/listings" className={`nav-link ${textColorClass} ${hoverColorClass} ${isActive('/vendor/listings') ? 'active' : ''}`}>My Listings</Link>
       <Link href="/vendor/profile" className={`nav-link ${textColorClass} ${hoverColorClass} ${isActive('/vendor/profile') ? 'active' : ''}`}>Business Profile</Link>
       <Link href="/create-listing" className="create-listing-btn">Create Listing</Link>

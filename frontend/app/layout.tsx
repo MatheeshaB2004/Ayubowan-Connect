@@ -1,3 +1,6 @@
+import './globals.css';
+import { ReactNode } from 'react';
+import { Toaster } from "react-hot-toast";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Arima } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -7,7 +10,6 @@ import ScrollToTopButton from "@/components/common/ScrollToTopButton";
 import ChatWidget from "@/components/common/ChatWidget";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
-import "./globals.css";
 import "../styles/Header.css";
 import "../styles/Footer.css";
 
@@ -31,11 +33,7 @@ export const metadata: Metadata = {
   description: "Connect with authentic Sri Lankan experiences",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider>
       <html lang="en">
@@ -52,6 +50,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <CartProvider>
+              <Toaster position="top-center" />
               <GlobalHeader />
               <main className="flex-grow pt-20">
                 {children}

@@ -1433,11 +1433,11 @@ export class DashboardService {
 
 
         if (duplicate) {
-          incomingIds.push(duplicate.id); // Mark duplicate's ID to keep
+          incomingIds.push(duplicate.id); 
           continue;
         }
 
-        // It is genuinely a brand new slot.
+        
         await this.prisma.availabilitySlot.create({
           data: {
             availabilityId: availability.id,
