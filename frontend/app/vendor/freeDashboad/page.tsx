@@ -15,9 +15,7 @@ type Ratings = {
 export default function Dashboard() {
     const { user, isLoaded } = useUser();
 
-    //console.log("CLERK ID:", user?.id);
     const userId = user?.id;
-
 
     const times: string[] = [];
 
@@ -30,17 +28,33 @@ export default function Dashboard() {
     }
     const [startTime, setStartTime] = useState("09:00");
     const [endTime, setEndTime] = useState("10:00");
+    const [selectedListing, setSelectedListing] = useState<number | null>(null);
+    const [maxGuests, setMaxGuests] = useState(5);
     const [activeTab, setActiveTab] = useState("All");
     const [isEditingCal, setIsEditingCal] = useState(false);
     const today = new Date();
     const [reviews, setReviews] = useState<any[]>([]);
     const [showAllReviews, setShowAllReviews] = useState(false);
+    const [isProVendor, setIsProVendor] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const [ratings, setRatings] = useState<Ratings>({
         avgRating: 0,
         totalReviews: 0,
         percentages: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
     });
+
+    const checkProVendor = async () => {
+
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/profile?userId=${userId}`
+        );
+
+        const data = await res.json();
+        console.log("API RESPONSE:", data);
+
+        setIsProVendor(data?.isProUser ?? false);
+    };
 
     const deleteReply = async (reviewId: number) => {
 
@@ -91,6 +105,72 @@ export default function Dashboard() {
         completedBookings: 0,
         events: 0,
     });
+    const fetchStats = async () => {
+        if (!userId) return;
+
+        try {
+            const res = await fetch(
+                `http://localhost:3001/dashboard/vendor/stats?userId=${userId}`
+            );
+
+            const text = await res.text();
+            const data = JSON.parse(text);
+
+            setStats(data);
+
+        } catch (error) {
+            console.error("Failed to fetch stats:", error);
+        }
+    };
+
+    const fetchRatings = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/rating-summary?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        setRatings({
+            avgRating: data?.avgRating ?? 0,
+            totalReviews: data?.totalReviews ?? 0,
+            percentages: data?.percentages ?? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        });
+    };
+
+    const fetchReviews = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        setReviews(data);
+    };
+
+    const fetchListings = async () => {
+        try {
+            const res = await fetch(
+                `http://localhost:3001/dashboard/vendor/listings?userId=${userId}`
+            );
+
+            const data = await res.json();
+            setListings(data);
+
+        } catch (error) {
+            console.error("Failed to fetch listings:", error);
+        }
+    };
+
+    const refreshDashboard = async () => {
+        await Promise.all([
+            fetchBookings(),
+            fetchStats(),
+            fetchRatings(),
+            fetchReviews(),
+            fetchListings()
+        ]);
+    };
+
 
     const [currentDate, setCurrentDate] = useState(today)
 
@@ -98,6 +178,8 @@ export default function Dashboard() {
         id?: number
         start: string
         end: string
+        listingId: number
+        maxGuests: number
     }
 
     type AvailabilityState = {
@@ -129,18 +211,12 @@ export default function Dashboard() {
             return;
         }
 
-        console.log("API RESPONSE:", data);
 
         const mapped = data.map((b: any) => {
 
             const start = b.slot?.startTime || null;
             const end = b.slot?.endTime || null;
             const date = b.slot?.date || null;
-
-            if (!isLoaded) {
-                return <div>Loading...</div>;
-            }
-
 
             return {
                 id: b.id,
@@ -149,7 +225,7 @@ export default function Dashboard() {
                 nights: 1,
                 price: b.totalPrice || 0,
                 guests: b.guests,
-                avatar: "https://i.pravatar.cc/150",
+                avatar: b.localTourist?.profilePhotoUrl || "/vendor_management/default.png",
 
                 slot: b.slot
                     ? {
@@ -177,6 +253,12 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
+        if (!isLoaded || !userId) return;
+
+        checkProVendor();
+    }, [isLoaded, userId]);
+
+    useEffect(() => {
         if (!userId) return;
         fetchBookings();
     }, [userId]);
@@ -186,7 +268,6 @@ export default function Dashboard() {
 
         const interval = setInterval(async () => {
             const now = new Date()
-            //const now = new Date(today.getFullYear(), today.getMonth() + 1, 1)
 
             if (
                 now.getMonth() !== currentDate.getMonth() ||
@@ -194,12 +275,12 @@ export default function Dashboard() {
 
 
             ) {
-                console.log("MONTH CHANGED — deleting previous availability")
+
                 const res = await fetch(
                     `http://localhost:3001/dashboard/vendor/availability/previous?userId=${userId}`,
                     { method: "DELETE" }
                 );
-                console.log("DELETE RESPONSE:", res.status)
+
                 setCurrentDate(now);
                 setAvailability({});
                 setIsEditingCal(false);
@@ -210,65 +291,17 @@ export default function Dashboard() {
     }, [currentDate])
 
     useEffect(() => {
-
-        if (!userId) return;
-
-        const fetchStats = async () => {
-            try {
-                const res = await fetch(
-                    `http://localhost:3001/dashboard/vendor/stats?userId=${userId}`
-                );
-
-                console.log("Status:", res.status);
-
-                const text = await res.text();
-                console.log("Response body:", text);
-
-                const data = JSON.parse(text);
-                setStats(data);
-
-            } catch (error) {
-                console.error("Failed to fetch stats:", error);
-            }
-        };
-
         fetchStats();
     }, [userId]);
 
     useEffect(() => {
         if (!userId) return;
-        const fetchReviews = async () => {
-            const res = await fetch(
-                `http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`
-            );
-
-            const data = await res.json();
-
-            setReviews(data);
-        };
-
-        fetchReviews();
+        fetchRatings();
     }, [userId]);
 
     useEffect(() => {
-
         if (!userId) return;
-
-        const fetchRatings = async () => {
-            const res = await fetch(
-                `http://localhost:3001/dashboard/vendor/rating-summary?userId=${userId}`
-            );
-
-            const data = await res.json();
-
-            setRatings({
-                avgRating: data?.avgRating ?? 0,
-                totalReviews: data?.totalReviews ?? 0,
-                percentages: data?.percentages ?? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-            });
-        };
-
-        fetchRatings();
+        fetchReviews();
     }, [userId]);
 
     useEffect(() => {
@@ -294,7 +327,9 @@ export default function Dashboard() {
                     mapped[day] = (d.slots || []).map((s: any) => ({
                         id: s.id,
                         start: s.start,
-                        end: s.end
+                        end: s.end,
+                        listingId: s.listingId,
+                        maxGuests: s.maxGuests
                     }));
                 });
             }
@@ -304,26 +339,22 @@ export default function Dashboard() {
 
         fetchAvailability();
 
-    }, [currentDate, userId]);   // ALWAYS SAME LENGTH
+    }, [currentDate, userId]);
 
 
     useEffect(() => {
         if (!userId) return;
-        const fetchListings = async () => {
-            try {
-                const res = await fetch(
-                    `http://localhost:3001/dashboard/vendor/listings?userId=${userId}`
-                );
-
-                const data = await res.json();
-                setListings(data);
-
-            } catch (error) {
-                console.error("Failed to fetch listings:", error);
-            }
-        };
-
         fetchListings();
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const interval = setInterval(() => {
+            refreshDashboard();
+        }, 10000); // every 10 seconds
+
+        return () => clearInterval(interval);
     }, [userId]);
 
     const handleAccept = async (id: number) => {
@@ -352,7 +383,7 @@ export default function Dashboard() {
             }
         });
 
-        fetchBookings();
+        refreshDashboard();
     };
 
     const handleDecline = async (id: number) => {
@@ -361,7 +392,7 @@ export default function Dashboard() {
             method: "PATCH"
         });
 
-        fetchBookings(); // reload
+        refreshDashboard();
     };
 
     const handleMarkDone = async (id: number) => {
@@ -369,7 +400,7 @@ export default function Dashboard() {
             method: "PATCH"
         });
 
-        fetchBookings(); // reload
+        refreshDashboard();
     };
 
     const toggleDate = (day: number) => {
@@ -440,9 +471,16 @@ export default function Dashboard() {
 
             const slots = copy[day] ? [...copy[day]] : []
 
+            if (!selectedListing) {
+                toast.error("Please select a listing first")
+                return prev
+            }
+
             slots.push({
                 start: startTime,
-                end: endTime
+                end: endTime,
+                listingId: selectedListing,
+                maxGuests: maxGuests
             })
 
             copy[day] = slots
@@ -481,10 +519,10 @@ export default function Dashboard() {
 
         return true;
     });
-
-    if (!isLoaded) {
+    if (!isLoaded || !userId) {
         return <div>Loading dashboard...</div>;
     }
+
 
     return (
         <div className="proplux-app">
@@ -518,12 +556,22 @@ export default function Dashboard() {
             <main className="proplux-main">
                 <header className="proplux-header">
                     <div className="proplux-header-text">
-                        <h1>Welcome back, Sarah!</h1>
+                        <h1>Welcome {user?.firstName || "Vendor"}!</h1>
                         <p>Here's what's happening with your properties today</p>
                     </div>
                     <div className="proplux-header-actions">
-                        <div className="proplux-live-badge"><span className="live-dot"></span>Live</div>
-                        <img src="https://i.pravatar.cc/150?img=47" alt="Sarah" className="proplux-avatar" />
+                        <div className="proplux-live-badge">
+                            <span className="live-dot"></span>Live
+                        </div>
+
+                        {user?.imageUrl ? (
+                            <img src={user.imageUrl} alt={user?.fullName || "Vendor"} className="proplux-avatar" />
+                        ) : (
+                            <div className="avatar-fallback">
+                                {user?.firstName?.[0]}
+                                {user?.lastName?.[0]}
+                            </div>
+                        )}
                     </div>
                 </header>
 
@@ -536,7 +584,22 @@ export default function Dashboard() {
                         <Link href="/vendor/listings" scroll={true}>
                             <button className="btn-light-green active">Create Listing</button>
                         </Link>
-                        <button className="proplux-btn-light">Create Events</button>
+                        <Link href="/events" scroll={true}>
+                            <button className="proplux-btn-light">Create Events</button>
+                        </Link>
+
+                        <button
+                            className="proplux-btn-light"
+                            onClick={() => {
+                                if (isProVendor) {
+                                    window.location.href = "/vendor/analytics_dashboard";
+                                } else {
+                                    setShowUpgradeModal(true);
+                                }
+                            }}
+                        >
+                            Analytics Dashboard
+                        </button>
                     </div>
                 </div>
 
@@ -763,7 +826,7 @@ export default function Dashboard() {
                                     <div className="review-header">
 
                                         <img
-                                            src="https://i.pravatar.cc/150"
+                                            src={r.user?.profilePhotoUrl || "/vendor_management/default.png"}
                                             className="review-avatar"
                                         />
 
@@ -776,6 +839,9 @@ export default function Dashboard() {
                                                     year: "numeric"
                                                 })}
                                             </span>
+                                            <div className="review-listing-name">
+                                                Reviewed: {r.listingTitle}
+                                            </div>
 
                                             <div className="stars">
                                                 {"⭐".repeat(r.rating)}
@@ -879,7 +945,7 @@ export default function Dashboard() {
                                                     `http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`,
                                                     { method: "DELETE" }
                                                 );
-                                                console.log("DELETE STATUS:", res.status);
+
 
                                                 setAvailability({});
                                                 setActiveDay(null);
@@ -898,7 +964,9 @@ export default function Dashboard() {
                                                     slots: slots.map(s => ({
                                                         id: s.id,
                                                         start: s.start,
-                                                        end: s.end
+                                                        end: s.end,
+                                                        listingId: s.listingId,
+                                                        maxGuests: s.maxGuests
                                                     }))
                                                 }));
 
@@ -919,7 +987,7 @@ export default function Dashboard() {
                                                 setIsEditingCal(false);
                                                 setActiveDay(null);
 
-                                                // --- ADD THESE LINES TO RE-SYNC STATE ---
+
                                                 const monthString = `${year}-${String(monthNumber).padStart(2, '0')}-01`;
                                                 const res = await fetch(`http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`);
                                                 const data = await res.json();
@@ -931,7 +999,9 @@ export default function Dashboard() {
                                                         mapped[day] = (d.slots || []).map((s: any) => ({
                                                             id: s.id,
                                                             start: s.start,
-                                                            end: s.end
+                                                            end: s.end,
+                                                            listingId: s.listingId,
+                                                            maxGuests: s.maxGuests
                                                         }));
                                                     });
                                                 }
@@ -984,7 +1054,22 @@ export default function Dashboard() {
                                     {currentDate.toLocaleString("default", { month: "long" })} {activeDay}
                                 </h4>
                                 {isEditingCal && (
-                                    <div className="add-slot-row" style={{ display: "flex", gap: "10px", marginTop: "15px", alignItems: "flex-end", flexWrap: "wrap" }}>
+                                    <div className="add-slot-row">
+                                        <div>
+                                            <label>Listing</label>
+                                            <select
+                                                value={selectedListing || ""}
+                                                onChange={(e) => setSelectedListing(Number(e.target.value))}
+                                            >
+                                                <option value="">Select Listing</option>
+                                                {listings.map(l => (
+                                                    <option key={l.id} value={l.id}>
+                                                        {l.title}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
                                         <div>
                                             <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>Start Time</label>
                                             <select value={startTime} onChange={e => setStartTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
@@ -996,6 +1081,16 @@ export default function Dashboard() {
                                             <select value={endTime} onChange={e => setEndTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
                                                 {times.map(t => <option key={t} value={t}>{t}</option>)}
                                             </select>
+                                        </div>
+
+                                        <div>
+                                            <label>Max Guests</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={maxGuests}
+                                                onChange={(e) => setMaxGuests(Number(e.target.value))}
+                                            />
                                         </div>
                                         <button
                                             type="button"
@@ -1030,19 +1125,23 @@ export default function Dashboard() {
                                                         marginBottom: "8px"
                                                     }}
                                                 >
+                                                    <div>
+                                                        <div className="slot-info">
+                                                            <div className="slot-time">{slot.start} – {slot.end}</div>
 
-                                                    <span style={{ fontWeight: 500 }}>
-                                                        {slot.start} – {slot.end}
-                                                    </span>
+                                                            <div className="slot-listing">
+                                                                {listings.find(l => l.id === slot.listingId)?.title}
+                                                            </div>
+
+                                                            <div className="slot-guests">
+                                                                Max Guests: {slot.maxGuests}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     {isEditingCal && (
                                                         <button
+                                                            className="slot-delete"
                                                             onClick={() => removeSlot(activeDay, idx)}
-                                                            style={{
-                                                                border: "none",
-                                                                background: "transparent",
-                                                                color: "red",
-                                                                cursor: "pointer"
-                                                            }}
                                                         >
                                                             🗑
                                                         </button>
@@ -1094,7 +1193,7 @@ export default function Dashboard() {
                                     <div className="review-header">
 
                                         <img
-                                            src="https://i.pravatar.cc/150"
+                                            src={r.user?.profilePhotoUrl || "/vendor_management/default.png"}
                                             className="review-avatar"
                                         />
 
@@ -1111,6 +1210,10 @@ export default function Dashboard() {
                                                     year: "numeric"
                                                 })}
                                             </span>
+
+                                            <div className="review-listing-name">
+                                                Reviewed: {r.listingTitle}
+                                            </div>
 
                                             <div className="stars">
                                                 {"⭐".repeat(r.rating)}
@@ -1203,6 +1306,39 @@ export default function Dashboard() {
 
                                 </div>
                             ))}
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+            {showUpgradeModal && (
+                <div className="upgrade-modal-overlay">
+
+                    <div className="upgrade-modal">
+
+                        <h2>Unlock Analytics 🚀</h2>
+
+                        <p>
+                            Upgrade to <strong>Pro</strong> to access powerful analytics,
+                            booking trends, performance insights and more.
+                        </p>
+
+                        <div className="upgrade-buttons">
+
+                            <Link href="/pro">
+                                <button className="btn-light-green">
+                                    Upgrade to Pro
+                                </button>
+                            </Link>
+
+                            <button
+                                className="btn-decline"
+                                onClick={() => setShowUpgradeModal(false)}
+                            >
+                                Maybe Later
+                            </button>
 
                         </div>
 
