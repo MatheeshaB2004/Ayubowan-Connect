@@ -31,17 +31,17 @@ const FALLBACK_INFO = [
 
 interface MockReview { id: number; initials: string; name: string; date: string; rating: number; comment: string; }
 const MOCK_REVIEWS: MockReview[] = [
-  { id: 1, initials: "SJ", name: "Sarah Johnson", date: "Feb 15, 2026", rating: 5, comment: "An absolutely incredible experience! The instructor was knowledgeable and patient. I learned so much about Sri Lankan culture and cuisine. Highly recommended!" },
+  { id: 1, initials: "LG", name: "Loganathan Ganesh", date: "Feb 15, 2026", rating: 5, comment: "An absolutely incredible experience! The instructor was knowledgeable and patient. I learned so much about our culture and cuisine. Highly recommended!" },
   { id: 2, initials: "MC", name: "Michael Chen",  date: "Feb 10, 2026", rating: 5, comment: "This was the highlight of my trip to Sri Lanka. Authentic, engaging, and so much fun. The small group size made it very personal." },
-  { id: 3, initials: "PP", name: "Priya Patel",   date: "Feb 5, 2026",  rating: 4, comment: "Great experience overall. The venue was beautiful and activities were well-organised. Would love to come back!" },
+  { id: 3, initials: "CE", name: "Chathuri Ekanayake",   date: "Jan 21, 2026",  rating: 4, comment: "Great experience overall. The venue was beautiful and activities were well-organised. Would love to come back!" },
 ];
 const MOCK_ATTENDEES = [
-  { initials: "EW", name: "Emma W.",  country: "Australia" },
-  { initials: "JD", name: "John D.",  country: "USA"       },
-  { initials: "LM", name: "Lisa M.",  country: "UK"        },
-  { initials: "DK", name: "David K.", country: "Canada"    },
-  { initials: "AS", name: "Anne S.",  country: "Germany"   },
-  { initials: "TR", name: "Tom R.",   country: "France"    },
+  { initials: "RN", name: "Ruqaiyah N.",  country: "Colombo, Sri Lanka" },
+  { initials: "MM", name: "Marie M.",  country: "Lyon, France"       },
+  { initials: "LM", name: "Lisa M.",  country: "Birmingham, UK"        },
+  { initials: "KP", name: "Kaushalya P.", country: "Matale, Sri Lanka"    },
+  { initials: "LY", name: "Lingyun Y.",   country: "Guangzhou, China"    },
+  { initials: "SR", name: "Shaun R.",  country: "Gampaha, Sri Lanka"   },
 ];
 
 
@@ -313,7 +313,7 @@ export default function EventDetailPage() {
                   <div className="w-5 h-5 rounded-full bg-[#e8f5f2] flex items-center justify-center flex-shrink-0 mt-0.5"><MapPin className="w-3 h-3 text-[#0d9488]" /></div>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 mb-0.5">Getting There</p>
-                    <p className="text-sm text-gray-500 leading-relaxed">The venue is easily accessible by public transport. Free parking is available on-site. Detailed directions will be sent upon registration.</p>
+                    <p className="text-sm text-gray-500 leading-relaxed">Please contact the vendor for more details regarding transportation options.</p>
                   </div>
                 </div>
               </Section>
@@ -352,7 +352,7 @@ export default function EventDetailPage() {
                       Vendors cannot register
                     </div>
                   )}
-                  <p className="text-[11px] text-gray-400 text-center mt-3">Free cancellation up to 24 hours before the event</p>
+                  <p className="text-[11px] text-gray-400 text-center mt-3">Cancellation up to 24 hours before the event</p>
                 </div>
 
                 {/* Contact Organiser */}
@@ -360,11 +360,11 @@ export default function EventDetailPage() {
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4">Contact Organiser</h3>
                     <div className="space-y-3 mb-4">
-                      <div className="flex items-center gap-2.5 text-sm text-gray-600"><Phone className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>+94 77 123 4567</span></div>
+                      <div className="flex items-center gap-2.5 text-sm text-gray-600"><Phone className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>+94 XX XXX XXXX</span></div>
                       <div className="flex items-center gap-2.5 text-sm text-gray-600"><Mail className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>contact@vendor.lk</span></div>
                       <div className="flex items-center gap-2.5 text-sm text-gray-600"><Globe className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>www.vendor.lk</span></div>
                     </div>
-                    <button className="w-full h-9 rounded-lg border border-[#0d9488] text-[#0d9488] text-sm font-semibold hover:bg-[#0d9488] hover:text-white transition-colors">Send Message</button>
+                    {/* <button className="w-full h-9 rounded-lg border border-[#0d9488] text-[#0d9488] text-sm font-semibold hover:bg-[#0d9488] hover:text-white transition-colors">Send Message</button> */}
                   </div>
                 )}
 
