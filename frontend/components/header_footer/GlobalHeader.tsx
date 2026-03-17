@@ -94,15 +94,13 @@ const GlobalHeader: React.FC = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="desktop-nav">
-            {pathname.startsWith('/vendor') ? (
-              <NavbarVendor textColorClass={textColorClass} />
-            ) : activeRole === 'traveller' ? (
-              <NavbarTraveller textColorClass={textColorClass} />
-            ) : (
-              <NavbarGuest textColorClass={textColorClass} />
-            )}
-          </div>
+          {activeRole === 'vendor' ? (
+            <NavbarVendor textColorClass={textColorClass} />
+          ) : isSignedIn ? (
+            <NavbarTraveller textColorClass={textColorClass} />
+          ) : (
+            <NavbarGuest textColorClass={textColorClass} />
+          )}
 
           {/* Mobile Menu Button */}
           <div className="md:hidden z-10">
