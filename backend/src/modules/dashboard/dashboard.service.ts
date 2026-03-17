@@ -2,6 +2,27 @@ import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BadRequestException } from '@nestjs/common';
 
+function getDateRange(period: string) {
+  const now = new Date();
+
+  let start: Date;
+  let end: Date = new Date();
+
+  if (period === "thisMonth") {
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (period === "last30Days") {
+    start = new Date();
+    start.setDate(now.getDate() - 30);
+  } else if (period === "lastQuarter") {
+    start = new Date();
+    start.setMonth(now.getMonth() - 3);
+  } else {
+    start = new Date(0);
+  }
+
+  return { start, end };
+}
+
 @Injectable()
 export class DashboardService {
   constructor(private prisma: PrismaService) { }
@@ -18,12 +39,17 @@ export class DashboardService {
       where: {
         listing: {
           vendorId: vendor.id,
+          listingType: "EXPERIENCE"
+        },
+        status: {
+          in: ["CONFIRMED", "COMPLETED"],
         },
       },
     });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
+
 
     return this.prisma.goal.create({
       data: {
@@ -63,6 +89,10 @@ export class DashboardService {
       where: {
         listing: {
           vendorId: vendor.id,
+          listingType: "EXPERIENCE"
+        },
+        status: {
+          in: ["CONFIRMED", "COMPLETED"],
         },
         createdAt: {
           gt: goal.createdAt,
@@ -180,11 +210,7 @@ export class DashboardService {
       prevStart.setMonth(start.getMonth() - 3);
     }
 
-    console.log("PERIOD:", period);
-    console.log("START:", start);
-    console.log("END:", end);
-    console.log("PREV START:", prevStart);
-    console.log("PREV END:", prevEnd);
+
 
     //Count Events 
     const currentEvents = await this.prisma.event.count({
@@ -197,7 +223,7 @@ export class DashboardService {
       },
     });
 
-    // LISTING VIEWS
+
 
     // get vendor listings
     const listings = await this.prisma.listing.findMany({
@@ -290,7 +316,14 @@ export class DashboardService {
     // Bookings 
     const currentBookings = await this.prisma.booking.count({
       where: {
-        listing: { vendorId: vendor.id },
+        listing: {
+          vendorId: vendor.id,
+          listingType: "EXPERIENCE"
+        },
+
+        status: {
+          notIn: ["REJECTED", "CANCELLED"],
+        },
         createdAt: {
           gte: start,
           lt: end,
@@ -300,7 +333,10 @@ export class DashboardService {
 
     const previousBookings = await this.prisma.booking.count({
       where: {
-        listing: { vendorId: vendor.id },
+        listing: {
+          vendorId: vendor.id,
+          listingType: "EXPERIENCE"
+        },
         createdAt: {
           gte: prevStart,
           lt: prevEnd,
@@ -323,7 +359,10 @@ export class DashboardService {
     // Estimated Revenue
     const revenueAgg = await this.prisma.booking.aggregate({
       where: {
-        listing: { vendorId: vendor.id },
+        listing: {
+          vendorId: vendor.id,
+          listingType: "EXPERIENCE"
+        },
         createdAt: { gte: start, lt: end },
       },
       _sum: { totalPrice: true },
@@ -391,7 +430,6 @@ export class DashboardService {
     }
     const listingsCount = currentListings;
 
-    // Make sure return object contains these
     return {
       experiences: currentExperiences,
       products: currentProducts,
@@ -406,7 +444,7 @@ export class DashboardService {
       avgRating,
       estimatedRevenue: revenueAgg._sum.totalPrice || 0,
       avgResponseMinutes,
-      avgResponseDisplay // Returning beautifully formatted display
+      avgResponseDisplay
     };
   }
 
@@ -436,6 +474,10 @@ export class DashboardService {
       where: {
         listing: {
           vendorId: vendor.id,
+          listingType: "EXPERIENCE"
+        },
+        status: {
+          notIn: ["REJECTED", "CANCELLED"],
         },
         createdAt: {
           gte: startDate,
@@ -446,7 +488,6 @@ export class DashboardService {
       },
     });
 
-    // Create a map of real booking counts
     const bookingMap: Record<string, number> = {};
 
     bookings.forEach((b) => {
@@ -454,7 +495,6 @@ export class DashboardService {
       bookingMap[key] = (bookingMap[key] || 0) + 1;
     });
 
-    // Generate all dates between startDate and today
     const result: { date: string; bookings: number }[] = [];
 
     const current = new Date(startDate);
@@ -465,7 +505,7 @@ export class DashboardService {
 
       result.push({
         date: key,
-        bookings: bookingMap[key] || 0, // fill missing days with 0
+        bookings: bookingMap[key] || 0,
       });
 
       current.setDate(current.getDate() + 1);
@@ -507,16 +547,21 @@ export class DashboardService {
     const listings = await this.prisma.listing.findMany({
       where: {
         vendorId: vendor.id,
-        createdAt: {
-          gte: start,
-          lt: end
-        },
+        listingType: "EXPERIENCE",
       },
       include: {
         bookings: {
-          where: { createdAt: { gte: start } },
-        },
-      },
+          where: {
+            createdAt: {
+              gte: start,
+              lt: end
+            },
+            status: {
+              in: ["CONFIRMED", "COMPLETED"]
+            }
+          }
+        }
+      }
     });
 
     const mapped = listings.map(l => ({
@@ -556,7 +601,6 @@ export class DashboardService {
         | "average"
         | "needs-improvement";
 
-      // PERFORMANCE TIER
       if (l.bookings >= minStrong && ratio >= 0.8) {
         performance = "high";
       } else if (l.bookings >= minStrong) {
@@ -676,16 +720,19 @@ export class DashboardService {
 
     const now = new Date();
     let start = new Date();
+    let end = new Date();
 
     if (period === "thisMonth") start = new Date(now.getFullYear(), now.getMonth(), 1);
     if (period === "last30Days") start.setDate(now.getDate() - 30);
     if (period === "lastQuarter") start.setMonth(now.getMonth() - 3);
 
-    // Card 1 — Demand Pattern
 
     const bookings = await this.prisma.booking.findMany({
       where: {
-        listing: { vendorId: vendor.id },
+        listing: {
+          vendorId: vendor.id,
+          listingType: "EXPERIENCE"
+        },
         createdAt: { gte: start },
       },
       select: { createdAt: true },
@@ -731,8 +778,6 @@ export class DashboardService {
       timingInsight = "Your bookings are still forming a pattern — consistency reveals peak days.";
     }
 
-    // Card 2 — Price Positioning
-
     const myListings = await this.prisma.listing.findMany({
       where: { vendorId: vendor.id },
       select: { priceMin: true },
@@ -771,7 +816,6 @@ export class DashboardService {
       }
     }
 
-    // ───────────── Card 3 — Revenue + Lost Revenue
 
     const earned = await this.prisma.booking.aggregate({
       where: {
@@ -785,7 +829,10 @@ export class DashboardService {
     const lost = await this.prisma.booking.aggregate({
       where: {
         listing: { vendorId: vendor.id },
-        createdAt: { gte: start },
+        createdAt: {
+          gte: start,
+          lt: end
+        },
         status: { in: ["CANCELLED", "REJECTED"] },
       },
       _sum: { totalPrice: true },
@@ -846,6 +893,9 @@ export class DashboardService {
     const bookings = await this.prisma.booking.findMany({
       where: {
         listingId: { in: listingIds },
+        status: {
+          notIn: ["REJECTED", "CANCELLED"],
+        },
         createdAt: { gte: start },
       },
       select: { createdAt: true },
@@ -880,16 +930,16 @@ export class DashboardService {
       cur.setDate(cur.getDate() + 1);
     }
 
-    // calculate totals
+
     const totalViews = result.reduce((sum, r) => sum + r.views, 0);
     const totalBookings = result.reduce((sum, r) => sum + r.bookings, 0);
 
     let conversionRate = 0;
 
     if (totalViews > 0) {
-      conversionRate = Math.round((totalBookings / totalViews) * 100);
+      const rawRate = (totalBookings / totalViews) * 100;
+      conversionRate = Math.min(Math.round(rawRate), 100);
     }
-
     return {
       data: result,
       totalViews,
@@ -902,7 +952,6 @@ export class DashboardService {
 
     let isRegisteredUser = false;
 
-    // Check if user exists as a registered localTourist
     if (userId) {
       const localTourist = await this.prisma.localTourist.findUnique({
         where: { userId }
@@ -942,7 +991,6 @@ export class DashboardService {
       })
     );
 
-    // Increment listing counter only for registered users
     if (isRegisteredUser) {
       txs.push(
         this.prisma.listing.update({
@@ -1004,7 +1052,7 @@ export class DashboardService {
     const upcomingCount = upcoming.length;
     const completedCount = completed.length;
 
-    // ---- Upcoming Message
+
     let upcomingMessage = "";
 
     if (upcomingCount === 0) {
@@ -1013,7 +1061,7 @@ export class DashboardService {
       upcomingMessage = `You have ${upcomingCount} upcoming event${upcomingCount > 1 ? "s" : ""}.`;
     }
 
-    // ---- Completed Message
+
     let completedMessage = "";
 
     if (completedCount === 0) {
@@ -1152,17 +1200,23 @@ export class DashboardService {
         listing: {
           vendorId: vendor.id,
         },
+
       },
       include: {
         user: {
           select: {
             fullName: true,
-          },
+            localTourist: {
+              select: {
+                profilePhotoUrl: true
+              }
+            }
+          }
         },
         listing: {
           select: {
-            title: true,
-          },
+            title: true
+          }
         },
         media: true
       },
@@ -1171,7 +1225,19 @@ export class DashboardService {
       },
     });
 
-    return reviews;
+    return reviews.map(r => ({
+      id: r.id,
+      rating: r.rating,
+      comment: r.comment,
+      createdAt: r.createdAt,
+      reply: r.reply,
+      listingTitle: r.listing.title,
+      user: {
+        fullName: r.user.fullName,
+        profilePhotoUrl: r.user.localTourist?.profilePhotoUrl || null
+      },
+      media: r.media
+    }))
   }
 
   async replyToReview(reviewId: number, reply: string) {
@@ -1315,10 +1381,9 @@ export class DashboardService {
       const existingSlots = availability.slots || [];
       const existingIds = existingSlots.map(s => s.id);
 
-      // We will track the IDs we want to KEEP in the database.
+
       const incomingIds: number[] = [];
 
-      // PROCESS EACH SLOT
       for (const slot of d.slots) {
         if (!slot.start || !slot.end) continue;
 
@@ -1331,14 +1396,13 @@ export class DashboardService {
         const endDate = new Date(d.date);
         endDate.setUTCHours(endH, endM, 0, 0);
 
-        // Safely parse the ID, even if the frontend sends it as a string
+
         const slotId = slot.id != null ? Number(slot.id) : null;
 
-        // UPDATE EXISTING SLOT IF ID IS MATCHED
         if (slotId && !isNaN(slotId)) {
           const existing = existingSlots.find(s => s.id === slotId);
           if (existing) {
-            incomingIds.push(slotId); // Mark to keep
+            incomingIds.push(slotId);
 
             const existingStart = `${pad(existing.startTime.getUTCHours())}:${pad(existing.startTime.getUTCMinutes())}`;
             const existingEnd = `${pad(existing.endTime.getUTCHours())}:${pad(existing.endTime.getUTCMinutes())}`;
@@ -1355,9 +1419,16 @@ export class DashboardService {
 
 
         const duplicate = existingSlots.find(s => {
+
           const sStart = `${pad(s.startTime.getUTCHours())}:${pad(s.startTime.getUTCMinutes())}`;
           const sEnd = `${pad(s.endTime.getUTCHours())}:${pad(s.endTime.getUTCMinutes())}`;
-          return sStart === slot.start && sEnd === slot.end;
+
+          return (
+            sStart === slot.start &&
+            sEnd === slot.end &&
+            s.listingId === slot.listingId
+          );
+
         });
 
 
@@ -1370,13 +1441,14 @@ export class DashboardService {
         await this.prisma.availabilitySlot.create({
           data: {
             availabilityId: availability.id,
+            listingId: slot.listingId,
             startTime: startDate,
-            endTime: endDate
+            endTime: endDate,
+            maxGuests: slot.maxGuests || 35
           }
         });
       }
 
-      // DELETE REMOVED SLOTS (Using all preserved IDs)
       const removedIds = existingIds.filter(id => !incomingIds.includes(id));
       if (removedIds.length > 0) {
         await this.prisma.availabilitySlot.deleteMany({
@@ -1389,7 +1461,7 @@ export class DashboardService {
   }
 
 
-  async getAvailability(userId: number, month: string) {
+  async getAvailability(userId: number, month: string, listingId?: number) {
 
     const vendor = await this.prisma.vendor.findUnique({
       where: { userId }
@@ -1413,12 +1485,15 @@ export class DashboardService {
 
     return dates.map(d => ({
       date: d.date,
-      slots: d.slots.map(s => ({
-        id: s.id,
-
-        start: `${pad(s.startTime.getUTCHours())}:${pad(s.startTime.getUTCMinutes())}`,
-        end: `${pad(s.endTime.getUTCHours())}:${pad(s.endTime.getUTCMinutes())}`,
-      }))
+      slots: d.slots
+        .filter(s => !listingId || s.listingId === listingId)
+        .map(s => ({
+          id: s.id,
+          listingId: s.listingId,
+          maxGuests: s.maxGuests,
+          start: `${pad(s.startTime.getUTCHours())}:${pad(s.startTime.getUTCMinutes())}`,
+          end: `${pad(s.endTime.getUTCHours())}:${pad(s.endTime.getUTCMinutes())}`,
+        }))
     }));
   }
 
@@ -1431,7 +1506,6 @@ export class DashboardService {
     if (!vendor) throw new Error("Vendor not found");
 
     const now = new Date();
-    //const now = new Date(2026, 3, 1);
 
     const startOfCurrentMonth = new Date(
       now.getFullYear(),
@@ -1450,13 +1524,12 @@ export class DashboardService {
     });
 
     const ids = records.map(r => r.id);
-    console.log("Deleting availability IDs:", ids);
 
     if (ids.length === 0) {
       return { message: "No previous availability found" };
     }
 
-    // delete slots first
+
     await this.prisma.availabilitySlot.deleteMany({
       where: {
         availabilityId: {
@@ -1478,7 +1551,7 @@ export class DashboardService {
   }
 
   async deleteAvailabilityForMonth(userId: number, month: string) {
-    console.log("DELETE MONTH AVAILABILITY CALLED");
+
 
     const vendor = await this.prisma.vendor.findUnique({
       where: { userId }
@@ -1528,7 +1601,6 @@ export class DashboardService {
     if (!vendor) throw new Error("Vendor not found");
 
     const now = new Date();
-    // temp data - const now = new Date("2026-03-07");
 
     const startOfMonth = new Date(
       now.getFullYear(),
@@ -1545,6 +1617,9 @@ export class DashboardService {
     const bookings = await this.prisma.booking.findMany({
       where: {
         vendorId: vendor.id,
+        listing: {
+          listingType: "EXPERIENCE"
+        },
         createdAt: {
           gte: startOfMonth,
           lt: startOfNextMonth
@@ -1567,12 +1642,10 @@ export class DashboardService {
       }
     });
 
-    // collect slot ids
     const slotIds = bookings
       .map(b => b.slotId)
       .filter((id): id is number => id !== null);
 
-    // fetch slots
     const slots = await this.prisma.availabilitySlot.findMany({
       where: {
         id: { in: slotIds }
@@ -1586,12 +1659,11 @@ export class DashboardService {
       }
     });
 
-    // create slot map
     const slotMap = Object.fromEntries(
       slots.map(s => [s.id, s])
     );
 
-    // map bookings
+
     return bookings.map(b => {
 
       const slot = b.slotId ? slotMap[b.slotId] : null;
@@ -1712,6 +1784,73 @@ export class DashboardService {
       }
     });
 
+  }
+
+  async checkProAccess(userId: number) {
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { userId }
+    });
+
+    if (!vendor) {
+      throw new Error("Vendor not found");
+    }
+
+    if (!vendor.isProUser) {
+      throw new ForbiddenException("Analytics available for PRO vendors only");
+    }
+
+    return { isPro: true };
+  }
+
+  async getRatingTrend(userId: string, period: string) {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    if (!vendor) return [];
+
+    const { start, end } = getDateRange(period);
+
+    const reviews = await this.prisma.review.findMany({
+      where: {
+        listing: { vendorId: vendor.id },
+        createdAt: {
+          gte: start,
+          lt: end,
+        },
+      },
+      select: {
+        rating: true,
+        createdAt: true,
+      },
+    });
+
+    const map: Record<string, number[]> = {};
+
+    reviews.forEach(r => {
+      const date = new Date(r.createdAt);
+
+      let key;
+
+      if (period === "lastQuarter") {
+        key = date.toLocaleString("default", { month: "short" });
+      } else {
+        const week = Math.ceil(date.getDate() / 7);
+        key = `Week ${week}`;
+      }
+
+      if (!map[key]) map[key] = [];
+      map[key].push(r.rating);
+    });
+
+    const trend = Object.entries(map).map(([label, ratings]) => ({
+      label,
+      avg:
+        ratings.reduce((a, b) => a + b, 0) / ratings.length,
+    }));
+
+    return trend;
   }
 
 }

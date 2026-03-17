@@ -98,7 +98,7 @@ export default function ExperienceDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    if (!idStr || viewLogged.current) return;
+     if (!idStr) return;
 
     viewLogged.current = true;
 
@@ -108,7 +108,7 @@ export default function ExperienceDetailPage() {
 
     fetch(url, { method: "POST" });
 
-  }, [idStr]);
+  }, [idStr,user]);
 
 
   useEffect(() => {

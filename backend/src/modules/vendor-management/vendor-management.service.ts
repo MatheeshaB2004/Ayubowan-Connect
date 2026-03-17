@@ -111,9 +111,7 @@ export class VendorManagementService {
     return { message: 'Profile updated successfully' };
   }
 
-  /**
-   * Register a vendor via Clerk (creates a Vendor record linked by clerkUserId)
-   */
+  /* Register a vendor via Clerk (creates a Vendor record linked by clerkUserId) */
   async registerVendorFromClerk(body: any) {
     const { userId: clerkUserId, businessName, shortTagline, contactPhone, establishedYear, location } = body;
 
@@ -124,13 +122,10 @@ export class VendorManagementService {
     // Check if vendor already registered
     const existing = await this.prisma.vendor.findUnique({ where: { clerkUserId } });
     if (existing) {
-      // Idempotent: if already registered, just return success
+      
       return { message: 'Already registered', vendorId: existing.id };
     }
 
-    // We need a backend User record — create a placeholder one if needed
-    // (The Vendor table requires a userId FK to users table)
-    // Use clerkUserId as a unique email placeholder so there's no conflict
     let backendUser = await this.prisma.user.findFirst({ where: { email: `clerk_${clerkUserId}@placeholder.local` } });
     if (!backendUser) {
       backendUser = await this.prisma.user.create({
@@ -205,9 +200,7 @@ export class VendorManagementService {
     return locations;
   }
 
-  /**
-   * Get available listing types (fixed enum)
-   */
+  /* Get available listing types */
   getAvailableListingTypes() {
     return [
       { value: 'EXPERIENCE', label: 'Experience' },
@@ -215,12 +208,10 @@ export class VendorManagementService {
     ];
   }
 
-  /**
-   * Create a new listing with validation
-   */
+  /* Create a new listing with validation*/
   async createListing(vendorId: number, dto: CreateListingDto, file?: Express.Multer.File,) {
     console.time("CREATE_LISTING_TOTAL");
-    // Validate category exists and is active
+  
     const category = await this.prisma.listingCategory.findUnique({
       where: { id: dto.categoryId },
     });
@@ -252,7 +243,7 @@ export class VendorManagementService {
       );
     }
 
-    // 1. Create the listing (Wait for this to get the ID)
+    // Create the listing 
     const listing = await this.prisma.listing.create({
       data: {
         vendorId,
@@ -292,7 +283,7 @@ export class VendorManagementService {
       },
     });
 
-    // Index listing in background
+    
     setImmediate(() => {
       this.prisma.listingSearchIndex.create({
         data: {
@@ -307,7 +298,6 @@ export class VendorManagementService {
       }).catch(err => console.error("Background Indexing Error:", err));
     });
 
-    // Handle image upload async
     if (file) {
       const media = await this.prisma.listingMedia.create({
         data: {
@@ -339,9 +329,7 @@ export class VendorManagementService {
     return listing;
   }
 
-  /**
-   * Update an existing listing with validation
-   */
+  /* Update an existing listing with validation*/
   async updateListing(
     vendorId: number,
     listingId: number,
@@ -578,51 +566,10 @@ export class VendorManagementService {
         },
       });
     } catch (error) {
-      // Unique constraint prevents duplicates
+    
       return null;
     }
   }
 
-  async updateVendorCapacity(vendorId: number, capacity: number) {
-
-    if (!capacity || capacity < 1) {
-      throw new BadRequestException("Capacity must be greater than 0");
-    }
-
-    // update all availability slots
-    await this.prisma.availabilitySlot.updateMany({
-      where: {
-        availability: {
-          is: {
-            vendorId: vendorId
-          }
-        }
-      },
-      data: {
-        maxGuests: capacity
-      }
-    });
-
-    return { message: "Capacity updated successfully" };
-  }
-
-  async getVendorCapacity(vendorId: number) {
-
-    const slot = await this.prisma.availabilitySlot.findFirst({
-      where: {
-        availability: {
-          is:{
-          vendorId: vendorId}
-        }
-      },
-      select: {
-        maxGuests: true
-      }
-    });
-
-    return {
-      capacity: slot?.maxGuests || null
-    };
-  }
 
 }

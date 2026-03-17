@@ -74,6 +74,27 @@ export class DashboardController {
     return this.service.getVendorSummary(userId, period || "thisMonth");
   }
 
+  @Get("pro-check")
+  checkProAccess(@Query("userId") userId: number) {
+    return this.service.checkProAccess(Number(userId));
+  }
+
+  @Get("profile")
+  async getVendorProfile(@Query("userId") clerkUserId: string) {
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId }
+    });
+
+    if (!vendor) {
+      throw new NotFoundException("Vendor not found");
+    }
+
+    return {
+      isProUser: vendor.isProUser
+    };
+  }
+
   @Get("booking-trend")
   async getBookingTrend(
     @Query("userId") clerkUserId: string,
@@ -139,21 +160,20 @@ export class DashboardController {
   async simulate(
     @Param("id") id: string,
     @Query("userId") clerkUserId?: string
-    
+
   ) {
-    console.log("SIMULATE VIEW CALLED → listing:", id, "time:", new Date());
+
     let userId: number | undefined = undefined;
 
     if (clerkUserId) {
 
       const user = await this.prisma.user.findFirst({
-        where: { email: clerkUserId } // because you store Clerk ID in email
+        where: { email: clerkUserId }
       });
-      console.log("CLERK USER ID FROM FRONTEND:", clerkUserId);
 
       if (user) {
 
-        // Check if that user is a LocalTourist
+
         const tourist = await this.prisma.localTourist.findUnique({
           where: { userId: user.id }
         });
@@ -244,8 +264,6 @@ export class DashboardController {
 
   @Post("reply")
   async reply(@Body() body: any) {
-    console.log("Reply request:", body);
-
     const { reviewId, reply } = body;
 
     return this.service.replyToReview(reviewId, reply);
@@ -279,6 +297,16 @@ export class DashboardController {
   completeBooking(@Param("id") id: string) {
     return this.service.completeBooking(Number(id));
   }
+
+  @Get("ratings-trend")
+  getRatingTrend(
+    @Query("userId") userId: string,
+    @Query("period") period: string
+  ) {
+    return this.service.getRatingTrend(userId, period);
+  }
 }
+
+
 
 

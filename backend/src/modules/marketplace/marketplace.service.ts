@@ -52,6 +52,7 @@ export class MarketplaceService {
     const priceBounds = this.resolvePriceBounds(minPrice, maxPrice, priceRange);
 
     const where: Prisma.ListingWhereInput = {
+       visibilityStatus: "PUBLISHED",
       ...(type ? { listingType: type } : {}),
       ...(categories?.length
         ? { category: { categoryName: { in: categories } } }

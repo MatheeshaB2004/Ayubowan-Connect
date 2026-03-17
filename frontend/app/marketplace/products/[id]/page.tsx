@@ -71,7 +71,7 @@ export default function ProductDetailPage() {
 
 
   useEffect(() => {
-    if (!idStr || viewLogged.current) return;
+     if (!idStr) return;
 
     viewLogged.current = true;
 
@@ -81,7 +81,7 @@ export default function ProductDetailPage() {
 
     fetch(url, { method: "POST" });
 
-  }, [idStr]);
+  }, [idStr,user]);
 
 
 
