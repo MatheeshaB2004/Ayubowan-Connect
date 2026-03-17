@@ -27,6 +27,7 @@ import {
 } from './datas';
 import './page.css';
 import { Inter } from "next/font/google";
+import { useUser } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -102,6 +103,8 @@ export default function DashboardClient({
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const data = dashboardData[selectedPeriod];
+  const { user } = useUser();
+  const displayName = user?.firstName || user?.fullName || 'Vendor';
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -261,7 +264,7 @@ export default function DashboardClient({
 
             <div>
               <h1 className="top-bar-title">
-                Welcome, Nimal 🤝
+                Welcome, {displayName} 🤝
               </h1>
               <p className="top-bar-subtitle">
                 Pro Vendor Dashboard · AyubowanConnect
