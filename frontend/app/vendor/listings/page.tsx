@@ -27,7 +27,6 @@ export default function CreateListingsPage() {
   const [formError, setFormError] = useState("");
   const [tagInput, setTagInput] = useState("");
   const [isPublished, setIsPublished] = useState(true);
-  const [vendorCapacity, setVendorCapacity] = useState("");
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
@@ -55,11 +54,9 @@ export default function CreateListingsPage() {
   });
 
   const [listings, setListings] = useState<any[]>([]);
-
   const [locations, setLocations] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState<"PUBLISHED" | "DRAFT">("PUBLISHED");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
-  const [capacityLocked, setCapacityLocked] = useState(false);
 
   useEffect(() => {
 
@@ -90,7 +87,6 @@ export default function CreateListingsPage() {
 
     fetchListings();
     fetchLocations(vendorId);
-    fetchCapacity();
 
   }, [vendorId]);
 
@@ -122,63 +118,6 @@ export default function CreateListingsPage() {
     console.log("LOCATIONS:", data);
 
     setLocations(data);
-  };
-
-
-
-  const fetchCapacity = async () => {
-    try {
-
-      console.log("FETCHING CAPACITY FOR VENDOR:", vendorId);
-
-      const res = await fetch(
-        `http://localhost:3001/vendor/${vendorId}/capacity`
-      );
-
-      const data = await res.json();
-
-      if (data.capacity) {
-        setVendorCapacity(data.capacity.toString());
-        setCapacityLocked(true);
-      }
-
-    } catch (error) {
-      console.error("Capacity fetch error", error);
-    }
-  };
-
-  const saveVendorCapacity = async () => {
-    try {
-      if (!vendorId) return;
-
-      console.log("SAVING CAPACITY FOR VENDOR:", vendorId);
-
-      const res = await fetch(
-        `http://localhost:3001/vendor/${vendorId}/capacity`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            capacity: Number(vendorCapacity)
-          }),
-        }
-      );
-
-      if (!res.ok) {
-        toast.error("Failed to update capacity");
-        return;
-      }
-
-      toast.success("Capacity updated successfully", {
-        className: "publish-toast"
-      });
-      await fetchListings();
-
-    } catch {
-      toast.error("Failed to update capacity");
-    }
   };
 
   const fetchCategories = async () => {
@@ -291,7 +230,7 @@ export default function CreateListingsPage() {
                   <h3>Create an Experience</h3>
                   <p>Offer unique cultural experiences for travelers to discover and book.</p>
 
-                  <button className="card-btn">Get Started →</button>
+                  
                 </div>
               </div>
 
@@ -305,7 +244,7 @@ export default function CreateListingsPage() {
                   <h3>Add a product</h3>
                   <p>List products in the marketplace for customers to explore and purchase.</p>
 
-                  <button className="card-btn">Get Started →</button>
+                  
                 </div>
               </div>
 
@@ -337,48 +276,7 @@ export default function CreateListingsPage() {
                 <p className="section-description">
                   Launch your unique Sri Lankan cultural experience and connect with travelers. Well-detailed listings get more engagement and visibility.
                 </p>
-                <div className="capacity-inline">
-
-                  <div className="capacity-inline-left">
-                    <i className="fa-solid fa-user-group"></i>
-                    <div>
-                      <strong>Guest Capacity</strong>
-
-                      <span className="capacity-note">
-                        Max guests per time slot • Applies to all experiences
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="capacity-inline-right">
-                    <input
-                      type="number"
-                      min="1"
-                      value={vendorCapacity}
-                      disabled={capacityLocked}
-                      onChange={(e) => setVendorCapacity(e.target.value)}
-                    />
-
-                    {capacityLocked ? (
-                      <button
-                        onClick={() => setCapacityLocked(false)}
-                        className="capacity-edit-btn"
-                      >
-                        Edit
-                      </button>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          await saveVendorCapacity();
-                          setCapacityLocked(true);
-                        }}
-                      >
-                        Save
-                      </button>
-                    )}
-                  </div>
-
-                </div>
+                
                 <ul className="feature-list">
                   <li><i className="fa-solid fa-check"></i> Title</li>
                   <li><i className="fa-solid fa-check"></i> Category</li>
@@ -421,13 +319,6 @@ export default function CreateListingsPage() {
                     <p>Manage your active listings and drafts</p>
                   </div>
                   <div className="offerings-right">
-                    <div className="search-filter-bar">
-                      <div className="search-input-wrap">
-                        <i className="fa-solid fa-search"></i>
-                        <input type="text" placeholder="Search listings..." readOnly aria-hidden="true" />
-                      </div>
-                      <button type="button" className="filter-btn">Filter</button>
-                    </div>
                     <div className="status-toggle">
                       <button
                         className={`status-btn ${listingFilter === "EXPERIENCE" ? "active" : ""}`}
@@ -506,12 +397,7 @@ export default function CreateListingsPage() {
                               {listing.shortDescription}
                             </p>
                           )}
-                          {listing.listingType === "EXPERIENCE" && (
-                            <div className="card-capacity">
-                              <i className="fa-solid fa-user-group"></i>
-                              <span>Maximum guests: {vendorCapacity}</span>
-                            </div>
-                          )}
+                          
 
 
                           {listing.listingType === "PRODUCT" && listing.stock !== null && (

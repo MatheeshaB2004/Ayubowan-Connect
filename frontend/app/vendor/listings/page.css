@@ -101,7 +101,7 @@ body {
   background: #f9fafb;
 }
 
-/* ===== BASE ===== */
+
 .listings-page {
   font-family: "Inter", "Segoe UI", sans-serif;
   color: var(--text);
@@ -279,7 +279,7 @@ input:checked+.slider:before {
   transform: translateY(-1px);
 }
 
-/* ===== BENTO GRID ===== */
+
 .bento-grid {
   display: flex;
   flex-direction: column;
@@ -332,7 +332,6 @@ input:checked+.slider:before {
   padding: 0 24px;
 }
 
-/* CARD */
 
 .create-card {
   position: relative;
@@ -354,13 +353,15 @@ input:checked+.slider:before {
   background: linear-gradient(135deg,
       rgba(227, 176, 75, 0.85),
       rgba(217, 164, 65, 0.75)),
-    url('/vendor_management/bg-1.jpeg') center/cover no-repeat;
+      url('/vendor_management/experience.png') center/cover no-repeat;
+    
 }
 
 .create-card.event {
   background:
     linear-gradient(135deg, rgba(13, 148, 136, .85), rgba(15, 118, 110, .85)),
-    url('/vendor_management/bg-2.jpeg') center/cover no-repeat;
+    url('/vendor_management/bg-1.jpeg') center/cover no-repeat;
+    
 }
 
 /* DARK OVERLAY */
@@ -409,7 +410,6 @@ input:checked+.slider:before {
   cursor: pointer;
 }
 
-/* ===== OPPORTUNITY CARD ===== */
 .opportunity-card {
   background: linear-gradient(135deg, var(--primary-soft) 0%, rgba(255, 255, 255, 0.95) 100%);
   border: 1px solid rgba(5, 150, 105, 0.15);
@@ -510,9 +510,6 @@ input:checked+.slider:before {
   }
 }
 
-
-
-/* ===== VENDOR TIP ===== */
 .vendor-tip {
   position: relative;
   display: flex;
@@ -616,7 +613,6 @@ input:checked+.slider:before {
   background: rgba(255, 255, 255, 0.28);
 }
 
-/* ===== CREATE LISTING SECTION ===== */
 .create-listing {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -751,7 +747,6 @@ input:checked+.slider:before {
   }
 }
 
-/* ===== OFFERINGS ===== */
 .offerings-header {
   display: flex;
   justify-content: space-between;
@@ -1101,7 +1096,6 @@ input:checked+.slider:before {
   transform: translateY(-1px);
 }
 
-/* ===== VIEW ALL ===== */
 .view-all-wrap {
   margin-top: var(--pad);
   text-align: center;
@@ -1157,7 +1151,6 @@ input:checked+.slider:before {
   margin: 0;
 }
 
-/* ===== MODAL ===== */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -1663,8 +1656,6 @@ body {
   border-radius: 0;
 
 }
-
-/* INCLUDED SECTION */
 
 .inclusions-container {
   display: flex;
