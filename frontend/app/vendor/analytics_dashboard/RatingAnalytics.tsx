@@ -140,12 +140,14 @@ export default function RatingAnalytics({
           <span>Rating Trend</span>
         </h4>
 
-        <div className="trend-line-wrapper">
+        <div className="trend-cards">
           {trend?.map((t, i) => (
-            <div key={i} className="trend-item">
-              <div className="trend-dot" />
-              <div className="trend-value">{t.avg.toFixed(1)}⭐</div>
-              <div className="trend-label">{t.label}</div>
+            <div key={i} className="trend-card">
+              <div className="trend-card-top">
+                <span className="trend-card-value">{t.avg.toFixed(1)}</span>
+                <span className="trend-star">★</span>
+              </div>
+              <div className="trend-card-label">{t.label}</div>
             </div>
           ))}
         </div>

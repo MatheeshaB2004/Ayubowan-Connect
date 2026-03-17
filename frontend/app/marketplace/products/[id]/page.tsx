@@ -74,7 +74,7 @@ export default function ProductDetailPage() {
 
 
   useEffect(() => {
-     if (!idStr) return;
+    if (!idStr) return;
 
     viewLogged.current = true;
 
@@ -84,7 +84,7 @@ export default function ProductDetailPage() {
 
     fetch(url, { method: "POST" });
 
-  }, [idStr,user]);
+  }, [idStr, user]);
 
 
   const [quantity, setQuantity] = useState(1);
@@ -281,9 +281,20 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <p className="product-intro" style={{ marginBottom: '2rem' }}>
-            {listing.longDescription ?? listing.shortDescription}
-          </p>
+          {listing.shortDescription && (
+            <p className="product-intro">
+              {listing.shortDescription}
+            </p>
+          )}
+
+          {listing.longDescription && (
+            <div className="cultural-story">
+              <h3 className="story-title">Cultural Story</h3>
+              <p className="story-text">
+                {listing.longDescription}
+              </p>
+            </div>
+          )}
 
           {/* Pricing */}
           <div className="pricing-card-container">

@@ -83,6 +83,7 @@ export default function CreateListingsPage() {
   }, [isLoaded, user]);
 
   useEffect(() => {
+    console.log("VENDOR ID:", vendorId);
     if (!vendorId) return;
 
     fetchListings();
@@ -102,6 +103,7 @@ export default function CreateListingsPage() {
     try {
       const response = await fetch(`http://localhost:3001/vendor/${vendorId}/listings`);
       const data = await response.json();
+      console.log("LISTINGS:", data);
       setListings(data);
     } catch (error) {
       console.error("Fetch error:", error);

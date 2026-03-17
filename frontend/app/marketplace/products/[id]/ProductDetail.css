@@ -1010,6 +1010,27 @@
   margin-bottom: 0.5rem;
 }
 
+.cultural-story {
+  margin-top: 2rem;
+  padding-top: 1.2rem;
+  margin-bottom: 2rem;
+  border-top: 1px solid #e5e7eb; /* subtle divider */
+}
+
+.story-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #111827 ;
+}
+
+.story-text {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #374151 !important;
+  
+}
+
 /* Footer Spacing */
 .footer-spacer {
   margin-bottom: 4rem;

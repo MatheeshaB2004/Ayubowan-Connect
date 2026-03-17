@@ -591,10 +591,10 @@
 
 /* Cultural Story */
 .story-card {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  background:  #ffffff !important;
   border-radius: 12px;
   padding: 2rem;
-  border: 1px solid #fbbf24;
+  border: 1px solid #ffffff;
 }
 
 .story-text {
