@@ -138,8 +138,8 @@ export default function CreateListingsPage() {
         </header>
         <div className="hero-tabs-wrapper">
           <div className="hero-tabs-card">
-            <button className="hero-tab active">Experiences</button>
-            <button className="hero-tab">Products</button>
+            <button suppressHydrationWarning className="hero-tab active">Experiences</button>
+            <button suppressHydrationWarning className="hero-tab">Products</button>
           </div>
         </div>
 
