@@ -13,6 +13,12 @@ export default function CreateListingsPage() {
   const listingsRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (window.location.hash === '#create-listing') {
+      setShowModal(true);
+    }
+  }, []);
+
   const [submitting, setSubmitting] = useState(false);
   const SHORT_DESC_MAX = 500;
   const [formError, setFormError] = useState("");
@@ -144,7 +150,7 @@ export default function CreateListingsPage() {
         </div>
 
         <div className="bento-grid">
-          <section className="create-new-section">
+          <section id="create-listing" className="create-new-section">
             <h2>Create a new listing or event</h2>
             <p>Capture travelers' interest by offering unique products, services, or activities.</p>
 
