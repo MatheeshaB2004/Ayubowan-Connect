@@ -9,6 +9,7 @@ import {
   Min,
   MaxLength,
 } from 'class-validator';
+import { VisibilityStatus } from "@prisma/client";
 import { Type, Transform } from 'class-transformer';
 import { ListingType } from '@prisma/client';
 
@@ -26,6 +27,10 @@ export class CreateListingDto {
   @IsEnum(ListingType)
   @IsNotEmpty()
   listingType: ListingType;
+
+  @IsOptional()
+  @IsEnum(VisibilityStatus)
+  visibilityStatus?: VisibilityStatus;
 
   @IsString()
   @IsNotEmpty()
@@ -65,6 +70,11 @@ export class CreateListingDto {
   @IsOptional()
   capacity?: number;
 
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  stock?: number;
+
   @IsString()
   @IsOptional()
   availability?: string;
@@ -97,4 +107,5 @@ export class CreateListingDto {
   @IsNumber()
   @IsOptional()
   displayPriority?: number;
+
 }

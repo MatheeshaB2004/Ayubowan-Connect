@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useUser } from "@clerk/nextjs";
 import {
     RocketIcon,
     PartyPopperIcon,
@@ -21,11 +22,13 @@ interface GoalData {
     state?: "ACTIVE" | "ACHIEVED" | "SMASHED";
     expiresAt?: string;
 }
+interface GoalTrackerProps {
+    goal: any;
+}
 
 const API_BASE = API_BASE_URL;
 
-const USER_ID = 2;
-export default function GoalTracker() {
+export default function GoalTracker({ goal }: GoalTrackerProps) {
     const router = useRouter();
     const [localGoal, setLocalGoal] = useState<GoalData | null>(null);
     const [customTarget, setCustomTarget] = useState(0);
@@ -34,10 +37,22 @@ export default function GoalTracker() {
     const [inputValue, setInputValue] = useState('');
     const [inputError, setInputError] = useState('');
     const [mounted, setMounted] = useState(false);
+    const { user, isLoaded } = useUser();
+    const userId = user?.id;
 
+    const fetchGoal = async () => {
+        const res = await fetch(`${API_BASE}/dashboard/vendor?userId=${userId}`);
+        const data = await res.json();
+        setLocalGoal(data.goal);
+        setHasGoal(data.goal?.exists ?? false);
+        setCustomTarget(data.goal?.target ?? 0);
+    };
+    
     useEffect(() => {
+        if (!isLoaded || !userId) return;
+
         fetchGoal();
-    }, []);
+    }, [isLoaded, userId]);
 
     useEffect(() => {
         if (localGoal) {
@@ -46,6 +61,14 @@ export default function GoalTracker() {
             setInputValue(String(localGoal.target || ""));
         }
     }, [localGoal]);
+
+    useEffect(() => {
+        if (!goal) return;
+
+        setLocalGoal(goal);
+        setHasGoal(goal.exists ?? false);
+        setCustomTarget(goal.target ?? 0);
+    }, [goal]);
 
     useEffect(() => {
         setMounted(true);
@@ -67,25 +90,19 @@ export default function GoalTracker() {
     const circumference = 2 * Math.PI * radius;
     const progress = Math.min(percentage, 100) / 100 * circumference;
 
-    const fetchGoal = async () => {
-        const res = await fetch(`${API_BASE}/vendor/dashboard?userId=${USER_ID}`);
-        const data = await res.json();
-        setLocalGoal(data.goal);
-        setHasGoal(data.goal?.exists ?? false);
-        setCustomTarget(data.goal?.target ?? 0);
-    };
+
 
     // CREATE / UPDATE GOAL
     const saveGoal = async (val: number) => {
         const method = hasGoal ? "PATCH" : "POST";
 
-        await fetch(`${API_BASE}/vendor/dashboard/goal`, {
+        await fetch(`${API_BASE}/dashboard/vendor/goal`, {
             method,
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                userId: USER_ID,
+                userId: userId,
                 target: val,
             }),
         });
@@ -95,13 +112,13 @@ export default function GoalTracker() {
 
     // DELETE GOAL
     const deleteGoal = async () => {
-        await fetch(`${API_BASE}/vendor/dashboard/goal`, {
+        await fetch(`${API_BASE}/dashboard/vendor/goal`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                userId: USER_ID,
+                userId: userId,
             }),
         });
 
@@ -259,34 +276,36 @@ export default function GoalTracker() {
                                 Monthly Goal
                             </p>
                         </div>
-                        <div className="goal-actions">
-                            <motion.button
-                                whileTap={{
-                                    scale: 0.95
-                                }}
-                                onClick={() => {
-                                    setInputValue(String(customTarget));
-                                    setIsEditing(true);
-                                }}
-                                className="goal-edit-button">
+                        {!isExpired && (
+                            <div className="goal-actions">
+                                <motion.button
+                                    whileTap={{
+                                        scale: 0.95
+                                    }}
+                                    onClick={() => {
+                                        setInputValue(String(customTarget));
+                                        setIsEditing(true);
+                                    }}
+                                    className="goal-edit-button">
 
-                                <PencilIcon className="goal-edit-icon" />
-                                <span className="goal-edit-text">
-                                    Edit Goal
-                                </span>
-                            </motion.button>
+                                    <PencilIcon className="goal-edit-icon" />
+                                    <span className="goal-edit-text">
+                                        Edit Goal
+                                    </span>
+                                </motion.button>
 
-                            <motion.button
-                                whileTap={{ scale: 0.95 }}
-                                onClick={deleteGoal}
-                                className="goal-edit-button"
-                            >
-                                <XIcon className="goal-edit-icon" />
-                                <span className="goal-edit-text">
-                                    Delete Goal
-                                </span>
-                            </motion.button>
-                        </div>
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={deleteGoal}
+                                    className="goal-edit-button"
+                                >
+                                    <XIcon className="goal-edit-icon" />
+                                    <span className="goal-edit-text">
+                                        Delete Goal
+                                    </span>
+                                </motion.button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Main content */}
@@ -313,7 +332,15 @@ export default function GoalTracker() {
                                     cy={size / 2}
                                     r={radius}
                                     fill="none"
-                                    stroke={isSmashed ? "#FFD700" : isComplete ? "#4db89e" : "#379683"}
+                                    stroke={
+                                        isExpired
+                                            ? "#666"
+                                            : isSmashed
+                                                ? "#FFD700"
+                                                : isComplete
+                                                    ? "#4db89e"
+                                                    : "#379683"
+                                    }
                                     strokeWidth={strokeWidth}
                                     strokeLinecap="round"
                                     strokeDasharray={circumference}

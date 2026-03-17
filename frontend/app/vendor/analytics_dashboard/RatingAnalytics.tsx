@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { StarIcon } from 'lucide-react';
+import { LineChartIcon } from 'lucide-react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Doughnut } from 'react-chartjs-2';
 import { RatingBreakdown } from './datas';
@@ -11,21 +12,23 @@ interface RatingAnalyticsProps {
   totalReviews: number;
   satisfaction: number;
   breakdown: RatingBreakdown[];
+  trend: { label: string; avg: number }[];
 }
 export default function RatingAnalytics({
   avgRating,
   totalReviews,
   satisfaction,
-  breakdown
+  breakdown,
+  trend
 }: RatingAnalyticsProps) {
   const donutData = {
     datasets: [
-    {
-      data: [satisfaction, 100 - satisfaction],
-      backgroundColor: ['#379683', '#e2e8f0'],
-      borderWidth: 0,
-      hoverOffset: 0
-    }]
+      {
+        data: [satisfaction, 100 - satisfaction],
+        backgroundColor: ['#379683', '#e2e8f0'],
+        borderWidth: 0,
+        hoverOffset: 0
+      }]
 
   };
   const donutOptions = {
@@ -86,21 +89,21 @@ export default function RatingAnalytics({
 
         {/* Star breakdown bars */}
         <div className="rating-breakdown">
-          {breakdown.map((item, index) =>
-          <motion.div
-            key={item.stars}
-            initial={{
-              opacity: 0,
-              x: 16
-            }}
-            animate={{
-              opacity: 1,
-              x: 0
-            }}
-            transition={{
-              delay: 0.3 + index * 0.07
-            }}
-            className="rating-breakdown-item">
+          {(Array.isArray(breakdown) ? breakdown : []).map((item, index) =>
+            <motion.div
+              key={item.stars}
+              initial={{
+                opacity: 0,
+                x: 16
+              }}
+              animate={{
+                opacity: 1,
+                x: 0
+              }}
+              transition={{
+                delay: 0.3 + index * 0.07
+              }}
+              className="rating-breakdown-item">
 
               <div className="rating-breakdown-stars">
                 <span className="rating-breakdown-stars-value">
@@ -110,17 +113,17 @@ export default function RatingAnalytics({
               </div>
               <div className="rating-breakdown-bar-container">
                 <motion.div
-                initial={{
-                  width: 0
-                }}
-                animate={{
-                  width: `${item.percentage}%`
-                }}
-                transition={{
-                  delay: 0.4 + index * 0.07,
-                  duration: 0.5
-                }}
-                className="rating-breakdown-bar" />
+                  initial={{
+                    width: 0
+                  }}
+                  animate={{
+                    width: `${item.percentage}%`
+                  }}
+                  transition={{
+                    delay: 0.4 + index * 0.07,
+                    duration: 0.5
+                  }}
+                  className="rating-breakdown-bar" />
 
               </div>
               <span className="rating-breakdown-count">
@@ -129,6 +132,24 @@ export default function RatingAnalytics({
               </span>
             </motion.div>
           )}
+        </div>
+      </div>
+      <div className="rating-trend-section">
+        <h4 className="trend-title">
+          <LineChartIcon size={20} color="gold" />
+          <span>Rating Trend</span>
+        </h4>
+
+        <div className="trend-cards">
+          {trend?.map((t, i) => (
+            <div key={i} className="trend-card">
+              <div className="trend-card-top">
+                <span className="trend-card-value">{t.avg.toFixed(1)}</span>
+                <span className="trend-star">★</span>
+              </div>
+              <div className="trend-card-label">{t.label}</div>
+            </div>
+          ))}
         </div>
       </div>
     </motion.div>);

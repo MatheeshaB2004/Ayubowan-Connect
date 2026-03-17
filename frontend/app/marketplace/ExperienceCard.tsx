@@ -29,7 +29,7 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({
   const safeImageUrl = imageUrl ?? '/assets/photos/B4.webp';
 
   return (
-    <Link href={detailLink} className="experience-card block group">
+    <Link href={detailLink} prefetch={false} className="experience-card block group">
       <div className="card-image-container">
         <Image
           src={safeImageUrl}

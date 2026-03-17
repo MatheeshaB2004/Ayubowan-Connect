@@ -410,3 +410,16 @@
   cursor: not-allowed;
   transform: none;
 }
+
+.vendor-reply {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border-left: 4px solid #22c55e;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.vendor-reply strong {
+  color: #166534;
+}
