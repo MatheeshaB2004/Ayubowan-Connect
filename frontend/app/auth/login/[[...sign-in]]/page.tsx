@@ -75,7 +75,7 @@ export default function LoginPage() {
         /invalid|incorrect|password/i.test(message);
 
       if (!wrongCredentials) {
-        console.error("Unexpected login error:", err);
+        console.log("Unexpected login error:", err);
       }
 
       setError(wrongCredentials ? "Invalid email or password. Please try again." : (message || "Sign in failed. Please try again."));
