@@ -154,7 +154,7 @@ export default function VendorRegisterPage() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setCurrentStep(4); // Move to verification
     } catch (err: any) {
-      console.error("Sign up error:", err);
+      console.log("Sign up error:", err);
       setError(err.errors?.[0]?.message || "Failed to create account. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -210,7 +210,7 @@ export default function VendorRegisterPage() {
         setError("Verification incomplete. Please try again.");
       }
     } catch (err: any) {
-      console.error("Verification error:", err);
+      console.log("Verification error:", err);
       setError(err.errors?.[0]?.message || "Invalid verification code.");
     } finally {
       setIsSubmitting(false);

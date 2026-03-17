@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
       setSuccess("Password reset code sent! Check your email.");
       setStep("reset");
     } catch (err: any) {
-      console.error("Reset error:", err);
+      console.log("Reset error:", err);
       setError(err.errors?.[0]?.message || "Failed to send reset code. Please try again.");
     } finally {
       setIsLoading(false);
@@ -77,7 +77,7 @@ export default function ForgotPasswordPage() {
         setError("Password reset incomplete. Please try again.");
       }
     } catch (err: any) {
-      console.error("Reset error:", err);
+      console.log("Reset error:", err);
       setError(err.errors?.[0]?.message || "Invalid code or failed to reset password.");
     } finally {
       setIsLoading(false);
