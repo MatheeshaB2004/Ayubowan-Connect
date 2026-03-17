@@ -41,7 +41,7 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
     const userId = user?.id;
 
     const fetchGoal = async () => {
-        const res = await fetch(`${API_BASE}/vendor/dashboard?userId=${userId}`);
+        const res = await fetch(`${API_BASE}/dashboard/vendor?userId=${userId}`);
         const data = await res.json();
         setLocalGoal(data.goal);
         setHasGoal(data.goal?.exists ?? false);
@@ -96,7 +96,7 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
     const saveGoal = async (val: number) => {
         const method = hasGoal ? "PATCH" : "POST";
 
-        await fetch(`${API_BASE}/vendor/dashboard/goal`, {
+        await fetch(`${API_BASE}/dashboard/vendor/goal`, {
             method,
             headers: {
                 "Content-Type": "application/json",
@@ -112,7 +112,7 @@ export default function GoalTracker({ goal }: GoalTrackerProps) {
 
     // DELETE GOAL
     const deleteGoal = async () => {
-        await fetch(`${API_BASE}/vendor/dashboard/goal`, {
+        await fetch(`${API_BASE}/dashboard/vendor/goal`, {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
