@@ -42,7 +42,6 @@ export default function PerformanceTrends({
     const searchParams = useSearchParams();
     const period = searchParams.get("period");
     const shouldGroupWeekly = period === "lastQuarter";
-    console.log("bookingTrend:", bookingTrend);
     const lineData = {
         labels: safeBookingTrend.map((d) => {
             const date = new Date(d.date);
@@ -63,8 +62,8 @@ export default function PerformanceTrends({
                 backgroundColor: (ctx: any) => {
                     const canvas = ctx.chart.ctx;
                     const gradient = canvas.createLinearGradient(0, 0, 0, 240);
-                    gradient.addColorStop(0, 'rgba(55,150,131,0.35)');
-                    gradient.addColorStop(1, 'rgba(55,150,131,0)');
+                    gradient.addColorStop(0, 'rgba(79,209,197,0.55)');
+                    gradient.addColorStop(1, 'rgba(79,209,197,0.05)');
                     return gradient;
                 },
                 tension: 0.4

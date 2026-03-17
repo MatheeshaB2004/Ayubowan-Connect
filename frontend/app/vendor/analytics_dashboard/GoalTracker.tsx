@@ -21,10 +21,12 @@ interface GoalData {
     state?: "ACTIVE" | "ACHIEVED" | "SMASHED";
     expiresAt?: string;
 }
+interface GoalTrackerProps {
+    goal: any;
+}
 
 
-
-export default function GoalTracker() {
+export default function GoalTracker({ goal }: GoalTrackerProps) {
     const router = useRouter();
     const [localGoal, setLocalGoal] = useState<GoalData | null>(null);
     const [customTarget, setCustomTarget] = useState(0);
@@ -37,7 +39,7 @@ export default function GoalTracker() {
     const userId = user?.id;
 
     const fetchGoal = async () => {
-        const res = await fetch(`http://localhost:3001/vendor/dashboard?userId=${userId}`);
+        const res = await fetch(`http://localhost:3001/dashboard/vendor?userId=${userId}`);
         const data = await res.json();
         setLocalGoal(data.goal);
         setHasGoal(data.goal?.exists ?? false);
@@ -49,7 +51,7 @@ export default function GoalTracker() {
         if (!isLoaded || !userId) return;
 
         fetchGoal();
-    }, []);
+    }, [isLoaded, userId]);
 
     useEffect(() => {
         if (localGoal) {
@@ -58,6 +60,14 @@ export default function GoalTracker() {
             setInputValue(String(localGoal.target || ""));
         }
     }, [localGoal]);
+
+    useEffect(() => {
+        if (!goal) return;
+
+        setLocalGoal(goal);
+        setHasGoal(goal.exists ?? false);
+        setCustomTarget(goal.target ?? 0);
+    }, [goal]);
 
     useEffect(() => {
         setMounted(true);
@@ -84,7 +94,7 @@ export default function GoalTracker() {
     const saveGoal = async (val: number) => {
         const method = hasGoal ? "PATCH" : "POST";
 
-        await fetch("http://localhost:3001/vendor/dashboard/goal", {
+        await fetch("http://localhost:3001/dashboard/vendor/goal", {
             method,
             headers: {
                 "Content-Type": "application/json",
@@ -100,7 +110,7 @@ export default function GoalTracker() {
 
     // DELETE GOAL
     const deleteGoal = async () => {
-        await fetch("http://localhost:3001/vendor/dashboard/goal", {
+        await fetch("http://localhost:3001/dashboard/vendor/goal", {
             method: "DELETE",
             headers: {
                 "Content-Type": "application/json",
@@ -264,34 +274,36 @@ export default function GoalTracker() {
                                 Monthly Goal
                             </p>
                         </div>
-                        <div className="goal-actions">
-                            <motion.button
-                                whileTap={{
-                                    scale: 0.95
-                                }}
-                                onClick={() => {
-                                    setInputValue(String(customTarget));
-                                    setIsEditing(true);
-                                }}
-                                className="goal-edit-button">
+                        {!isExpired && (
+                            <div className="goal-actions">
+                                <motion.button
+                                    whileTap={{
+                                        scale: 0.95
+                                    }}
+                                    onClick={() => {
+                                        setInputValue(String(customTarget));
+                                        setIsEditing(true);
+                                    }}
+                                    className="goal-edit-button">
 
-                                <PencilIcon className="goal-edit-icon" />
-                                <span className="goal-edit-text">
-                                    Edit Goal
-                                </span>
-                            </motion.button>
+                                    <PencilIcon className="goal-edit-icon" />
+                                    <span className="goal-edit-text">
+                                        Edit Goal
+                                    </span>
+                                </motion.button>
 
-                            <motion.button
-                                whileTap={{ scale: 0.95 }}
-                                onClick={deleteGoal}
-                                className="goal-edit-button"
-                            >
-                                <XIcon className="goal-edit-icon" />
-                                <span className="goal-edit-text">
-                                    Delete Goal
-                                </span>
-                            </motion.button>
-                        </div>
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={deleteGoal}
+                                    className="goal-edit-button"
+                                >
+                                    <XIcon className="goal-edit-icon" />
+                                    <span className="goal-edit-text">
+                                        Delete Goal
+                                    </span>
+                                </motion.button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Main content */}
@@ -318,7 +330,15 @@ export default function GoalTracker() {
                                     cy={size / 2}
                                     r={radius}
                                     fill="none"
-                                    stroke={isSmashed ? "#FFD700" : isComplete ? "#4db89e" : "#379683"}
+                                    stroke={
+                                        isExpired
+                                            ? "#666"
+                                            : isSmashed
+                                                ? "#FFD700"
+                                                : isComplete
+                                                    ? "#4db89e"
+                                                    : "#379683"
+                                    }
                                     strokeWidth={strokeWidth}
                                     strokeLinecap="round"
                                     strokeDasharray={circumference}

@@ -17,7 +17,7 @@ interface KPIGridProps {
   summary: any;
 }
 export default function KPIGrid({ summary }: KPIGridProps) {
-  console.log("KPI RECEIVED:", summary);
+  
   const primaryStats = [
     {
       label: 'Bookings',
@@ -44,7 +44,10 @@ export default function KPIGrid({ summary }: KPIGridProps) {
     },
     {
       label: 'Response Time',
-      value: summary.avgResponseDisplay || '—',
+      value:
+        summary.avgResponseDisplay === "0m"
+           ? "⚡Instant"
+          : summary.avgResponseDisplay || "—",
       sub: 'Avg accept time',
       icon: InboxIcon,
       color: '#577399'
