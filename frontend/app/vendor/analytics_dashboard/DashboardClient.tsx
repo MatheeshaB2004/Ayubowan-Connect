@@ -272,6 +272,7 @@ export default function DashboardClient({
             </div>
             <div ref={dropdownRef} className="dropdown-container">
               <button
+                suppressHydrationWarning
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
