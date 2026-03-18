@@ -45,7 +45,8 @@ export default function VendorRegisterPage() {
 
       try {
         const payload = {
-          userId: user?.id,
+          email: user?.primaryEmailAddress?.emailAddress,
+          fullName: user?.fullName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
           businessName,
           shortTagline,
           contactPhone,
@@ -60,14 +61,14 @@ export default function VendorRegisterPage() {
           }
         };
 
-        const response = await fetch("http://localhost:3000/vendor/register", {
+        const response = await fetch("http://localhost:3001/vendor/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
         if (!response.ok) {
-          console.warn("Backend vendor registration endpoint might not be ready yet.");
+          throw new Error("Failed to register vendor profile on the server.");
         } else {
           console.log("Vendor registration successful");
         }

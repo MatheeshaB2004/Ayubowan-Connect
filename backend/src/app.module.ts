@@ -12,6 +12,7 @@ import { FilesController } from './files.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventsModule } from './modules/events/events.module';
+import { UserModule } from './modules/user/user.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { EventsModule } from './modules/events/events.module';
     DashboardModule,
     EventsModule,
     ChatbotModule,
+    UserModule,
   ],
   controllers: [AppController, FilesController],
   providers: [AppService],

@@ -35,7 +35,6 @@ export default function UserRegisterPage() {
 
     try {
       const payload = {
-        userId: user?.id,
         fullName: fullName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
         email: user?.primaryEmailAddress?.emailAddress,
         profilePhotoUrl: user?.imageUrl,
@@ -45,15 +44,14 @@ export default function UserRegisterPage() {
         preferredLanguage,
       };
 
-      // In a real app, send to an actual endpoint
-      const response = await fetch("http://localhost:3000/user/register", {
+      const response = await fetch("http://localhost:3001/user/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        console.warn("Backend registration endpoint might not be ready yet.");
+        throw new Error("Failed to register user profile on the server.");
       } else {
         console.log("User registration successful");
       }

@@ -19,10 +19,21 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { VendorManagementService } from './vendor-management.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
+import { RegisterVendorDto } from './dto/register-vendor.dto';
 
 @Controller('vendor')
 export class VendorManagementController {
   constructor(private readonly vendorService: VendorManagementService) { }
+
+  /**
+   * Register a new Vendor Profile
+   * POST /vendor/register
+   */
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  async registerVendor(@Body() dto: RegisterVendorDto) {
+    return this.vendorService.registerVendor(dto);
+  }
 
   /**
    * Get all active categories (fixed list)

@@ -2,17 +2,92 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
+import { RegisterVendorDto } from './dto/register-vendor.dto';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class VendorManagementService {
   constructor(private prisma: PrismaService,
     private cloudinaryService: CloudinaryService
   ) { }
+
+  /**
+   * Register a new Vendor Profile
+   */
+  async registerVendor(dto: RegisterVendorDto) {
+    try {
+      // 1. Check if a base User exists
+      let user = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+
+      // 2. If it doesn't exist, create it
+      if (!user) {
+        const randomPassword = crypto.randomBytes(32).toString('hex');
+        const hash = await bcrypt.hash(randomPassword, 10);
+
+        user = await this.prisma.user.create({
+          data: {
+            fullName: dto.fullName,
+            email: dto.email,
+            passwordHash: hash,
+            role: 'USER',
+            isActive: true,
+          },
+        });
+      }
+
+      // 3. Upsert the Vendor profile connected to this User
+      const vendor = await this.prisma.vendor.upsert({
+        where: { userId: user.id },
+        update: {
+          businessName: dto.businessName,
+          shortTagline: dto.shortTagline,
+          contactPhone: dto.contactPhone,
+          establishedYear: dto.establishedYear,
+          profileComplete: true,
+        },
+        create: {
+          userId: user.id,
+          businessName: dto.businessName,
+          shortTagline: dto.shortTagline,
+          contactPhone: dto.contactPhone,
+          establishedYear: dto.establishedYear,
+          profileComplete: true,
+          verifiedStatus: 'PENDING',
+        },
+      });
+
+      // 4. Upsert the VendorLocation (Main Location)
+      await this.prisma.vendorLocation.create({
+        data: {
+          vendorId: vendor.id,
+          addressLine1: dto.location.addressLine1,
+          addressLine2: dto.location.addressLine2,
+          city: dto.location.city,
+          district: dto.location.district,
+          province: dto.location.province,
+          postalCode: dto.location.postalCode,
+          isMainLocation: true,
+        },
+      });
+
+      return {
+        message: 'Vendor profile registered successfully',
+        data: vendor,
+      };
+    } catch (error) {
+      console.error(error);
+      throw new InternalServerErrorException('Failed to register vendor profile');
+    }
+  }
 
   /**
    * Get all active categories that vendors can choose from
