@@ -6,6 +6,13 @@ export interface EventVendor {
   website?: string;
 }
 
+export interface EventGalleryImage {
+  id: number;
+  imageUrl: string;
+  displayOrder: number;
+  uploadedAt: string;
+}
+
 export interface Event {
   id: number;
   title: string;
@@ -34,6 +41,7 @@ export interface Event {
   updatedAt?: string;
   whatYouWillLearn?: string[];
   importantInfo?: string[];
+  galleryImages?: EventGalleryImage[];
 }
 
 export interface CreateEventPayload {

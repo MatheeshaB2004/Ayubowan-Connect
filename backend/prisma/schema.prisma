@@ -382,7 +382,8 @@ model Event {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  registrations EventRegistration[]
+  registrations    EventRegistration[]
+  galleryImages    EventGalleryImage[]
 
   @@map("events")
 }
@@ -400,6 +401,19 @@ model EventRegistration {
   @@index([userId])
   @@index([eventId])
   @@map("event_registrations")
+}
+
+model EventGalleryImage {
+  id           Int      @id @default(autoincrement()) @map("gallery_image_id")
+  eventId      Int      @map("event_id")
+  imageUrl     String   @map("image_url")
+  displayOrder Int      @default(0) @map("display_order")
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@map("event_gallery_images")
 }
 
 enum UserRole {

@@ -40,9 +40,9 @@ export async function fetchEventById(id: number) {
 
 // Vendor
 
-export async function fetchVendorEvents(token: string) {
+export async function fetchVendorEvents(token: string, rawUserId?: string) {
   const res = await fetch(requireApiUrl("/events/vendor/mine"), {
-    headers: authHeaders(token),
+    headers: authHeaders(token, rawUserId),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch vendor events");
@@ -51,14 +51,33 @@ export async function fetchVendorEvents(token: string) {
 
 export async function createEvent(
   token: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  rawUserId?: string
 ) {
   const res = await fetch(requireApiUrl("/events"), {
     method: "POST",
-    headers: authHeaders(token),
+    headers: authHeaders(token, rawUserId),
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to create event");
+  return res.json();
+}
+
+export async function deleteEvent(
+  token: string,
+  eventId: number,
+  rawUserId?: string
+) {
+  const res = await fetch(requireApiUrl(`/events/${eventId}`), {
+    method: "DELETE",
+    headers: authHeaders(token, rawUserId),
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "Failed to delete event");
+    throw new Error(msg);
+  }
+
   return res.json();
 }
 
@@ -120,5 +139,62 @@ export async function unregisterFromEvent(token: string, eventId: number, rawUse
     headers: authHeaders(token, rawUserId),
   });
   if (!res.ok) throw new Error("Failed to unregister from event");
+  return res.json();
+}
+
+// Event Gallery
+
+export async function fetchEventGallery(eventId: number) {
+  const res = await fetch(requireApiUrl(`/events/${eventId}/gallery`), {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch event gallery");
+  return res.json();
+}
+
+export async function uploadEventGalleryImage(
+  token: string,
+  eventId: number,
+  file: File,
+  rawUserId?: string
+): Promise<{ id: number; imageUrl: string; displayOrder: number; uploadedAt: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const headers: HeadersInit = { Authorization: `Bearer ${token}` };
+  if (rawUserId) {
+    headers["x-user-id"] = rawUserId;
+  }
+
+  const res = await fetch(requireApiUrl(`/events/${eventId}/gallery`), {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "Gallery image upload failed");
+    throw new Error(msg);
+  }
+
+  return res.json();
+}
+
+export async function deleteEventGalleryImage(
+  token: string,
+  eventId: number,
+  imageId: number,
+  rawUserId?: string
+) {
+  const res = await fetch(requireApiUrl(`/events/${eventId}/gallery/${imageId}`), {
+    method: "DELETE",
+    headers: authHeaders(token, rawUserId),
+  });
+
+  if (!res.ok) {
+    const msg = await res.text().catch(() => "Failed to delete gallery image");
+    throw new Error(msg);
+  }
+
   return res.json();
 }

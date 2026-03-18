@@ -55,13 +55,13 @@ export default function EventsPage() {
   const loadVendorEvents = useCallback(async () => {
     if (!isVendor) return;
     try {
-      const data = await fetchVendorEvents(getToken());
+      const data = await fetchVendorEvents(getToken(), user?.id);
       setVendorEvents(data);
     } catch (err) {
       console.error("Failed to load vendor events:", err);
       setVendorEvents([]);
     }
-  }, [isVendor]);
+  }, [isVendor, user?.id]);
 
   const loadUserEvents = useCallback(async () => {
     if (!isUser) return;
@@ -126,6 +126,7 @@ export default function EventsPage() {
           <VendorEventsSection
             events={vendorEvents}
             token={getToken()}
+            userId={user?.id}
             onEventCreated={() => { loadVendorEvents(); loadAllEvents(); }}
           />
         )}
