@@ -91,7 +91,7 @@ export default function EventDetailPage() {
 
       if (authLoaded && !isGuest && !isVendor) {
         try {
-          const registeredEvents = await fetchUserRegisteredEvents(getToken());
+          const registeredEvents = await fetchUserRegisteredEvents(getToken(), user?.id);
           const alreadyReg = registeredEvents.some((e: Event) => e.id === Number(id));
           setIsRegistered(alreadyReg);
         } catch (err) {
@@ -103,7 +103,7 @@ export default function EventDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id, authLoaded, isGuest, isVendor]);
+  }, [id, authLoaded, isGuest, isVendor, user?.id]);
 
   useEffect(() => { loadEvent(); }, [loadEvent]);
 
@@ -113,7 +113,7 @@ export default function EventDetailPage() {
     setRegError(null);
     setRegLoading(true);
     try {
-      const result = await registerForEvent(getToken(), event.id);
+      const result = await registerForEvent(getToken(), event.id, user?.id);
 
       if (result?.message === "Already registered") {
         setIsRegistered(true);
@@ -182,6 +182,11 @@ export default function EventDetailPage() {
 
   const galleryImages = event.imageUrl
     ? [event.imageUrl, event.imageUrl, event.imageUrl, event.imageUrl] : [];
+
+  const organiserPhone = event.contactPhone || event.vendor?.contactPhone;
+  const organiserEmail = event.contactEmail || event.vendor?.email;
+  const organiserWebsite = event.contactWebsite || event.vendor?.website;
+  const hasContactDetails = Boolean(organiserPhone || organiserEmail || organiserWebsite);
 
   return (
     <>
@@ -410,28 +415,28 @@ export default function EventDetailPage() {
                 {event.vendor && (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4">Contact Organiser</h3>
-                    {(!event.vendor.contactPhone && !event.vendor.email && !event.vendor.website) ? (
+                    {!hasContactDetails ? (
                       <p className="text-sm text-gray-500 italic text-center py-2 bg-gray-50 rounded-lg border border-gray-100">
                         Contact details have not been provided by the organiser.
                       </p>
                     ) : (
                       <div className="space-y-3 mb-4">
-                        {event.vendor.contactPhone && (
+                        {organiserPhone && (
                           <div className="flex items-center gap-2.5 text-sm text-gray-600">
                             <Phone className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
-                            <span>{event.vendor.contactPhone}</span>
+                            <span>{organiserPhone}</span>
                           </div>
                         )}
-                        {event.vendor.email && (
+                        {organiserEmail && (
                           <div className="flex items-center gap-2.5 text-sm text-gray-600">
                             <Mail className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
-                            <span>{event.vendor.email}</span>
+                            <span>{organiserEmail}</span>
                           </div>
                         )}
-                        {event.vendor.website && (
+                        {organiserWebsite && (
                           <div className="flex items-center gap-2.5 text-sm text-gray-600">
                             <Globe className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
-                            <span>{event.vendor.website}</span>
+                            <span>{organiserWebsite}</span>
                           </div>
                         )}
                       </div>

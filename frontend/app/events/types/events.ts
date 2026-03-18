@@ -14,6 +14,9 @@ export interface Event {
   endDate?: string;
   time?: string;
   location: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactWebsite?: string;
   city: string;
   district: string;
   province: string;
@@ -29,10 +32,8 @@ export interface Event {
   vendor?: EventVendor;
   createdAt?: string;
   updatedAt?: string;
-
-  // Vendor-provided content sections
-  whatYouWillLearn?: string[];   // bullet list → "What You'll Learn" section
-  importantInfo?: string[];      // bullet list → "Important Information" section
+  whatYouWillLearn?: string[];
+  importantInfo?: string[];
 }
 
 export interface CreateEventPayload {
@@ -40,6 +41,9 @@ export interface CreateEventPayload {
   description?: string;
   category?: string;
   location: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactWebsite?: string;
   city: string;
   district: string;
   province: string;

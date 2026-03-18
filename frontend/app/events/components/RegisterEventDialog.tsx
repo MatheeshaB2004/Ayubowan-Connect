@@ -10,11 +10,12 @@ import { formatDateRange, formatPrice } from "../lib/utils";
 interface Props {
   event: Event | null;
   token: string;
+  userId?: string;
   onClose: () => void;
   onRegistered: () => void;
 }
 
-export function RegisterEventDialog({ event, token, onClose, onRegistered }: Props) {
+export function RegisterEventDialog({ event, token, userId, onClose, onRegistered }: Props) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError]     = useState<string | null>(null);
@@ -25,7 +26,7 @@ export function RegisterEventDialog({ event, token, onClose, onRegistered }: Pro
   const handleRegister = async () => {
     setError(null); setLoading(true);
     try {
-      await registerForEvent(token, event.id);
+      await registerForEvent(token, event.id, userId);
       setSuccess(true);
       setTimeout(() => { onRegistered(); onClose(); setSuccess(false); }, 1800);
     } catch {

@@ -8,7 +8,39 @@ import { Prisma } from '@prisma/client';
 export class EventsService {
   constructor(private prisma: PrismaService) {}
 
-  // ── Get all published events with optional filters ─────────────────────────
+  private async resolveUserId(rawUserId: string): Promise<number> {
+    const parsed = Number(rawUserId);
+    if (!isNaN(parsed) && Number.isInteger(parsed)) {
+      return parsed;
+    }
+
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId: rawUserId },
+      select: { userId: true },
+    });
+    if (vendor) return vendor.userId;
+
+    const placeholderEmail = `clerk_${rawUserId}@placeholder.local`;
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: placeholderEmail },
+      select: { id: true },
+    });
+
+    if (existingUser) return existingUser.id;
+
+    const createdUser = await this.prisma.user.create({
+      data: {
+        fullName: 'Clerk User',
+        email: placeholderEmail,
+        passwordHash: 'clerk-auth',
+      },
+      select: { id: true },
+    });
+
+    return createdUser.id;
+  }
+
+  // Get all published events with optional filters
   async getAllEvents(query: EventQueryDto) {
     const { search, category, location } = query;
 
@@ -102,7 +134,9 @@ export class EventsService {
   }
 
   // ── Get events a user has registered for ──────────────────────────────────
-  async getUserRegisteredEvents(userId: number) {
+  async getUserRegisteredEvents(rawUserId: string) {
+    const userId = await this.resolveUserId(rawUserId);
+
     const registrations = await this.prisma.eventRegistration.findMany({
       where: { userId },
       include: {
@@ -136,7 +170,9 @@ export class EventsService {
   }
 
   // ── Register user for an event ─────────────────────────────────────────────
-  async registerForEvent(userId: number, eventId: number) {
+  async registerForEvent(rawUserId: string, eventId: number) {
+    const userId = await this.resolveUserId(rawUserId);
+
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
     });
@@ -153,7 +189,9 @@ export class EventsService {
   }
 
   // ── Unregister user from an event ─────────────────────────────────────────
-  async unregisterFromEvent(userId: number, eventId: number) {
+  async unregisterFromEvent(rawUserId: string, eventId: number) {
+    const userId = await this.resolveUserId(rawUserId);
+
     const existing = await this.prisma.eventRegistration.findUnique({
       where: { userId_eventId: { userId, eventId } },
     });

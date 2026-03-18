@@ -28,7 +28,7 @@ export default function EventsPage() {
 
   // AuthContext: { user, role, isAuthenticated, loginAsTraveller, loginAsVendor, logout }
   // role: 'traveller' | 'vendor' | 'guest'
-  const { role, authReady } = useAuth();
+  const { role, authReady, user } = useAuth();
 
   const isGuest  = authReady && (role === "guest" || !role);
   const isVendor = role === "vendor";
@@ -66,13 +66,13 @@ export default function EventsPage() {
   const loadUserEvents = useCallback(async () => {
     if (!isUser) return;
     try {
-      const data = await fetchUserRegisteredEvents(getToken());
+      const data = await fetchUserRegisteredEvents(getToken(), user?.id);
       setUserEvents(data);
     } catch (err) {
       console.error("Failed to load user events:", err);
       setUserEvents([]);
     }
-  }, [isUser]);
+  }, [isUser, user?.id]);
 
   // Initial load
   useEffect(() => {

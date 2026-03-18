@@ -42,6 +42,8 @@ interface Props {
 
 interface Form {
   title: string; description: string; category: string;
+  location: string;
+  contactPhone: string; contactEmail: string; contactWebsite: string;
   province: string; district: string;
   startDate: string; endDate: string; time: string;
   maxParticipants: string; price: string; isFree: boolean;
@@ -49,6 +51,8 @@ interface Form {
 
 const EMPTY: Form = {
   title: "", description: "", category: "",
+  location: "",
+  contactPhone: "", contactEmail: "", contactWebsite: "",
   province: "", district: "",
   startDate: "", endDate: "", time: "",
   maxParticipants: "", price: "", isFree: false,
@@ -141,6 +145,7 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
   // Submit
   const handleSubmit = async () => {
     if (!form.title.trim())  { setError("Event title is required."); return; }
+    if (!form.location.trim()) { setError("Exact event location is required."); return; }
     if (!form.province)      { setError("Please select a province."); return; }
     if (!form.district)      { setError("Please select a district."); return; }
     if (!form.startDate)     { setError("Start date is required."); return; }
@@ -174,7 +179,10 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
         title:            form.title.trim(),
         description:      form.description      || undefined,
         category:         form.category         || undefined,
-        location:         form.district,          // display name
+        location:         form.location.trim(),
+        contactPhone:     form.contactPhone.trim() || undefined,
+        contactEmail:     form.contactEmail.trim() || undefined,
+        contactWebsite:   form.contactWebsite.trim() || undefined,
         city:             form.district,
         district:         form.district,
         province:         form.province,
@@ -324,7 +332,49 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             </Field>
           </div>
 
-          {/* ── 5. Dates ── */}
+          {/* ── 5. Exact Location ── */}
+          <Field label="Exact Location" required>
+            <input
+              type="text"
+              placeholder="e.g. No. 25, Lake Road, Kandy"
+              value={form.location}
+              onChange={e => set("location", e.target.value)}
+              className={inp}
+            />
+          </Field>
+
+          {/* ── 6. Contact Details (optional) ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Contact Number (optional)">
+              <input
+                type="text"
+                placeholder="e.g. +94 77 123 4567"
+                value={form.contactPhone}
+                onChange={e => set("contactPhone", e.target.value)}
+                className={inp}
+              />
+            </Field>
+            <Field label="Contact Email (optional)">
+              <input
+                type="email"
+                placeholder="e.g. hello@yourbrand.lk"
+                value={form.contactEmail}
+                onChange={e => set("contactEmail", e.target.value)}
+                className={inp}
+              />
+            </Field>
+          </div>
+          <Field label="Website (optional)">
+            <input
+              type="url"
+              placeholder="e.g. https://www.yourbrand.lk"
+              value={form.contactWebsite}
+              onChange={e => set("contactWebsite", e.target.value)}
+              className={inp}
+            />
+          </Field>
+
+          {/* ── 7. Dates ── */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Start Date" required>
               <input type="date" value={form.startDate} onChange={e => set("startDate", e.target.value)} className={inp} />
@@ -334,12 +384,12 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             </Field>
           </div>
 
-          {/* ── 6. Time ── */}
+          {/* ── 8. Time ── */}
           <Field label="Time">
             <input type="text" placeholder="e.g. 09:00 AM – 12:00 PM" value={form.time} onChange={e => set("time", e.target.value)} className={inp} />
           </Field>
 
-          {/* ── 7. Participants + Price ── */}
+          {/* ── 9. Participants + Price ── */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Max Participants">
               <input type="number" min={1} placeholder="30" value={form.maxParticipants} onChange={e => set("maxParticipants", e.target.value)} className={inp} />
@@ -361,7 +411,7 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             </Field>
           </div>
 
-          {/* ── 8. Description ── */}
+          {/* ── 10. Description ── */}
           <Field label="Description">
             <textarea
               rows={3}
@@ -372,7 +422,7 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             />
           </Field>
 
-          {/* ── 9. What You'll Learn ── */}
+          {/* ── 11. What You'll Learn ── */}
           <Collapsible title="What You'll Learn" hint="Shown as bullet points on the event detail page" open={learnOpen} onToggle={() => setLearnOpen(o => !o)}>
             <div className="space-y-2">
               {learnItems.map((item, i) => (
@@ -398,7 +448,7 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             </div>
           </Collapsible>
 
-          {/* ── 10. Important Information ── */}
+          {/* ── 12. Important Information ── */}
           <Collapsible title="Important Information" hint="Shown in the sidebar on the event detail page" open={infoOpen} onToggle={() => setInfoOpen(o => !o)}>
             <div className="space-y-2">
               {infoItems.map((item, i) => (

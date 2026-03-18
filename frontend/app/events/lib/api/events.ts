@@ -1,9 +1,19 @@
 import { requireApiUrl } from "@/lib/api";
 
-function authHeaders(token?: string): HeadersInit {
-  return token
-    ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-    : { "Content-Type": "application/json" };
+function authHeaders(token?: string, rawUserId?: string): HeadersInit {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (rawUserId) {
+    headers["x-user-id"] = rawUserId;
+  }
+
+  return headers;
 }
 
 //  Public
@@ -86,28 +96,28 @@ export async function uploadEventImage(
 
 // User
 
-export async function fetchUserRegisteredEvents(token: string) {
+export async function fetchUserRegisteredEvents(token: string, rawUserId?: string) {
   const res = await fetch(requireApiUrl("/events/user/registered"), {
-    headers: authHeaders(token),
+    headers: authHeaders(token, rawUserId),
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch registered events");
   return res.json();
 }
 
-export async function registerForEvent(token: string, eventId: number) {
+export async function registerForEvent(token: string, eventId: number, rawUserId?: string) {
   const res = await fetch(requireApiUrl(`/events/${eventId}/register`), {
     method: "POST",
-    headers: authHeaders(token),
+    headers: authHeaders(token, rawUserId),
   });
   if (!res.ok) throw new Error("Failed to register for event");
   return res.json();
 }
 
-export async function unregisterFromEvent(token: string, eventId: number) {
+export async function unregisterFromEvent(token: string, eventId: number, rawUserId?: string) {
   const res = await fetch(requireApiUrl(`/events/${eventId}/register`), {
     method: "DELETE",
-    headers: authHeaders(token),
+    headers: authHeaders(token, rawUserId),
   });
   if (!res.ok) throw new Error("Failed to unregister from event");
   return res.json();
