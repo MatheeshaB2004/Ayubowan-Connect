@@ -136,7 +136,7 @@ If the user explicitly asks to be taken, redirected, or navigated to a specific 
 Use these EXACT paths:
 - User Profile / Name Edit / Account Settings: [NAVIGATE:/User_profile_manager]
 - Marketplace / Search: [NAVIGATE:/marketplace]
-- Homepage / Home / Main Page: [NAVIGATE:/home]
+- Homepage / Home / Main Page: [NAVIGATE:/]
 - Events: [NAVIGATE:/events]
 - Cart / Checkout: [NAVIGATE:/cart]
 - FAQ / Help: [NAVIGATE:/faq]
