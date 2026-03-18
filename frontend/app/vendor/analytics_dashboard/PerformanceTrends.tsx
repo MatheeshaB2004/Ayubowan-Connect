@@ -31,17 +31,19 @@ interface PerformanceTrendsProps {
     viewsVsBookings: ViewsVsBookingsPoint[];
     conversionRate: number;
 }
+
 export default function PerformanceTrends({
     bookingTrend,
     viewsVsBookings,
     conversionRate
 }: PerformanceTrendsProps) {
+    const safeBookingTrend = Array.isArray(bookingTrend) ? bookingTrend : [];
+    const safeViewsVsBookings = Array.isArray(viewsVsBookings) ? viewsVsBookings : [];
     const searchParams = useSearchParams();
     const period = searchParams.get("period");
     const shouldGroupWeekly = period === "lastQuarter";
-    console.log("bookingTrend:", bookingTrend);
     const lineData = {
-        labels: bookingTrend.map((d) => {
+        labels: safeBookingTrend.map((d) => {
             const date = new Date(d.date);
             return date.toLocaleDateString("en-US", {
                 month: "short",
@@ -51,8 +53,7 @@ export default function PerformanceTrends({
         datasets: [
             {
                 label: 'Bookings',
-                data: bookingTrend.map((d) => d.bookings),
-                borderColor: '#379683',
+                data: safeBookingTrend.map((d) => d.bookings),
                 borderWidth: 2.5,
                 pointRadius: 3,
                 pointHoverRadius: 6,
@@ -61,8 +62,8 @@ export default function PerformanceTrends({
                 backgroundColor: (ctx: any) => {
                     const canvas = ctx.chart.ctx;
                     const gradient = canvas.createLinearGradient(0, 0, 0, 240);
-                    gradient.addColorStop(0, 'rgba(55,150,131,0.35)');
-                    gradient.addColorStop(1, 'rgba(55,150,131,0)');
+                    gradient.addColorStop(0, 'rgba(79,209,197,0.55)');
+                    gradient.addColorStop(1, 'rgba(79,209,197,0.05)');
                     return gradient;
                 },
                 tension: 0.4
@@ -163,9 +164,10 @@ export default function PerformanceTrends({
         );
     };
 
+
     const processedData = shouldGroupWeekly
-        ? groupWeekly(viewsVsBookings)
-        : viewsVsBookings.map((d) => ({
+        ? groupWeekly(safeViewsVsBookings)
+        : safeViewsVsBookings.map((d) => ({
             start: new Date(d.week),
             end: new Date(d.week),
             views: d.views,

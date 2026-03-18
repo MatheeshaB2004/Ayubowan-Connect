@@ -74,6 +74,7 @@ const GlobalHeader: React.FC = () => {
     <header className={headerClass}>
       <div className="container header-container relative">
         <div className="header-content">
+
           {/* Logo */}
           <div className="relative z-10 h-full flex items-center">
             <Link href="/" className="logo-container">
@@ -93,11 +94,13 @@ const GlobalHeader: React.FC = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="desktop-nav">
-            {activeRole === 'guest' && <NavbarGuest textColorClass={textColorClass} isSignedIn={isSignedIn} />}
-            {(activeRole === 'traveller' || activeRole === 'user') && <NavbarTraveller textColorClass={textColorClass} />}
-            {activeRole === 'vendor' && <NavbarVendor textColorClass={textColorClass} />}
-          </div>
+          {activeRole === 'vendor' ? (
+            <NavbarVendor textColorClass={textColorClass} />
+          ) : isSignedIn ? (
+            <NavbarTraveller textColorClass={textColorClass} />
+          ) : (
+            <NavbarGuest textColorClass={textColorClass} />
+          )}
 
           {/* Mobile Menu Button */}
           <div className="md:hidden z-10">

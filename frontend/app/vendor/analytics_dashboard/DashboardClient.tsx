@@ -27,6 +27,7 @@ import {
 } from './datas';
 import './page.css';
 import { Inter } from "next/font/google";
+import { useUser } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -43,21 +44,16 @@ const navItems = [
   },
   {
     icon: LayoutGridIcon,
-    label: 'Listings',
+    label: 'Listings and Reviews',
     sectionId: 'section-listings'
   },
   {
-    icon: BarChart3Icon,
-    label: 'Analytics',
-    sectionId: 'section-analytics'
-  },
-  {
     icon: StarIcon,
-    label: 'Reviews',
+    label: 'Insights',
     sectionId: 'section-reviews'
   },
   {
-    icon: SettingsIcon,
+    icon: TrophyIcon,
     label: 'Goals',
     sectionId: 'section-goals'
   }];
@@ -71,6 +67,7 @@ export default function DashboardClient({
   viewsVsBookings,
   conversionRate,
   period,
+  ratingTrend,
 }: {
   summary: any;
   bookingTrend: any[];
@@ -94,6 +91,8 @@ export default function DashboardClient({
   viewsVsBookings: any[];
   conversionRate: number;
   period: string;
+
+  ratingTrend: { label: string; avg: number }[];
 }) {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>(period as Period);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -101,7 +100,40 @@ export default function DashboardClient({
   const [hideSidebar, setHideSidebar] = useState(false);
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const data = dashboardData[selectedPeriod];
+  const [mounted, setMounted] = useState(false);
+  const { user, isLoaded } = useUser();
+  const [liveSummary, setLiveSummary] = useState(summary);
+  const [liveBookingTrend, setLiveBookingTrend] = useState(bookingTrend);
+  const [liveViewsVsBookings, setLiveViewsVsBookings] = useState(viewsVsBookings);
+  const [liveConversionRate, setLiveConversionRate] = useState(conversionRate);
+  const [liveTopListings, setLiveTopListings] = useState(topListings);
+  const [liveRatings, setLiveRatings] = useState(ratings);
+  const [liveInsights, setLiveInsights] = useState(insights);
+  const [liveGoal, setLiveGoal] = useState(null);
+  
+  const userId = user?.id;
+
+  useEffect(() => {
+
+    const checkPro = async () => {
+
+      const res = await fetch(
+        `http://localhost:3001/dashboard/vendor/profile?userId=${userId}`
+      );
+
+      const data = await res.json();
+
+      if (!data.isProUser) {
+        router.push("/vendor/freeDashboard");
+      }
+
+    };
+
+    if (userId) {
+      checkPro();
+    }
+
+  }, [userId]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -157,6 +189,65 @@ export default function DashboardClient({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const refreshDashboard = async () => {
+      const summaryRes = await fetch(
+        `http://localhost:3001/dashboard/vendor/summary?userId=${user.id}&period=${selectedPeriod}`
+      );
+
+      const trendRes = await fetch(
+        `http://localhost:3001/dashboard/vendor/booking-trend?userId=${user.id}&period=${selectedPeriod}`
+      );
+
+      const viewsRes = await fetch(
+        `http://localhost:3001/dashboard/vendor/views-vs-bookings?userId=${user.id}&period=${selectedPeriod}`
+      );
+
+      const listingsRes = await fetch(
+        `http://localhost:3001/dashboard/vendor/top-listings?userId=${user.id}&period=${selectedPeriod}`
+      );
+
+      const ratingsRes = await fetch(
+        `http://localhost:3001/dashboard/vendor/ratings?userId=${user.id}&period=${selectedPeriod}`
+      );
+
+      const insightsRes = await fetch(
+        `http://localhost:3001/dashboard/vendor/insights?userId=${user.id}&period=${selectedPeriod}`
+      );
+
+      const goalRes = await fetch(
+        `http://localhost:3001/dashboard/vendor?userId=${user.id}`
+      );
+
+      const summaryData = await summaryRes.json();
+      const trendData = await trendRes.json();
+      const viewsJson = await viewsRes.json();
+      const listingsData = await listingsRes.json();
+      const ratingsData = await ratingsRes.json();
+      const insightsData = await insightsRes.json();
+      const goalData = await goalRes.json();
+
+      setLiveSummary(summaryData);
+      setLiveBookingTrend(trendData);
+      setLiveViewsVsBookings(viewsJson.data);
+      setLiveConversionRate(viewsJson.conversionRate);
+      setLiveTopListings(listingsData);
+      setLiveRatings(ratingsData);
+      setLiveInsights(insightsData);
+      setLiveGoal(goalData.goal);
+    };
+
+    const interval = setInterval(refreshDashboard, 5000);
+
+    return () => clearInterval(interval);
+  }, [user?.id, selectedPeriod]);
+
   const scrollTo = (id: string) =>
     document.getElementById(id)?.scrollIntoView({
       behavior: 'smooth',
@@ -164,8 +255,8 @@ export default function DashboardClient({
     });
 
   const periods: Period[] = ['thisMonth', 'last30Days', 'lastQuarter'];
-  console.log("SUMMARY STATE:", summary);
-  if (!summary) return null;
+
+  if (!mounted || !summary) return null;
   return (
     <div className={`${inter.className} dashboard-container`}>
       {/* ── Sidebar ── */}
@@ -228,20 +319,6 @@ export default function DashboardClient({
               </motion.button>);
           })}
         </nav>
-
-        <motion.div
-          initial={{
-            opacity: 0
-          }}
-          animate={{
-            opacity: 1
-          }}
-          transition={{
-            delay: 0.5
-          }}
-          className="user-avatar">
-          N
-        </motion.div>
       </aside>
 
       {/* ── Main ── */}
@@ -261,7 +338,7 @@ export default function DashboardClient({
 
             <div>
               <h1 className="top-bar-title">
-                Welcome, Nimal 🤝
+                Welcome, {user?.firstName || "Vendor"}! 👋
               </h1>
               <p className="top-bar-subtitle">
                 Pro Vendor Dashboard · AyubowanConnect
@@ -269,6 +346,7 @@ export default function DashboardClient({
             </div>
             <div ref={dropdownRef} className="dropdown-container">
               <button
+                suppressHydrationWarning
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -303,7 +381,7 @@ export default function DashboardClient({
                     className="period-dropdown-menu">
 
                     {periods.map((p) => {
-                      console.log("Rendering period:", p, "Label:", periodLabels?.[p]); // DEBUG
+
                       return (
                         <button
                           key={p}
@@ -339,15 +417,15 @@ export default function DashboardClient({
             {/* ── 1. Overview ── */}
             <section id="section-overview" className="section-container section-spacing-y">
               <HeroSection
-                experiences={summary?.experiences || 0}
-                bookings={summary?.bookings || 0}
-                products={summary?.products || 0}
-                events={summary?.events || 0}
+                experiences={liveSummary?.experiences || 0}
+                bookings={liveSummary?.bookings || 0}
+                products={liveSummary?.products || 0}
+                events={liveSummary?.events || 0}
               />
 
               <div className="section-spacing">
                 {summary && (
-                  <KPIGrid summary={summary} />
+                  <KPIGrid summary={liveSummary} />
                 )}
               </div>
             </section>
@@ -360,9 +438,9 @@ export default function DashboardClient({
                 title="Booking Trends" />
 
               <PerformanceTrends
-                bookingTrend={bookingTrend}
-                viewsVsBookings={viewsVsBookings}
-                conversionRate={conversionRate}
+                bookingTrend={liveBookingTrend || []}
+                viewsVsBookings={liveViewsVsBookings || []}
+                conversionRate={liveConversionRate || 0}
               />
             </section>
 
@@ -376,9 +454,9 @@ export default function DashboardClient({
                   <SectionLabel
                     icon={TrophyIcon}
                     color="#577399"
-                    title="Top Listings" />
+                    title="Top Experiences" />
 
-                  <TopListings listings={topListings} />
+                  <TopListings listings={liveTopListings || []} />
                 </section>
 
                 <section
@@ -391,23 +469,25 @@ export default function DashboardClient({
                     title="Rating Analytics" />
 
                   <RatingAnalytics
-                    avgRating={ratings.avgRating}
-                    totalReviews={ratings.totalReviews}
-                    satisfaction={ratings.satisfaction}
-                    breakdown={ratings.breakdown}
+                    avgRating={liveRatings?.avgRating || 0}
+                    totalReviews={liveRatings?.totalReviews || 0}
+                    satisfaction={liveRatings?.satisfaction || 0}
+                    breakdown={liveRatings?.breakdown || []}
+                    trend={ratingTrend} 
                   />
                 </section>
               </div>
+
             </div>
 
-            {/* ── 4. Reviews / Insights ── */}
+            {/* ── 4. Insights ── */}
             <section id="section-reviews" className="section-container section-spacing">
               <SectionLabel
                 icon={LightbulbIcon}
                 color="#8D5A97"
                 title="Engagement Insights" />
 
-              <EngagementInsights insights={insights} />
+              <EngagementInsights insights={liveInsights || []} />
             </section>
 
             {/* ── 5. Goals ── */}
@@ -417,7 +497,7 @@ export default function DashboardClient({
                 color="#379683"
                 title="Monthly Goal" />
 
-              <GoalTracker />
+              <GoalTracker goal={liveGoal} />
             </section>
           </motion.div>
         </div>

@@ -3,20 +3,39 @@
 import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import "./page.css";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useUser } from "@clerk/nextjs";
 
 const API_BASE = API_BASE_URL;
 
 export default function CreateListingsPage() {
 
+  const { user, isLoaded } = useUser();
+  
+
+  const clerkUserId = user?.id;
+
+  console.log("DEBUG USER:", user);
+  console.log("DEBUG LOADED:", isLoaded);
+
   const [showModal, setShowModal] = useState(false);
   const [editingListing, setEditingListing] = useState<any>(null);
   const listingsRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [vendorId, setVendorId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (window.location.hash === '#create-listing') {
+      setShowModal(true);
+    }
+  }, []);
 
   const [submitting, setSubmitting] = useState(false);
   const SHORT_DESC_MAX = 500;
   const [formError, setFormError] = useState("");
   const [tagInput, setTagInput] = useState("");
+  const [isPublished, setIsPublished] = useState(true);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || !e.target.files[0]) return;
@@ -40,23 +59,60 @@ export default function CreateListingsPage() {
     imageName: "",
     imagePreview: "",
     tags: [] as string[],
+    inclusions: [] as { title: string; description: string }[]
   });
 
   const [listings, setListings] = useState<any[]>([]);
-  const vendorId = 2;
   const [locations, setLocations] = useState<any[]>([]);
+  const [statusFilter, setStatusFilter] = useState<"PUBLISHED" | "DRAFT">("PUBLISHED");
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
 
   useEffect(() => {
+
+    if (!isLoaded) return;
+    if (!user?.id) return;
+
+
+    const fetchVendor = async () => {
+      const res = await fetch(
+        `http://localhost:3001/vendor/profile?userId=${user.id}`
+      );
+
+      const data = await res.json();
+
+      console.log("VENDOR RESPONSE:", data);
+
+      if (data?.vendorId) {
+        setVendorId(data.vendorId);
+      }
+    };
+
+    fetchVendor();
+
+  }, [isLoaded, user]);
+
+  useEffect(() => {
+    console.log("VENDOR ID:", vendorId);
+    if (!vendorId) return;
+
     fetchListings();
     fetchLocations();
+
+  }, [vendorId]);
+
+  useEffect(() => {
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
   }, []);
 
   const fetchListings = async () => {
     try {
       const response = await fetch(`${API_BASE}/vendor/${vendorId}/listings`);
       const data = await response.json();
+      console.log("LISTINGS:", data);
       setListings(data);
     } catch (error) {
       console.error("Fetch error:", error);
@@ -84,6 +140,7 @@ export default function CreateListingsPage() {
   };
 
   const [showAll, setShowAll] = useState(false);
+  const [listingFilter, setListingFilter] = useState<"EXPERIENCE" | "PRODUCT">("EXPERIENCE");
   const [categories, setCategories] = useState<any[]>([]);
 
   const sriLankaDistricts = [
@@ -107,12 +164,23 @@ export default function CreateListingsPage() {
     imageName: "",
     imagePreview: "",
     tags: [] as string[],
+    inclusions: [] as { title: string; description: string }[],
   };
 
   const wordCount =
     formData.longDescription.trim() === ""
       ? 0
       : formData.longDescription.trim().split(/\s+/).length;
+
+  const filteredListings = listings.filter(
+    (l) =>
+      l.listingType === listingFilter &&
+      l.visibilityStatus === statusFilter
+  );
+
+  if (!isLoaded) {
+    return null;
+  }
 
   return (
     <main className="listings-page">
@@ -138,13 +206,25 @@ export default function CreateListingsPage() {
         </header>
         <div className="hero-tabs-wrapper">
           <div className="hero-tabs-card">
-            <button className="hero-tab active">Experiences</button>
-            <button className="hero-tab">Products</button>
+            <button
+              className={`hero-tab ${statusFilter === "PUBLISHED" ? "active" : ""}`}
+              onClick={() => setStatusFilter("PUBLISHED")}
+            >
+              Published
+            </button>
+
+            <button
+              className={`hero-tab ${statusFilter === "DRAFT" ? "active" : ""}`}
+              onClick={() => setStatusFilter("DRAFT")}
+            >
+              Draft
+            </button>
+           
           </div>
         </div>
 
         <div className="bento-grid">
-          <section className="create-new-section">
+          <section id="create-listing" className="create-new-section">
             <h2>Create a new listing or event</h2>
             <p>Capture travelers' interest by offering unique products, services, or activities.</p>
 
@@ -160,7 +240,7 @@ export default function CreateListingsPage() {
                   <h3>Create an Experience</h3>
                   <p>Offer unique cultural experiences for travelers to discover and book.</p>
 
-                  <button className="card-btn">Get Started →</button>
+                  
                 </div>
               </div>
 
@@ -174,7 +254,7 @@ export default function CreateListingsPage() {
                   <h3>Add a product</h3>
                   <p>List products in the marketplace for customers to explore and purchase.</p>
 
-                  <button className="card-btn">Get Started →</button>
+                  
                 </div>
               </div>
 
@@ -206,6 +286,7 @@ export default function CreateListingsPage() {
                 <p className="section-description">
                   Launch your unique Sri Lankan cultural experience and connect with travelers. Well-detailed listings get more engagement and visibility.
                 </p>
+                
                 <ul className="feature-list">
                   <li><i className="fa-solid fa-check"></i> Title</li>
                   <li><i className="fa-solid fa-check"></i> Category</li>
@@ -248,22 +329,56 @@ export default function CreateListingsPage() {
                     <p>Manage your active listings and drafts</p>
                   </div>
                   <div className="offerings-right">
-                    <div className="search-filter-bar">
-                      <div className="search-input-wrap">
-                        <i className="fa-solid fa-search"></i>
-                        <input type="text" placeholder="Search listings..." readOnly aria-hidden="true" />
-                      </div>
-                      <button type="button" className="filter-btn">Filter</button>
-                    </div>
                     <div className="status-toggle">
-                      <button className="status-btn active">Published</button>
-                      <button className="status-btn">Draft</button>
+                      <button
+                        className={`status-btn ${listingFilter === "EXPERIENCE" ? "active" : ""}`}
+                        onClick={() => setListingFilter("EXPERIENCE")}
+                      >
+                        Experiences
+                      </button>
+
+                      <button
+                        className={`status-btn ${listingFilter === "PRODUCT" ? "active" : ""}`}
+                        onClick={() => setListingFilter("PRODUCT")}
+                      >
+                        Products
+                      </button>
                     </div>
                   </div>
                 </div>
 
+                {listings.length > 0 && filteredListings.length === 0 && (
+                  <div className="empty-filter-state">
+                    <i className="fa-solid fa-box-open"></i>
+
+                    {listingFilter === "EXPERIENCE" ? (
+                      <>
+                        <h3>No experiences yet</h3>
+                        <p>Create your first experience to attract travelers.</p>
+                      </>
+                    ) : (
+                      <>
+                        <h3>No products yet</h3>
+                        <p>Add products to sell in the marketplace.</p>
+                      </>
+                    )}
+
+                    <button
+                      className="primary-button"
+                      onClick={() => {
+                        setEditingListing(null);
+                        setFormData(emptyForm);
+                        setShowModal(true);
+
+                      }}
+                    >
+                      Create Listing
+                    </button>
+                  </div>
+                )}
+
                 <div className="cards-grid" ref={listingsRef}>
-                  {(showAll ? listings : listings.slice(0, 2)).map((listing) => (
+                  {(showAll ? filteredListings : filteredListings.slice(0, 2)).map((listing) => (
                     <div className="listing-card-wrap" key={listing.id}>
                       <div className="modern-card">
                         <div className="card-image">
@@ -271,8 +386,8 @@ export default function CreateListingsPage() {
                             src={listing.media?.length > 0 ? listing.media[0].mediaUrl : "/vendor_management/card-1.jpeg"}
                             alt={listing.title}
                           />
-                          <span className={`status-badge ${listing.status === "DRAFT" ? "draft" : "active"}`}>
-                            {listing.status || "ACTIVE"}
+                          <span className={`status-badge ${listing.visibilityStatus === "DRAFT" ? "draft" : "active"}`}>
+                            {listing.visibilityStatus}
                           </span>
                           <span className="category-badge">
                             {listing.category?.categoryName || "Experience"}
@@ -287,10 +402,18 @@ export default function CreateListingsPage() {
                             </div>
                           )}
                           <h3 className="card-title">{listing.title}</h3>
-                          {listing.capacity > 0 && (
+                          {listing.shortDescription && (
+                            <p className="card-description">
+                              {listing.shortDescription}
+                            </p>
+                          )}
+                          
+
+
+                          {listing.listingType === "PRODUCT" && listing.stock !== null && (
                             <div className="card-capacity">
-                              <i className="fa-solid fa-users"></i>
-                              <span>Up to {listing.capacity} people</span>
+                              <i className="fa-solid fa-box"></i>
+                              <span>Stock available: {listing.stock}</span>
                             </div>
                           )}
                           <div className="meta-row light">
@@ -313,6 +436,7 @@ export default function CreateListingsPage() {
                               onClick={() => {
                                 console.log("MEDIA:", listing.media);
                                 setEditingListing(listing);
+                                setIsPublished(listing.visibilityStatus === "PUBLISHED");
                                 const existingImage = listing.media?.length > 0 ? listing.media[0].mediaUrl : "";
                                 setFormData({
                                   title: listing.title || "",
@@ -320,12 +444,13 @@ export default function CreateListingsPage() {
                                   listingType: listing.listingType || "EXPERIENCE",
                                   minPrice: listing.priceMin?.toString() || "",
                                   maxPrice: listing.priceMax?.toString() || "",
-                                  capacity: listing.capacity?.toString() || "",
                                   longDescription: listing.longDescription || "",
                                   shortDescription: listing.shortDescription || "",
+                                  capacity: listing.stock?.toString() || "",
                                   imageName: existingImage,
                                   imagePreview: existingImage,
                                   tags: listing.tags || [],
+                                  inclusions: listing.inclusions ?? []
                                 });
                                 setSelectedAddressId(listing.addressId || null);
                                 setShowModal(true);
@@ -397,10 +522,30 @@ export default function CreateListingsPage() {
 
                 <div className="form-card premium-card">
                   <div className="form-title">Basic Information</div>
+                  <div className="publish-switch-row">
+                    <label>Publish listing</label>
+
+                    <label className="switch">
+                      <input
+                        type="checkbox"
+                        checked={isPublished}
+                        onChange={(e) => setIsPublished(e.target.checked)}
+                      />
+                      <span className="slider"></span>
+                    </label>
+
+                    <span>{isPublished ? "Published" : "Draft"}</span>
+                  </div>
                   <div className="listing-type-toggle">
                     <div
                       className={`type-card ${formData.listingType === "EXPERIENCE" ? "active" : ""}`}
-                      onClick={() => setFormData({ ...formData, listingType: "EXPERIENCE" })}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          listingType: "EXPERIENCE",
+                          capacity: ""
+                        })
+                      }
                     >
                       <i className="fa-solid fa-person-walking"></i>
                       <span>Experience</span>
@@ -440,7 +585,7 @@ export default function CreateListingsPage() {
                       <label>Location *</label>
                       <select
                         required
-                        value={selectedAddressId || ""}
+                        value={selectedAddressId ?? ""}
                         onChange={(e) => setSelectedAddressId(Number(e.target.value))}
                       >
                         <option value="">Select location</option>
@@ -471,18 +616,91 @@ export default function CreateListingsPage() {
                         onChange={(e) => setFormData({ ...formData, maxPrice: e.target.value })}
                       />
                     </div>
-                  </div>
-                  <div className="form-group" style={{ marginTop: 16 }}>
-                    <label>Capacity (max people)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 10"
-                      value={formData.capacity}
-                      onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
-                    />
+                    <div className="form-group">
+                      <label>Product Quantity</label>
+
+                      <input
+                        type="number"
+                        placeholder="e.g. 50"
+                        value={formData.capacity}
+                        disabled={formData.listingType === "EXPERIENCE"}
+                        onChange={(e) =>
+                          setFormData({ ...formData, capacity: e.target.value })
+                        }
+                      />
+
+                      {formData.listingType === "EXPERIENCE" && (
+                        <small className="field-note">
+                          Quantity is only used for products.
+                        </small>
+                      )}
+                    </div>
                   </div>
                   <div className="form-group" style={{ marginTop: 16 }}>
                     <label>Tags (max 3, one word each)</label>
+                    <div className="form-group" style={{ marginTop: 20 }}>
+                      <label className="form-label">What's Included</label>
+
+                      <div className="inclusions-container">
+
+                        {formData.inclusions.map((item, index) => (
+                          <div key={index} className="inclusion-card">
+
+                            <div className="inclusion-icon">
+                              ✓
+                            </div>
+
+                            <div className="inclusion-inputs">
+                              <input
+                                placeholder="Title (e.g. Tea & refreshments)"
+                                value={item.title}
+                                onChange={(e) => {
+                                  const updated = [...formData.inclusions];
+                                  updated[index].title = e.target.value;
+                                  setFormData({ ...formData, inclusions: updated });
+                                }}
+                              />
+
+                              <input
+                                placeholder="Short description"
+                                value={item.description}
+                                onChange={(e) => {
+                                  const updated = [...formData.inclusions];
+                                  updated[index].description = e.target.value;
+                                  setFormData({ ...formData, inclusions: updated });
+                                }}
+                              />
+                            </div>
+
+                            <button
+                              className="remove-inclusion"
+                              type="button"
+                              onClick={() => {
+                                const updated = formData.inclusions.filter((_, i) => i !== index);
+                                setFormData({ ...formData, inclusions: updated });
+                              }}
+                            >
+                              ✕
+                            </button>
+
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          className="add-inclusion-button"
+                          onClick={() =>
+                            setFormData({
+                              ...formData,
+                              inclusions: [...formData.inclusions, { title: "", description: "" }]
+                            })
+                          }
+                        >
+                          + Add inclusion
+                        </button>
+
+                      </div>
+                    </div>
                     <input
                       type="text"
                       placeholder="Add up to 3 tags (press Enter)"
@@ -538,7 +756,7 @@ export default function CreateListingsPage() {
                       {formData.shortDescription.length}/{SHORT_DESC_MAX}
                     </div>
                     <div style={{ height: 12 }} />
-                    <div className="form-title">Full Listing Description *</div>
+                    <div className="form-title">Add Cultural Story</div>
                     <textarea
                       rows={6}
                       placeholder="Describe your listing in detail..."
@@ -586,11 +804,29 @@ export default function CreateListingsPage() {
                       formDataToSend.append("listingType", formData.listingType);
                       formDataToSend.append("title", formData.title);
                       formDataToSend.append("shortDescription", formData.shortDescription);
+                      formDataToSend.append(
+                        "tags",
+                        JSON.stringify(formData.tags)
+                      );
                       if (formData.longDescription) formDataToSend.append("longDescription", formData.longDescription);
                       formDataToSend.append("priceMin", formData.minPrice);
                       formDataToSend.append("priceMax", formData.maxPrice);
-                      if (formData.capacity && formData.capacity.trim() !== "") formDataToSend.append("capacity", formData.capacity);
-                      formDataToSend.append("tags", JSON.stringify(formData.tags));
+                      if (
+                        formData.listingType === "PRODUCT" &&
+                        formData.capacity &&
+                        formData.capacity.trim() !== ""
+                      ) {
+                        formDataToSend.append("stock", formData.capacity);
+                      }
+
+                      formDataToSend.append(
+                        "visibilityStatus",
+                        isPublished ? "PUBLISHED" : "DRAFT"
+                      );
+                      formDataToSend.append(
+                        "inclusions",
+                        JSON.stringify(formData.inclusions)
+                      );
                       if (fileInputRef.current?.files?.[0]) formDataToSend.append("image", fileInputRef.current.files[0]);
 
                       const url = editingListing
@@ -605,6 +841,16 @@ export default function CreateListingsPage() {
                         return;
                       }
                       console.log("Saved:", data);
+
+                      if (isPublished) {
+                        toast.success(`"${formData.title}" is now published!`, {
+                          className: "publish-toast"
+                        });
+                      } else {
+                        toast.info(`"${formData.title}" saved as draft.`, {
+                          className: "publish-toast"
+                        });
+                      }
                       if (!editingListing) {
                         setListings((prev) => [
                           { ...data, media: formData.imagePreview ? [{ mediaUrl: formData.imagePreview }] : [] },
@@ -620,6 +866,7 @@ export default function CreateListingsPage() {
                         );
                       }
                       setFormData(emptyForm);
+                      setIsPublished(true);
                       setEditingListing(null);
                       setShowModal(false);
                     } catch (error) {
@@ -637,6 +884,7 @@ export default function CreateListingsPage() {
           </div>
         )}
       </div>
-    </main>
+      <ToastContainer position="top-right" autoClose={3000} />
+    </main >
   );
 }

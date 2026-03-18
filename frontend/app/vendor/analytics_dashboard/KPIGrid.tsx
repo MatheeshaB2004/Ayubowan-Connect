@@ -17,7 +17,7 @@ interface KPIGridProps {
   summary: any;
 }
 export default function KPIGrid({ summary }: KPIGridProps) {
-  console.log("KPI RECEIVED:", summary);
+  
   const primaryStats = [
     {
       label: 'Bookings',
@@ -27,9 +27,9 @@ export default function KPIGrid({ summary }: KPIGridProps) {
       color: '#379683'
     },
     {
-      label: 'Profile Views',
-      value: summary?.profileViews,
-      change: summary?.profileViewsChange ?? null,
+      label: 'Listing Views',
+      value: summary?.listingViews,
+      change: summary?.listingViewsChange ?? null,
       icon: EyeIcon,
       color: '#577399'
     }];
@@ -44,9 +44,10 @@ export default function KPIGrid({ summary }: KPIGridProps) {
     },
     {
       label: 'Response Time',
-      value: summary.avgResponseMinutes
-        ? `${summary.avgResponseMinutes} min`
-        : '—',
+      value:
+        summary.avgResponseDisplay === "0m"
+           ? "⚡Instant"
+          : summary.avgResponseDisplay || "—",
       sub: 'Avg accept time',
       icon: InboxIcon,
       color: '#577399'
