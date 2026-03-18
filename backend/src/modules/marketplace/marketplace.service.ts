@@ -34,7 +34,7 @@ type ListingSummary = {
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(query: MarketplaceQuery) {
     const {
@@ -52,6 +52,7 @@ export class MarketplaceService {
     const priceBounds = this.resolvePriceBounds(minPrice, maxPrice, priceRange);
 
     const where: Prisma.ListingWhereInput = {
+       visibilityStatus: "PUBLISHED",
       ...(type ? { listingType: type } : {}),
       ...(categories?.length
         ? { category: { categoryName: { in: categories } } }
@@ -59,20 +60,20 @@ export class MarketplaceService {
       ...(location ? { location: { district: location } } : {}),
       ...(priceBounds
         ? {
-            priceMin: {
-              gte: priceBounds.min,
-              lte: priceBounds.max,
-            },
-          }
+          priceMin: {
+            gte: priceBounds.min,
+            lte: priceBounds.max,
+          },
+        }
         : {}),
       ...(search
         ? {
-            OR: [
-              { title: { contains: search, mode: 'insensitive' } },
-              { shortDescription: { contains: search, mode: 'insensitive' } },
-              { longDescription: { contains: search, mode: 'insensitive' } },
-            ],
-          }
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { shortDescription: { contains: search, mode: 'insensitive' } },
+            { longDescription: { contains: search, mode: 'insensitive' } },
+          ],
+        }
         : {}),
     };
 
@@ -84,6 +85,9 @@ export class MarketplaceService {
           category: true,
           location: true,
           media: true,
+          reviews: {
+            select: { rating: true },
+          },
         },
         orderBy: [{ displayPriority: 'desc' }, { createdAt: 'desc' }],
         skip: offset,
@@ -112,6 +116,9 @@ export class MarketplaceService {
           },
         },
         media: true,
+        reviews: {
+          select: { rating: true }
+        },
         vendor: {
           include: {
             user: {
@@ -127,6 +134,18 @@ export class MarketplaceService {
     if (!listing) {
       throw new NotFoundException(`Listing with ID ${id} not found`);
     }
+
+    const ratingAverage =
+      listing.reviews.length > 0
+        ? Number(
+          (
+            listing.reviews.reduce((sum, r) => sum + r.rating, 0) /
+            listing.reviews.length
+          ).toFixed(1)
+        )
+        : 0;
+
+    const ratingCount = listing.reviews.length;
 
     // Transform to include contactEmail in vendor and ensure vendorId is at top level
     const result = {
@@ -223,7 +242,7 @@ export class MarketplaceService {
     title: string;
     shortDescription: string;
     priceMin: number;
-    ratingAverage: number;
+    reviews: { rating: number }[];
     listingType: ListingType;
     category: { categoryName: string };
     location: { city: string; district: string };
@@ -232,13 +251,23 @@ export class MarketplaceService {
     const primaryMedia =
       listing.media.find((media) => media.isPrimary) ?? listing.media[0];
 
+    const rating =
+      listing.reviews.length > 0
+        ? Number(
+          (
+            listing.reviews.reduce((sum, r) => sum + r.rating, 0) /
+            listing.reviews.length
+          ).toFixed(1)
+        )
+        : 0;
+
     return {
       id: listing.id,
       title: listing.title,
       price: listing.priceMin,
       location: listing.location.city,
       district: listing.location.district,
-      rating: listing.ratingAverage,
+      rating: rating,
       imageUrl: primaryMedia?.mediaUrl ?? null,
       category: listing.category.categoryName,
       type:
@@ -305,16 +334,26 @@ export class MarketplaceService {
       }),
     ]);
 
+    const averageRating =
+      total > 0
+        ? Number(
+          (
+            reviews.reduce((sum, r) => sum + r.rating, 0) / total
+          ).toFixed(1)
+        )
+        : 0;
+
     return {
       total,
-      averageRating: listing?.ratingAverage || 0,
+      averageRating,
       reviews: reviews.map((review) => ({
         id: review.id,
         listingId: review.listingId,
         userId: review.userId,
-        userName: review.user.fullName,
+        userName: review.user?.fullName ?? "Unknown User",
         rating: review.rating,
         comment: review.comment,
+        reply: review.reply,
         media: review.media.map((m) => ({
           id: m.id,
           mediaType: m.mediaType,
