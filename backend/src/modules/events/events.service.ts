@@ -151,7 +151,14 @@ export class EventsService {
     const event = await this.prisma.event.findUnique({
       where: { id },
       include: {
-        vendor: { select: { id: true, businessName: true } },
+        vendor: {
+          select: {
+            id: true,
+            businessName: true,
+            userId: true,
+            clerkUserId: true,
+          },
+        },
       },
     });
 

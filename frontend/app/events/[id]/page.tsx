@@ -265,8 +265,29 @@ export default function EventDetailPage() {
   const hasContactDetails = Boolean(organiserPhone || organiserEmail || organiserWebsite);
 
   // Check if current vendor is the event creator
-  const isEventCreator = !!(isVendor && event.vendor && event.vendor.id && user && 
-    event.vendor.id === Number(user.id?.split('_')[1] || user.id));
+  const metadataUserIdRaw = user?.publicMetadata?.userId ?? user?.unsafeMetadata?.userId;
+  const metadataVendorIdRaw = user?.publicMetadata?.vendorId ?? user?.unsafeMetadata?.vendorId;
+  const metadataUserId = Number(metadataUserIdRaw);
+  const metadataVendorId = Number(metadataVendorIdRaw);
+  const matchesByClerkId = Boolean(
+    user?.id &&
+      event.vendor?.clerkUserId &&
+      event.vendor.clerkUserId === user.id
+  );
+  const matchesByUserId = Boolean(
+    event.vendor?.userId &&
+      Number.isFinite(metadataUserId) &&
+      event.vendor.userId === metadataUserId
+  );
+  const matchesByVendorId = Boolean(
+    event.vendor?.id &&
+      Number.isFinite(metadataVendorId) &&
+      event.vendor.id === metadataVendorId
+  );
+
+  const isEventCreator = Boolean(
+    isVendor && (matchesByClerkId || matchesByUserId || matchesByVendorId)
+  );
   const canDelete = isEventCreator && canDeleteEvent(event);
 
   return (

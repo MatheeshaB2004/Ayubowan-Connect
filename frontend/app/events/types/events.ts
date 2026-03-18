@@ -1,5 +1,7 @@
 export interface EventVendor {
   id: number;
+  userId?: number;
+  clerkUserId?: string;
   businessName: string;
   contactPhone?: string;
   email?: string;
