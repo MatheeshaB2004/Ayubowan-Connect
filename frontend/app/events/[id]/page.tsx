@@ -10,7 +10,7 @@ import {
   ChevronLeft, ChevronRight, Star, CheckCircle2,
   Loader2, X,
 } from "lucide-react";
-import { fetchEventById, registerForEvent } from "../lib/api/events";
+import { fetchEventById, registerForEvent, fetchUserRegisteredEvents } from "../lib/api/events";
 import { Event } from "../types/events";
 import { formatFullDate, formatPrice } from "../lib/utils";
 
@@ -53,12 +53,11 @@ export default function EventDetailPage() {
   // useUser() gives us the signed-in user. isLoaded tells us when Clerk is ready.
   const { user, isLoaded: authLoaded } = useUser();
 
-  // get the role from publicMetadata that Clerk stores after sign-up.
-  // Adjust the field name to match what our Clerk setup stores.
-  const clerkRole = (user?.publicMetadata?.role as string | undefined) ?? "guest";
+  // get the role from publicMetadata or unsafeMetadata that Clerk stores after sign-up.
+  const clerkRole = (user?.publicMetadata?.role || user?.unsafeMetadata?.role) as string | undefined;
   const isGuest     = !user;               // not signed in at all
   const isVendor    = clerkRole === "vendor";
-  const isTraveller = clerkRole === "traveller" || clerkRole === "user";
+  const isTraveller = !isGuest && !isVendor;
 
   // ALL useState / useCallback hooks declared unconditionally
   const [event, setEvent]       = useState<Event | null>(null);
@@ -70,6 +69,7 @@ export default function EventDetailPage() {
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
   const [regError, setRegError]     = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const getToken = () =>
     typeof window !== "undefined" ? (localStorage.getItem("accessToken") ?? "") : "";
@@ -88,12 +88,22 @@ export default function EventDetailPage() {
     try {
       const data = await fetchEventById(Number(id));
       setEvent(data);
+
+      if (authLoaded && !isGuest && !isVendor) {
+        try {
+          const registeredEvents = await fetchUserRegisteredEvents(getToken());
+          const alreadyReg = registeredEvents.some((e: Event) => e.id === Number(id));
+          setIsRegistered(alreadyReg);
+        } catch (err) {
+          console.error("Failed to fetch registered events", err);
+        }
+      }
     } catch {
       setNotFound(true);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, authLoaded, isGuest, isVendor]);
 
   useEffect(() => { loadEvent(); }, [loadEvent]);
 
@@ -103,8 +113,31 @@ export default function EventDetailPage() {
     setRegError(null);
     setRegLoading(true);
     try {
-      await registerForEvent(getToken(), event.id);
+      const result = await registerForEvent(getToken(), event.id);
+
+      if (result?.message === "Already registered") {
+        setIsRegistered(true);
+        setRegError("You are already registered for this event.");
+        return;
+      }
+
       setRegSuccess(true);
+      setIsRegistered(true);
+
+      try {
+        const updatedEvent = await fetchEventById(event.id);
+        setEvent(updatedEvent);
+      } catch {
+        // Keep UI responsive if refresh fails, but avoid exceeding the max participants.
+        setEvent((prevEvent) => {
+          if (!prevEvent) return prevEvent;
+          const nextCount = prevEvent.participantCount + 1;
+          const cappedCount = prevEvent.maxParticipants
+            ? Math.min(nextCount, prevEvent.maxParticipants)
+            : nextCount;
+          return { ...prevEvent, participantCount: cappedCount };
+        });
+      }
     } catch {
       setRegError("Registration failed. You may already be registered for this event.");
     } finally {
@@ -139,7 +172,8 @@ export default function EventDetailPage() {
 
   const isFree     = event.isFree || !event.price;
   const spotsLeft  = event.maxParticipants ? event.maxParticipants - event.participantCount : null;
-  const almostFull = spotsLeft != null && spotsLeft <= 5;
+  const noSpotsLeft = spotsLeft != null && spotsLeft <= 0;
+  const almostFull = spotsLeft != null && spotsLeft > 0 && spotsLeft <= 5;
 
   const learnItems = (event.whatYouWillLearn && event.whatYouWillLearn.length > 0)
     ? event.whatYouWillLearn : FALLBACK_LEARN;
@@ -333,7 +367,7 @@ export default function EventDetailPage() {
                   </div>
                   {spotsLeft != null && (
                     <p className={`text-xs mb-4 ${almostFull ? "text-amber-600 font-medium" : "text-gray-500"}`}>
-                      {almostFull ? `⚡ Only ${spotsLeft} spots remaining` : `${spotsLeft} spots remaining`}
+                      {noSpotsLeft ? "Event is full" : almostFull ? `⚡ Only ${spotsLeft} spots remaining` : `${spotsLeft} spots remaining`}
                     </p>
                   )}
                   <div className="space-y-3 mb-5">
@@ -343,28 +377,65 @@ export default function EventDetailPage() {
                   </div>
 
                   {isTraveller && (
-                    <button onClick={() => setShowReg(true)} className="w-full h-11 rounded-xl bg-[#0d9488] hover:bg-[#0b7a70] text-white font-semibold text-sm transition-colors active:scale-[0.98]">
-                      Register Now
-                    </button>
+                    isRegistered ? (
+                      <div>
+                        <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-400 font-medium text-sm flex items-center justify-center cursor-not-allowed">
+                          Register Now
+                        </div>
+                        <p className="text-sm text-[#0d9488] font-medium text-center mt-3 flex items-center justify-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" />
+                          You have already registered in this event
+                        </p>
+                      </div>
+                    ) : noSpotsLeft ? (
+                      <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-500 font-medium text-sm flex items-center justify-center">
+                        Event is full
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowReg(true)}
+                        className="w-full h-11 rounded-xl bg-[#0d9488] hover:bg-[#0b7a70] text-white font-semibold text-sm transition-colors active:scale-[0.98]"
+                      >
+                        Register Now
+                      </button>
+                    )
                   )}
                   {isVendor && (
                     <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-500 font-medium text-sm flex items-center justify-center">
                       Vendors cannot register
                     </div>
                   )}
-                  <p className="text-[11px] text-gray-400 text-center mt-3">Cancellation up to 24 hours before the event</p>
                 </div>
 
-                {/* Contact Organiser */}
                 {event.vendor && (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4">Contact Organiser</h3>
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center gap-2.5 text-sm text-gray-600"><Phone className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>+94 XX XXX XXXX</span></div>
-                      <div className="flex items-center gap-2.5 text-sm text-gray-600"><Mail className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>contact@vendor.lk</span></div>
-                      <div className="flex items-center gap-2.5 text-sm text-gray-600"><Globe className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>www.vendor.lk</span></div>
-                    </div>
-                    {/* <button className="w-full h-9 rounded-lg border border-[#0d9488] text-[#0d9488] text-sm font-semibold hover:bg-[#0d9488] hover:text-white transition-colors">Send Message</button> */}
+                    {(!event.vendor.contactPhone && !event.vendor.email && !event.vendor.website) ? (
+                      <p className="text-sm text-gray-500 italic text-center py-2 bg-gray-50 rounded-lg border border-gray-100">
+                        Contact details have not been provided by the organiser.
+                      </p>
+                    ) : (
+                      <div className="space-y-3 mb-4">
+                        {event.vendor.contactPhone && (
+                          <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                            <Phone className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <span>{event.vendor.contactPhone}</span>
+                          </div>
+                        )}
+                        {event.vendor.email && (
+                          <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                            <Mail className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <span>{event.vendor.email}</span>
+                          </div>
+                        )}
+                        {event.vendor.website && (
+                          <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                            <Globe className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <span>{event.vendor.website}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 

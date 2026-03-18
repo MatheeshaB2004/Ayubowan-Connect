@@ -1,6 +1,9 @@
 export interface EventVendor {
   id: number;
   businessName: string;
+  contactPhone?: string;
+  email?: string;
+  website?: string;
 }
 
 export interface Event {

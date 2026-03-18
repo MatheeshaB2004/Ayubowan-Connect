@@ -1,23 +1,10 @@
-"use client";
-
-import { Search, X, SlidersHorizontal, MapPin } from "lucide-react";
+import { LocationDropdown } from "@/components/common/LocationDropdown";
+import { CategoryDropdown } from "@/components/common/CategoryDropdown";
+import { Search, X, MapPin } from "lucide-react";
 
 const CATEGORIES = [
-  "Traditional Artisanship","Textiles & Handicrafts","Cooking","Arts & Crafts","Cultural","Food & Beverage","Community","Adventure","Nature & Wellness"
+  "Traditional Artisanship", "Textiles & Handicrafts", "Cooking", "Arts & Crafts", "Cultural", "Food & Beverage", "Community", "Adventure", "Nature & Wellness"
 ];
-
-const provinceDistrictMap: { [key: string]: string[] } = {
-   'Western': ['Colombo', 'Gampaha', 'Kalutara'],
-   'Central': ['Kandy', 'Matale', 'Nuwara Eliya'],
-   'Southern': ['Galle', 'Matara', 'Hambantota'],
-   'Northern': ['Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya'],
-   'Eastern': ['Ampara', 'Batticaloa', 'Trincomalee'],
-   'North Western': ['Kurunegala', 'Puttalam'],
-   'North Central': ['Anuradhapura', 'Polonnaruwa'],
-   'Uva': ['Badulla', 'Monaragala'],
-   'Sabaragamuwa': ['Ratnapura', 'Kegalle']
-};
-
 interface EventFiltersProps {
   search: string;
   category: string;
@@ -27,15 +14,12 @@ interface EventFiltersProps {
   onLocationChange: (v: string) => void;
 }
 
-const selectCls =
-  "w-full h-10 pl-8 pr-3 text-sm border border-gray-200 rounded-lg appearance-none bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0d9488]/30 focus:border-[#0d9488] transition-colors cursor-pointer";
-
 export function EventFilters({
   search, category, location,
   onSearchChange, onCategoryChange, onLocationChange,
 }: EventFiltersProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8 shadow-sm">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8 shadow-sm relative z-50">
       <div className="flex flex-col md:flex-row gap-3">
 
         {/* Search */}
@@ -59,27 +43,22 @@ export function EventFilters({
         </div>
 
         {/* Category */}
-        <div className="relative w-full md:w-48">
-          <SlidersHorizontal className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-          <select value={category} onChange={(e) => onCategoryChange(e.target.value)} className={selectCls}>
-            <option value="all">All Categories</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+        <div className="relative w-full md:w-56 z-10">
+          <CategoryDropdown 
+            value={category}
+            onChange={onCategoryChange}
+            categories={CATEGORIES}
+          />
         </div>
 
         {/* Location */}
-        <div className="relative w-full md:w-48">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-          <select value={location} onChange={(e) => onLocationChange(e.target.value)} className={selectCls}>
-            <option value="all">All Locations</option>
-            {Object.entries(provinceDistrictMap).flatMap(([province, districts]) =>
-              districts.map((district) => (
-                <option key={district} value={district}>
-                  {district}, {province}
-                </option>
-              ))
-            )}
-          </select>
+        <div className="relative w-full md:w-56 z-20">
+          <LocationDropdown
+            value={location}
+            onChange={onLocationChange}
+            className="h-10 border border-gray-200 rounded-lg text-sm px-3 relative z-30 bg-white"
+            icon={true}
+          />
         </div>
 
       </div>

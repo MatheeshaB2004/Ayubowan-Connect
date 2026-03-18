@@ -13,10 +13,13 @@ import {
 } from "./lib/api/events";
 import { Event } from "./types/events";
 
+import { useSearchParams } from "next/navigation";
+
 export default function EventsPage() {
-  const [search, setSearch]     = useState("");
-  const [category, setCategory] = useState("all");
-  const [location, setLocation] = useState("all");
+  const searchParams = useSearchParams();
+  const [search, setSearch]     = useState(searchParams.get("search") || "");
+  const [category, setCategory] = useState(searchParams.get("category") || "all");
+  const [location, setLocation] = useState(searchParams.get("location") || "all");
 
   const [allEvents, setAllEvents]       = useState<Event[]>([]);
   const [vendorEvents, setVendorEvents] = useState<Event[]>([]);
