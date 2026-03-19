@@ -108,15 +108,14 @@ function PaymentSuccessPageContent() {
     const activateSubscription = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/subscriptions/activate`, {
+        const response = await fetch(`${API_BASE}/payments/upgrade`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-user-id': user.id,
           },
           body: JSON.stringify({
-            plan,
-            cycle,
+            planType: plan?.toUpperCase(),
           }),
         });
 
