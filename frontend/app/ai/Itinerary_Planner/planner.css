@@ -133,7 +133,7 @@
 }
 
 .day-card {
-    @apply bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow;
+    @apply bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300;
 }
 
 .day-header {
