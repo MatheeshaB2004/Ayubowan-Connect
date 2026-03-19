@@ -6,7 +6,7 @@ import { EventCard } from "./EventCard";
 import { CreateEventDialog } from "./CreateEventDialog";
 import { Event } from "../types/events";
 
-interface Props { events: Event[]; token: string; onEventCreated: () => void; }
+interface Props { events: Event[]; token: string; userId?: string; onEventCreated: () => void; }
 
 function HScroll({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +16,7 @@ function HScroll({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function VendorEventsSection({ events, token, onEventCreated }: Props) {
+export function VendorEventsSection({ events, token, userId, onEventCreated }: Props) {
   const [open, setOpen] = useState(false);
 
   const live     = events.filter(e => e.isLive || e.computedStatus === "live");
@@ -28,13 +28,15 @@ export function VendorEventsSection({ events, token, onEventCreated }: Props) {
       <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">Your Events</h2>
-          <button
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#0d9488] hover:bg-[#0b7a70] active:scale-95 transition-all rounded-lg px-4 h-9"
-          >
-            <Plus className="w-4 h-4" />
-            Create Event
-          </button>
+          {events.length > 0 && (
+            <button
+              onClick={() => setOpen(true)}
+              className="flex items-center gap-1.5 text-sm font-semibold text-white bg-[#0d9488] hover:bg-[#0b7a70] active:scale-95 transition-all rounded-lg px-4 h-9"
+            >
+              <Plus className="w-4 h-4" />
+              Create Event
+            </button>
+          )}
         </div>
 
         {events.length === 0 ? (
@@ -69,14 +71,14 @@ export function VendorEventsSection({ events, token, onEventCreated }: Props) {
             {past.length > 0 && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-3">Past Events</h3>
-                <HScroll>{past.map(e => <EventCard key={e.id} event={e} showVendor={false} muted />)}</HScroll>
+                <HScroll>{past.map(e => <EventCard key={e.id} event={e} showVendor={false} />)}</HScroll>
               </div>
             )}
           </div>
         )}
       </section>
 
-      <CreateEventDialog open={open} token={token} onClose={() => setOpen(false)} onCreated={onEventCreated} />
+      <CreateEventDialog open={open} token={token} userId={userId} onClose={() => setOpen(false)} onCreated={onEventCreated} />
     </>
   );
 }

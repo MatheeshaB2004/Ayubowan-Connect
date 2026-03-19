@@ -7,12 +7,14 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { createEvent, uploadEventImage } from "../lib/api/events";
+import { CategoryDropdown } from "@/components/common/CategoryDropdown";
 
 // Constants
 
 const CATEGORIES = [
-  "Cooking", "Arts & Crafts", "Cultural",
-  "Food & Beverage", "Community", "Adventure", "Wellness",
+  "Traditional Artisanship", "Textiles & Handicrafts", "Cooking",
+  "Arts & Crafts", "Cultural", "Food & Beverage", "Community",
+  "Adventure", "Nature & Wellness",
 ];
 
 // Province → District map (same as Marketplace)
@@ -36,12 +38,15 @@ const MAX_MB = 5;
 interface Props {
   open: boolean;
   token: string;
+  userId?: string;
   onClose: () => void;
   onCreated: () => void;
 }
 
 interface Form {
   title: string; description: string; category: string;
+  location: string;
+  contactPhone: string; contactEmail: string; contactWebsite: string;
   province: string; district: string;
   startDate: string; endDate: string; time: string;
   maxParticipants: string; price: string; isFree: boolean;
@@ -49,6 +54,8 @@ interface Form {
 
 const EMPTY: Form = {
   title: "", description: "", category: "",
+  location: "",
+  contactPhone: "", contactEmail: "", contactWebsite: "",
   province: "", district: "",
   startDate: "", endDate: "", time: "",
   maxParticipants: "", price: "", isFree: false,
@@ -58,7 +65,7 @@ const inp =
   "w-full h-9 px-3 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488]/30 focus:border-[#0d9488] transition-colors bg-white placeholder-gray-400 disabled:bg-gray-50 disabled:text-gray-400";
 
 // Component
-export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
+export function CreateEventDialog({ open, token, userId, onClose, onCreated }: Props) {
 
   // ALL hooks declared before early return
   const [form, setForm]             = useState<Form>(EMPTY);
@@ -141,9 +148,19 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
   // Submit
   const handleSubmit = async () => {
     if (!form.title.trim())  { setError("Event title is required."); return; }
+    if (!form.category || form.category === "all") { setError("Category is required."); return; }
+    if (!form.location.trim()) { setError("Exact event location is required."); return; }
     if (!form.province)      { setError("Please select a province."); return; }
     if (!form.district)      { setError("Please select a district."); return; }
     if (!form.startDate)     { setError("Start date is required."); return; }
+    if (!form.endDate)       { setError("End date is required."); return; }
+    if (!form.time.trim())   { setError("Time is required."); return; }
+    if (!form.description.trim()) { setError("Description is required."); return; }
+    if (!form.isFree && !form.price.trim()) { setError("Price is required unless the event is marked free."); return; }
+
+    const cleanLearn = learnItems.filter(x => x.trim() !== "");
+    if (cleanLearn.length === 0) { setError("Please add at least one item in What You'll Learn."); return; }
+
     setError(null);
     setLoading(true);
 
@@ -167,27 +184,29 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
         }
       }
 
-      const cleanLearn = learnItems.filter(x => x.trim() !== "");
       const cleanInfo  = infoItems.filter(x => x.trim() !== "");
 
       await createEvent(token, {
         title:            form.title.trim(),
-        description:      form.description      || undefined,
+        description:      form.description.trim(),
         category:         form.category         || undefined,
-        location:         form.district,          // display name
+        location:         form.location.trim(),
+        contactPhone:     form.contactPhone.trim() || undefined,
+        contactEmail:     form.contactEmail.trim() || undefined,
+        contactWebsite:   form.contactWebsite.trim() || undefined,
         city:             form.district,
         district:         form.district,
         province:         form.province,
         startDate:        form.startDate,
-        endDate:          form.endDate           || undefined,
-        time:             form.time              || undefined,
+        endDate:          form.endDate,
+        time:             form.time.trim(),
         maxParticipants:  form.maxParticipants ? parseInt(form.maxParticipants) : undefined,
         price:            form.isFree ? undefined : form.price ? parseFloat(form.price) : undefined,
         isFree:           form.isFree,
         imageUrl:         finalImageUrl,
         whatYouWillLearn: cleanLearn.length > 0 ? cleanLearn : undefined,
         importantInfo:    cleanInfo.length  > 0 ? cleanInfo  : undefined,
-      });
+      }, userId);
 
       // Reset everything on success
       setForm(EMPTY);
@@ -296,11 +315,14 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
           </Field>
 
           {/* ── 3. Category ── */}
-          <Field label="Category">
-            <select value={form.category} onChange={e => set("category", e.target.value)} className={inp}>
-              <option value="">Select category</option>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
+          <Field label="Category" required>
+            <div className="relative w-full z-10">
+              <CategoryDropdown
+                value={form.category || "all"}
+                onChange={(v) => set("category", v === "all" ? "" : v)}
+                categories={CATEGORIES}
+              />
+            </div>
           </Field>
 
           {/* ── 4. Province → District (cascade) ── */}
@@ -324,27 +346,69 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             </Field>
           </div>
 
-          {/* ── 5. Dates ── */}
+          {/* ── 5. Exact Location ── */}
+          <Field label="Exact Address of the event" required>
+            <input
+              type="text"
+              placeholder="e.g. No. 25, Lake Road, Kandy"
+              value={form.location}
+              onChange={e => set("location", e.target.value)}
+              className={inp}
+            />
+          </Field>
+
+          {/* ── 6. Contact Details (optional) ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field label="Contact Number (optional)">
+              <input
+                type="text"
+                placeholder="e.g. +94 77 123 4567"
+                value={form.contactPhone}
+                onChange={e => set("contactPhone", e.target.value)}
+                className={inp}
+              />
+            </Field>
+            <Field label="Contact Email (optional)">
+              <input
+                type="email"
+                placeholder="e.g. hello@yourbrand.lk"
+                value={form.contactEmail}
+                onChange={e => set("contactEmail", e.target.value)}
+                className={inp}
+              />
+            </Field>
+          </div>
+          <Field label="Website (optional)">
+            <input
+              type="url"
+              placeholder="e.g. https://www.yourbrand.lk"
+              value={form.contactWebsite}
+              onChange={e => set("contactWebsite", e.target.value)}
+              className={inp}
+            />
+          </Field>
+
+          {/* ── 7. Dates ── */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Start Date" required>
               <input type="date" value={form.startDate} onChange={e => set("startDate", e.target.value)} className={inp} />
             </Field>
-            <Field label="End Date">
+            <Field label="End Date" required>
               <input type="date" value={form.endDate} onChange={e => set("endDate", e.target.value)} className={inp} />
             </Field>
           </div>
 
-          {/* ── 6. Time ── */}
-          <Field label="Time">
+          {/* ── 8. Time ── */}
+          <Field label="Time" required>
             <input type="text" placeholder="e.g. 09:00 AM – 12:00 PM" value={form.time} onChange={e => set("time", e.target.value)} className={inp} />
           </Field>
 
-          {/* ── 7. Participants + Price ── */}
+          {/* ── 9. Participants + Price ── */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Max Participants">
               <input type="number" min={1} placeholder="30" value={form.maxParticipants} onChange={e => set("maxParticipants", e.target.value)} className={inp} />
             </Field>
-            <Field label="Price (LKR)">
+            <Field label="Price (LKR)" required>
               <div className="flex items-center gap-2">
                 <input
                   type="number" min={0} placeholder="3500"
@@ -361,8 +425,8 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             </Field>
           </div>
 
-          {/* ── 8. Description ── */}
-          <Field label="Description">
+          {/* ── 10. Description ── */}
+          <Field label="Description" required>
             <textarea
               rows={3}
               placeholder="Tell participants what to expect from this event..."
@@ -372,8 +436,8 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             />
           </Field>
 
-          {/* ── 9. What You'll Learn ── */}
-          <Collapsible title="What You'll Learn" hint="Shown as bullet points on the event detail page" open={learnOpen} onToggle={() => setLearnOpen(o => !o)}>
+          {/* ── 11. What You'll Learn ── */}
+          <Collapsible title="What You'll Learn" hint="Shown as bullet points on the event detail page" required open={learnOpen} onToggle={() => setLearnOpen(o => !o)}>
             <div className="space-y-2">
               {learnItems.map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -398,7 +462,7 @@ export function CreateEventDialog({ open, token, onClose, onCreated }: Props) {
             </div>
           </Collapsible>
 
-          {/* ── 10. Important Information ── */}
+          {/* ── 12. Important Information ── */}
           <Collapsible title="Important Information" hint="Shown in the sidebar on the event detail page" open={infoOpen} onToggle={() => setInfoOpen(o => !o)}>
             <div className="space-y-2">
               {infoItems.map((item, i) => (
@@ -460,14 +524,16 @@ function Field({ label, required, children }: { label: string; required?: boolea
   );
 }
 
-function Collapsible({ title, hint, open, onToggle, children }: {
-  title: string; hint: string; open: boolean; onToggle: () => void; children: React.ReactNode;
+function Collapsible({ title, hint, required, open, onToggle, children }: {
+  title: string; hint: string; required?: boolean; open: boolean; onToggle: () => void; children: React.ReactNode;
 }) {
   return (
     <div className="rounded-xl border border-gray-200 overflow-hidden">
       <button type="button" onClick={onToggle} className="w-full flex items-center justify-between px-4 py-3 bg-[#f9fafb] hover:bg-[#e8f5f2]/60 transition-colors text-left">
         <div>
-          <p className="text-[13px] font-semibold text-gray-800">{title}</p>
+          <p className="text-[13px] font-semibold text-gray-800">
+            {title}{required && <span className="text-red-500 ml-0.5">*</span>}
+          </p>
           <p className="text-[11px] text-gray-400 mt-0.5">{hint}</p>
         </div>
         {open ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}

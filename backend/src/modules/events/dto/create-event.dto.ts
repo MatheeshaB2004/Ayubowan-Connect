@@ -5,6 +5,8 @@ import {
   IsNumber,
   IsDateString,
   IsArray,
+  IsEmail,
+  IsUrl,
 } from 'class-validator';
 
 export class CreateEventDto {
@@ -28,6 +30,18 @@ export class CreateEventDto {
 
   @IsString()
   location: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
+
+  @IsOptional()
+  @IsEmail()
+  contactEmail?: string;
+
+  @IsOptional()
+  @IsUrl()
+  contactWebsite?: string;
 
   @IsString()
   city: string;
