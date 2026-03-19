@@ -139,7 +139,7 @@ export default function MyEventsPage() {
                       <td className="px-4 py-4 text-sm text-gray-600">{event.location}</td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge()}`}>
-                          Registered
+                          REGISTERED
                         </span>
                       </td>
                     </tr>

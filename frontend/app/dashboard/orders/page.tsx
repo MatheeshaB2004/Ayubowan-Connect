@@ -47,6 +47,7 @@ type Event = {
   location: string;
   price?: number;
   isFree: boolean;
+  registrationDate?: string;
   vendor?: {
     businessName?: string;
   };
@@ -258,7 +259,7 @@ export default function OrdersPage() {
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Participants</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Date</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
-                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -289,7 +290,7 @@ export default function OrdersPage() {
                             </td>
                             <td className="px-4 py-3">
                               <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusBadge(getDisplayStatus(order))}`}>
-                                {getDisplayStatus(order)}
+                                {getDisplayStatus(order).toUpperCase()}
                               </span>
                             </td>
                           </tr>
@@ -313,7 +314,7 @@ export default function OrdersPage() {
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Quantity</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Date</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
-                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -339,7 +340,7 @@ export default function OrdersPage() {
                             </td>
                             <td className="px-4 py-3">
                               <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusBadge(getDisplayStatus(order))}`}>
-                                {getDisplayStatus(order)}
+                                {getDisplayStatus(order).toUpperCase()}
                               </span>
                             </td>
                           </tr>
@@ -363,6 +364,8 @@ export default function OrdersPage() {
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Time</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Location</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
                       </tr>
                     </thead>
@@ -381,9 +384,15 @@ export default function OrdersPage() {
                           <td className="px-4 py-3 text-sm text-gray-700">
                             {event.location}
                           </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {formatDate(event.registrationDate)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-[#21a17a] font-semibold">
+                            {event.price ? `LKR ${event.price.toLocaleString()}` : 'FREE'}
+                          </td>
                           <td className="px-4 py-3">
                             <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                              Paid
+                              COMPLETED
                             </span>
                           </td>
                         </tr>
