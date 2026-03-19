@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
+import DashboardTabs from '@/components/dashboard/DashboardTabs';
 
 const API_BASE = API_BASE_URL;
 
@@ -96,32 +97,9 @@ export default function MyEventsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Events</h1>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link
-              href="/dashboard/bookings"
-              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              Pending Bookings
-            </Link>
-            <Link
-              href="/dashboard/events"
-              className="inline-flex items-center rounded-xl bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm"
-            >
-              My Events
-            </Link>
-            <Link
-              href="/dashboard/orders"
-              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              Orders History
-            </Link>
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-[#f9fafb]">
+      <DashboardTabs />
+      <div className="max-w-6xl mx-auto py-12 px-4">
         {events.length === 0 ? (
           <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">You have not registered for any events yet.</h2>

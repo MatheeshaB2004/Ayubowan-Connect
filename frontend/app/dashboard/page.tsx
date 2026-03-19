@@ -4,12 +4,22 @@ import Link from 'next/link';
 
 const cards = [
   {
-    title: 'My Pending Bookings',
+    title: 'Pending Bookings',
     description: 'Track booking requests waiting for vendor approval',
     href: '/dashboard/bookings',
     icon: (
       <svg className="h-8 w-8 text-[#0d9488]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Upcoming Experiences',
+    description: 'View your upcoming experience bookings',
+    href: '/dashboard/upcoming',
+    icon: (
+      <svg className="h-8 w-8 text-[#0d9488]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
       </svg>
     ),
   },
@@ -24,7 +34,7 @@ const cards = [
     ),
   },
   {
-    title: 'My Orders',
+    title: 'Orders',
     description: 'View completed purchases',
     href: '/dashboard/orders',
     icon: (
@@ -37,8 +47,8 @@ const cards = [
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 overflow-visible">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
           Customer Dashboard
@@ -48,7 +58,7 @@ export default function DashboardPage() {
         </p>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-0">
           {cards.map((card) => (
             <div
               key={card.title}
