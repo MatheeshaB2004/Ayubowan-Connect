@@ -32,170 +32,47 @@ export class ChatbotService {
         if (!queryText.trim()) {
             return {
                 fulfillmentText:
-                    'Ayubowan! Welcome to Ayubowan Connect. I can help you explore experiences, navigate the platform, or answer questions. How can I help?',
+                    'Ayubowan! Welcome to Ayubowan Connect. I can help with bookings, marketplace exploration, vendor support, and events. How can I help?',
             };
         }
 
-        // check for keyword-based navigation first
-        const navigationResponse = this.checkNavigationIntent(queryText.toLowerCase());
-        if (navigationResponse) {
-            return navigationResponse;
+        // check for specific AI Itinerary Planner redirect
+        if (/\b(plan|trip|itinerary|planner|journey|travel|schedule)\b/i.test(queryText) && /\b(take|go|bring|show)\b/i.test(queryText)) {
+            return {
+                fulfillmentText: 'For trip planning, please use our dedicated AI Itinerary Planner feature! 🗺️',
+                payload: { navigation: '/ai' },
+            };
         }
 
-        // try matching a search intent against the database
-        const searchResponse = await this.checkSearchIntent(queryText.toLowerCase());
-        if (searchResponse) {
-            return searchResponse;
-        }
-
-        // fall back to Groq AI for general conversation
+        // Send all other conversations to Groq AI
         if (this.groqApiKey) {
             try {
-                const aiResponse = await this.askGroq(queryText);
-                return { fulfillmentText: aiResponse };
+                const rawResponse = await this.askGroq(queryText);
+                let aiResponse = rawResponse;
+                let navPayload: { navigation?: string } | undefined = undefined;
+
+                // look for the special navigation tag the AI might output
+                const navMatch = rawResponse.match(/\[NAVIGATE:([^\]]+)\]/);
+                if (navMatch) {
+                    navPayload = { navigation: navMatch[1].trim() };
+                    // remove the tag from the final text shown to the user
+                    aiResponse = rawResponse.replace(/\[NAVIGATE:([^\]]+)\]/g, '').trim();
+                }
+
+                return { 
+                    fulfillmentText: aiResponse, 
+                    ...(navPayload ? { payload: navPayload } : {}) 
+                };
             } catch (error) {
                 console.error('Groq AI error:', error);
             }
         }
 
-        // generic fallback if AI is unavailable
+        // fallback if AI is unavailable
         return {
             fulfillmentText:
-                "I'm here to help with Ayubowan Connect! You can ask me about:\n\n🛍️ Exploring the marketplace\n🗺️ Planning a trip\n📅 Booking experiences\n🍽️ Finding food & culture experiences\n❓ How the platform works\n\nJust type what you'd like to do!",
+                "I'm having trouble connecting to my AI brain right now! But I'm here to help with Ayubowan Connect! You can ask me about exploring the marketplace & vendor support.",
         };
-    }
-
-    // matches common keywords to instant navigation or canned responses
-
-    private checkNavigationIntent(text: string): ChatResponse | null {
-        if (/\b(hi|hello|hey|hii+|howdy|greetings?|ayubowan|ola|sup|yo|good\s*(morning|afternoon|evening|day))\b/.test(text)) {
-            return {
-                fulfillmentText:
-                    'Ayubowan! 🙏 Welcome to Ayubowan Connect, your gateway to authentic Sri Lankan cultural experiences. How can I help you today?\n\nYou can ask me to:\n🛍️ Browse the marketplace\n🗺️ Plan a trip\n📅 Book an experience\n🍽️ Find food experiences',
-            };
-        }
-
-        if (/\b(marketplace|browse|shop|explore|listings?|catalog|products?|see\s+what|check\s+out|available)\b/.test(text)) {
-            return {
-                fulfillmentText: 'Sure! Taking you to our marketplace where you can discover amazing Sri Lankan cultural experiences! 🛍️',
-                payload: { navigation: '/marketplace' },
-            };
-        }
-
-        if (/\b(plan|trip|itinerary|planner|journey|travel|schedule)\b/.test(text)) {
-            return {
-                fulfillmentText: 'Let me take you to our AI Trip Planner! It will create a personalized cultural itinerary just for you! 🗺️',
-                payload: { navigation: '/ai' },
-            };
-        }
-
-        if (/\b(book|booking|reserve|reservation|purchase|buy|checkout|pay|payment)\b/.test(text)) {
-            return {
-                fulfillmentText:
-                    "Booking on Ayubowan Connect is easy! Here's how:\n\n1️⃣ Browse the marketplace and pick an experience\n2️⃣ Choose your date and number of guests\n3️⃣ Add to cart or book directly\n4️⃣ Complete payment securely\n5️⃣ Get instant confirmation! ✅\n\nWant me to take you to the marketplace to find something?",
-            };
-        }
-
-        if (
-            /\b(what\s*(is|are)|about|tell\s*me|info|who\s*(made|built|created))\b/.test(text) &&
-            /\b(this|site|platform|ayubowan|website|app|service|you)\b/.test(text)
-        ) {
-            return {
-                fulfillmentText:
-                    'Ayubowan Connect is a Sri Lankan cultural experience marketplace! 🇱🇰\n\nWe connect travelers with authentic local experiences including:\n\n🎭 Cultural workshops & tours\n🍽️ Traditional food experiences\n🎨 Arts and crafts sessions\n🎉 Festival & event access\n🗺️ AI-powered trip planning\n\nOur platform supports local vendors and preserves Sri Lankan cultural heritage while giving visitors unforgettable experiences!',
-            };
-        }
-
-        if (/\b(help|assist|support|guide|how\s*(to|do|can)|what\s*can)\b/.test(text)) {
-            return {
-                fulfillmentText:
-                    "I can help you with lots of things! Here's what I can do:\n\n🛍️ Take you to the marketplace — try \"show me the marketplace\"\n🗺️ Plan a trip — try \"plan my trip\"\n📅 Help with bookings — try \"how do I book\"\n🍽️ Find experiences — try \"find food in Kandy\"\n🎉 Find events — try \"show me events\"\n\nOr just ask me anything about Sri Lanka and Ayubowan Connect! 😊",
-            };
-        }
-
-        return null;
-    }
-
-    // extracts category/location from the message and queries the DB
-
-    private async checkSearchIntent(text: string): Promise<ChatResponse | null> {
-        // only proceed if the message contains a search-related word
-        if (!/\b(food|experience|workshop|tour|culture|cultural|arts?|craft|festival|event|show\s*me|find|search|discover|recommend)\b/.test(text)) {
-            return null;
-        }
-
-        let category: string | undefined;
-        if (/\b(food|cuisine|dining|eat|restaurant|cook)\b/.test(text)) category = 'food';
-        else if (/\b(culture|cultural|heritage|tradition)\b/.test(text)) category = 'culture';
-        else if (/\b(workshop|class|learn|craft|arts?)\b/.test(text)) category = 'workshop';
-        else if (/\b(tour|sightseeing|visit)\b/.test(text)) category = 'tour';
-        else if (/\b(festival|event|celebration)\b/.test(text)) category = 'events';
-
-        // map known city names to their proper-cased versions
-        let location: string | undefined;
-        const cities: Record<string, string> = {
-            kandy: 'Kandy', colombo: 'Colombo', galle: 'Galle',
-            jaffna: 'Jaffna', ella: 'Ella', 'nuwara eliya': 'Nuwara Eliya',
-            sigiriya: 'Sigiriya', anuradhapura: 'Anuradhapura',
-            trincomalee: 'Trincomalee', matara: 'Matara',
-        };
-        for (const [key, value] of Object.entries(cities)) {
-            if (text.includes(key)) { location = value; break; }
-        }
-
-        return this.searchExperiences(category, location);
-    }
-
-    private async searchExperiences(category?: string, location?: string): Promise<ChatResponse> {
-        try {
-            const where: any = { visibilityStatus: 'PUBLISHED' };
-
-            if (category) {
-                const cat = await this.prisma.listingCategory.findFirst({
-                    where: { categoryName: { contains: category, mode: 'insensitive' } },
-                });
-                if (cat) where.categoryId = cat.id;
-            }
-
-            if (location) {
-                where.location = {
-                    OR: [
-                        { city: { contains: location, mode: 'insensitive' } },
-                        { district: { contains: location, mode: 'insensitive' } },
-                        { province: { contains: location, mode: 'insensitive' } },
-                    ],
-                };
-            }
-
-            const listings = await this.prisma.listing.findMany({
-                where,
-                take: 5,
-                orderBy: { ratingAverage: 'desc' },
-                include: { category: true, location: true, vendor: true },
-            });
-
-            if (listings.length === 0) {
-                return {
-                    fulfillmentText: `I couldn't find any ${category || 'experiences'} ${location ? `in ${location}` : ''} right now. Want to explore the full marketplace instead?`,
-                    payload: { navigation: '/marketplace' },
-                };
-            }
-
-            const summary = listings
-                .map((l, i) => `${i + 1}. **${l.title}** by ${l.vendor.businessName} — LKR ${l.priceMin}`)
-                .join('\n');
-
-            return {
-                fulfillmentText: `I found ${listings.length} great ${category || 'experiences'} ${location ? `in ${location}` : ''}! 🎉\n\n${summary}\n\nWant to explore these in the marketplace?`,
-                payload: { navigation: '/marketplace' },
-            };
-        } catch (error) {
-            console.error('DB search error:', error);
-            return {
-                fulfillmentText: "I'm having trouble searching right now. Let me take you to the marketplace instead!",
-                payload: { navigation: '/marketplace' },
-            };
-        }
     }
 
     // sends the user message to Groq (Llama 3.1) with the system prompt
@@ -227,53 +104,59 @@ export class ChatbotService {
     }
 
     private getSystemPrompt(): string {
-        return `You are the Ayubowan Connect AI Assistant — a friendly, knowledgeable chatbot for a Sri Lankan cultural experience marketplace.
+        return `You are the Ayubowan Connect Support Assistant — a customer service, booking, and vendor support chatbot for a Sri Lankan cultural marketplace. 
+
+ABOUT YOUR ROLE:
+Your primary duties are:
+1. Marketplace & Booking Support (Helping with checkout, payments, bookings, and policies)
+2. Customer Support & FAQ (Cancellations, refunds, and general platform help)
+3. Event Discovery (Guiding users to local festivals and events)
+4. Vendor & Pro-User Support (Helping vendors list items, navigate dashboards, and upgrade to PRO)
+* IMPORTANT: You explicitly DO NOT handle Trip & Itinerary Planning. If asked, politely redirect users to the dedicated "AI Itinerary Planner" tool.
 
 ABOUT AYUBOWAN CONNECT:
-Ayubowan Connect is a web platform that connects travelers with authentic Sri Lankan cultural experiences. "Ayubowan" (ආයුබෝවන්) is the traditional Sinhalese greeting meaning "may you live long." The platform serves as a bridge between local Sri Lankan vendors who offer cultural experiences and travelers looking for authentic cultural immersion.
+Ayubowan Connect connects travelers with authentic Sri Lankan cultural experiences. "Ayubowan" (ආයුබෝවන්) is the traditional greeting.
 
 SITE PAGES & NAVIGATION:
-- Home (/) — Landing page with hero section, featured experiences, and events/offers
-- Marketplace (/marketplace) — Browse all listings with filters for category, location, price range, and type
+- Marketplace (/marketplace) — Browse listings
 - Pro (/pro) — Premium subscription plans page
-- My Trips (/trips) — View planned/saved trips and itineraries
-- AI Planner (/ai) — AI-powered trip planner for personalized cultural itineraries
 - Events (/events) — Upcoming cultural events and festivals
-- Cart (/cart) — Shopping cart for experiences/products
-- Booking (/booking) — Complete booking with date/guest selection
-- Payments (/payments) — Secure payment processing
-- Auth (/auth) — Login and registration
+- AI Planner (/ai) — The separate tool for trip planning
+- Vendor Dashboard (/vendor) — Where vendors manage listings
+- FAQ (/faq) — Policies and help
 
-USER TYPES:
-1. Travelers — Browse, book, plan trips, buy products, leave reviews
-2. Vendors — List and manage cultural experiences, products, and services
-3. Admins — Manage users, listings, and site content
+PLATFORM RULES & POLICIES (FAQ):
+- Cancellations: Full refund if canceled 48 hours before the experience. No refund if canceled within 24 hours.
+- Human Support: If a user is angry or the issue is complex, tell them to visit the FAQ page or an admin will contact them.
+- Payments: All payments are processed securely. If a payment fails, advise them to check their card or try again later.
+- Profile Management: Tell users they can change their name, profile picture, or settings from their Account Settings or User Profile Manager dashboard.
+
+ROUTING & NAVIGATION (IMPORTANT):
+Under NO circumstances should you output a [NAVIGATE:/path] tag unless the user explicitly types words demanding to be relocated, such as "take me to", "bring me to", "go to", "open", "redirect me to", or "show me the page".
+If the user asks "How do I...", "Where can I...", or "What is...", NEVER output the [NAVIGATE:/path] tag! Instead, just explain what to do in text (e.g. "To pay, go to the cart page and click checkout.").
+ONLY if the user strictly commands you to take them somewhere, append the exact tag at the absolute end of the message: [NAVIGATE:/path]
+Use these EXACT paths:
+- User Profile / Name Edit / Account Settings: [NAVIGATE:/User_profile_manager]
+- Marketplace / Search: [NAVIGATE:/marketplace]
+- Homepage / Home / Main Page: [NAVIGATE:/]
+- Events: [NAVIGATE:/events]
+- Cart / Checkout: [NAVIGATE:/cart]
+- FAQ / Help: [NAVIGATE:/faq]
+- Vendor Dashboard: [NAVIGATE:/vendor]
+- Pro Upgrade: [NAVIGATE:/pro]
+
+Example behavior:
+User: "Can you bring me to the name edit page?"
+AI: "Sure! I am taking you to your User Profile Manager where you can update your name and settings now. [NAVIGATE:/User_profile_manager]"
 
 PRO PLANS:
-1. User Pro (for travelers): LKR 900/month or LKR 9,000/year
-   - AI Itinerary Planner, Dual Language Translator (Sinhala/Tamil/English), Full platform access
-2. Vendor Pro (for businesses): LKR 2,500/month or LKR 25,000/year
-   - Analytics Dashboard, Dual Language Translator, Priority Listing Placement
-
-MARKETPLACE:
-- Categories: Cultural workshops, Food experiences, Tours, Arts & crafts, Festivals, Products
-- Filters: category, location, price range, type
-- Each listing shows: title, description, price, location, rating, vendor info, images
-
-BOOKING PROCESS:
-1. Browse marketplace → 2. Choose date & guests → 3. Add to cart/book → 4. Pay securely → 5. Confirmation
+1. Vendor Pro: LKR 2,500/month or LKR 25,000/year. Benefits: Analytics Dashboard, Native Dual Language Translator (Sinhala/Tamil/English), Priority Listing Placement.
+2. User Pro: LKR 900/month (AI planner, translator).
 
 PERSONALITY:
-- Warm, friendly, knowledgeable about Sri Lankan culture
-- Use "Ayubowan" naturally, keep responses concise (2-4 sentences), use emojis sparingly
-- Guide users toward relevant pages and features
-
-RULES:
-- Answer accurately based on the above information
-- Explain exact Pro plans and prices when asked
-- Politely redirect off-topic questions to the platform
-- Never invent specific listing names or prices
-- Give step-by-step guidance when asked how to do something`;
+- Warm, polite, and strictly professional about support. Use "Ayubowan" naturally. 
+- Keep responses concise (2-4 sentences). 
+- If someone asks to "plan a trip", tell them to use the AI Itinerary Planner.`;
     }
 
     async onModuleDestroy() {
