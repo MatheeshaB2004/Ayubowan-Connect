@@ -7,11 +7,12 @@ import Image from "next/image";
 import {
   ArrowLeft, Calendar, Clock, Users, MapPin,
   Phone, Mail, Globe, Share2, Heart,
-  ChevronLeft, ChevronRight, Star, CheckCircle2,
-  Loader2, X,
+  Star, CheckCircle2,
+  Loader2, X, Trash2, AlertTriangle,
 } from "lucide-react";
-import { fetchEventById, registerForEvent } from "../lib/api/events";
-import { Event } from "../types/events";
+import { fetchEventById, registerForEvent, fetchUserRegisteredEvents, deleteEvent } from "../lib/api/events";
+import { EventGallery } from "../components/EventGallery";
+import { Event, EventGalleryImage } from "../types/events";
 import { formatFullDate, formatPrice } from "../lib/utils";
 
 // Fallback data shown when vendor hasn't provided content
@@ -31,18 +32,52 @@ const FALLBACK_INFO = [
 
 interface MockReview { id: number; initials: string; name: string; date: string; rating: number; comment: string; }
 const MOCK_REVIEWS: MockReview[] = [
-  { id: 1, initials: "SJ", name: "Sarah Johnson", date: "Feb 15, 2026", rating: 5, comment: "An absolutely incredible experience! The instructor was knowledgeable and patient. I learned so much about Sri Lankan culture and cuisine. Highly recommended!" },
+  { id: 1, initials: "LG", name: "Loganathan Ganesh", date: "Feb 15, 2026", rating: 5, comment: "An absolutely incredible experience! The instructor was knowledgeable and patient. I learned so much about our culture and cuisine. Highly recommended!" },
   { id: 2, initials: "MC", name: "Michael Chen",  date: "Feb 10, 2026", rating: 5, comment: "This was the highlight of my trip to Sri Lanka. Authentic, engaging, and so much fun. The small group size made it very personal." },
-  { id: 3, initials: "PP", name: "Priya Patel",   date: "Feb 5, 2026",  rating: 4, comment: "Great experience overall. The venue was beautiful and activities were well-organised. Would love to come back!" },
+  { id: 3, initials: "CE", name: "Chathuri Ekanayake",   date: "Jan 21, 2026",  rating: 4, comment: "Great experience overall. The venue was beautiful and activities were well-organised. Would love to come back!" },
 ];
 const MOCK_ATTENDEES = [
-  { initials: "EW", name: "Emma W.",  country: "Australia" },
-  { initials: "JD", name: "John D.",  country: "USA"       },
-  { initials: "LM", name: "Lisa M.",  country: "UK"        },
-  { initials: "DK", name: "David K.", country: "Canada"    },
-  { initials: "AS", name: "Anne S.",  country: "Germany"   },
-  { initials: "TR", name: "Tom R.",   country: "France"    },
+  { initials: "RN", name: "Ruqaiyah N.",  country: "Colombo, Sri Lanka" },
+  { initials: "MM", name: "Marie M.",  country: "Lyon, France"       },
+  { initials: "LM", name: "Lisa M.",  country: "Birmingham, UK"        },
+  { initials: "KP", name: "Kaushalya P.", country: "Matale, Sri Lanka"    },
+  { initials: "LY", name: "Lingyun Y.",   country: "Guangzhou, China"    },
+  { initials: "SR", name: "Shaun R.",  country: "Gampaha, Sri Lanka"   },
 ];
+
+function getEventStartDateTime(event: Event): Date {
+  const eventStart = new Date(event.startDate);
+  const rawTime = event.time ?? "";
+
+  const twelveHourMatch = rawTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+  if (twelveHourMatch) {
+    let hour = Number(twelveHourMatch[1]);
+    const minute = Number(twelveHourMatch[2]);
+    const meridiem = twelveHourMatch[3].toUpperCase();
+    if (meridiem === "PM" && hour !== 12) hour += 12;
+    if (meridiem === "AM" && hour === 12) hour = 0;
+    eventStart.setHours(hour, minute, 0, 0);
+    return eventStart;
+  }
+
+  const twentyFourHourMatch = rawTime.match(/(\d{1,2}):(\d{2})/);
+  if (twentyFourHourMatch) {
+    const hour = Number(twentyFourHourMatch[1]);
+    const minute = Number(twentyFourHourMatch[2]);
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      eventStart.setHours(hour, minute, 0, 0);
+    }
+  }
+
+  return eventStart;
+}
+
+function canDeleteEvent(event: Event): boolean {
+  const now = new Date();
+  const eventStart = getEventStartDateTime(event);
+  const msUntilStart = eventStart.getTime() - now.getTime();
+  return msUntilStart >= 24 * 60 * 60 * 1000;
+}
 
 
 export default function EventDetailPage() {
@@ -53,23 +88,25 @@ export default function EventDetailPage() {
   // useUser() gives us the signed-in user. isLoaded tells us when Clerk is ready.
   const { user, isLoaded: authLoaded } = useUser();
 
-  // get the role from publicMetadata that Clerk stores after sign-up.
-  // Adjust the field name to match what our Clerk setup stores.
-  const clerkRole = (user?.publicMetadata?.role as string | undefined) ?? "guest";
+  // get the role from publicMetadata or unsafeMetadata that Clerk stores after sign-up.
+  const clerkRole = (user?.publicMetadata?.role || user?.unsafeMetadata?.role) as string | undefined;
   const isGuest     = !user;               // not signed in at all
   const isVendor    = clerkRole === "vendor";
-  const isTraveller = clerkRole === "traveller" || clerkRole === "user";
+  const isTraveller = !isGuest && !isVendor;
 
   // ALL useState / useCallback hooks declared unconditionally
   const [event, setEvent]       = useState<Event | null>(null);
   const [loading, setLoading]   = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [saved, setSaved]       = useState(false);
-  const [galleryIndex, setGalleryIndex] = useState(0);
   const [showReg, setShowReg]       = useState(false);
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
   const [regError, setRegError]     = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const getToken = () =>
     typeof window !== "undefined" ? (localStorage.getItem("accessToken") ?? "") : "";
@@ -88,12 +125,22 @@ export default function EventDetailPage() {
     try {
       const data = await fetchEventById(Number(id));
       setEvent(data);
+
+      if (authLoaded && !isGuest && !isVendor) {
+        try {
+          const registeredEvents = await fetchUserRegisteredEvents(getToken(), user?.id);
+          const alreadyReg = registeredEvents.some((e: Event) => e.id === Number(id));
+          setIsRegistered(alreadyReg);
+        } catch (err) {
+          console.error("Failed to fetch registered events", err);
+        }
+      }
     } catch {
       setNotFound(true);
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, authLoaded, isGuest, isVendor, user?.id]);
 
   useEffect(() => { loadEvent(); }, [loadEvent]);
 
@@ -103,12 +150,77 @@ export default function EventDetailPage() {
     setRegError(null);
     setRegLoading(true);
     try {
-      await registerForEvent(getToken(), event.id);
+      const result = await registerForEvent(getToken(), event.id, user?.id);
+
+      if (result?.message === "Already registered") {
+        setIsRegistered(true);
+        setRegError("You are already registered for this event.");
+        return;
+      }
+
       setRegSuccess(true);
+      setIsRegistered(true);
+
+      try {
+        const updatedEvent = await fetchEventById(event.id);
+        setEvent(updatedEvent);
+      } catch {
+        // Keep UI responsive if refresh fails, but avoid exceeding the max participants.
+        setEvent((prevEvent) => {
+          if (!prevEvent) return prevEvent;
+          const nextCount = prevEvent.participantCount + 1;
+          const cappedCount = prevEvent.maxParticipants
+            ? Math.min(nextCount, prevEvent.maxParticipants)
+            : nextCount;
+          return { ...prevEvent, participantCount: cappedCount };
+        });
+      }
     } catch {
       setRegError("Registration failed. You may already be registered for this event.");
     } finally {
       setRegLoading(false); }
+  };
+
+  // Delete event handler
+  const handleDelete = async () => {
+    if (!event) return;
+    setDeleteError(null);
+    setDeleteLoading(true);
+
+    try {
+      await deleteEvent(getToken(), event.id, user?.id);
+      // Redirect back to events page
+      router.push("/events");
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error ? error.message : "Could not delete this event. It may be within 24 hours of start time."
+      );
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  // Gallery event handlers
+  const handleImageAdded = (image: EventGalleryImage) => {
+    setEvent((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        galleryImages: [...(prev.galleryImages || []), image],
+      };
+    });
+  };
+
+  const handleImageDeleted = (imageId: number) => {
+    setEvent((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        galleryImages: (prev.galleryImages || []).filter(
+          (img) => img.id !== imageId
+        ),
+      };
+    });
   };
 
   // Loading states
@@ -139,15 +251,44 @@ export default function EventDetailPage() {
 
   const isFree     = event.isFree || !event.price;
   const spotsLeft  = event.maxParticipants ? event.maxParticipants - event.participantCount : null;
-  const almostFull = spotsLeft != null && spotsLeft <= 5;
+  const noSpotsLeft = spotsLeft != null && spotsLeft <= 0;
+  const almostFull = spotsLeft != null && spotsLeft > 0 && spotsLeft <= 5;
 
   const learnItems = (event.whatYouWillLearn && event.whatYouWillLearn.length > 0)
     ? event.whatYouWillLearn : FALLBACK_LEARN;
   const infoItems  = (event.importantInfo && event.importantInfo.length > 0)
     ? event.importantInfo : FALLBACK_INFO;
 
-  const galleryImages = event.imageUrl
-    ? [event.imageUrl, event.imageUrl, event.imageUrl, event.imageUrl] : [];
+  const organiserPhone = event.contactPhone || event.vendor?.contactPhone;
+  const organiserEmail = event.contactEmail || event.vendor?.email;
+  const organiserWebsite = event.contactWebsite || event.vendor?.website;
+  const hasContactDetails = Boolean(organiserPhone || organiserEmail || organiserWebsite);
+
+  // Check if current vendor is the event creator
+  const metadataUserIdRaw = user?.publicMetadata?.userId ?? user?.unsafeMetadata?.userId;
+  const metadataVendorIdRaw = user?.publicMetadata?.vendorId ?? user?.unsafeMetadata?.vendorId;
+  const metadataUserId = Number(metadataUserIdRaw);
+  const metadataVendorId = Number(metadataVendorIdRaw);
+  const matchesByClerkId = Boolean(
+    user?.id &&
+      event.vendor?.clerkUserId &&
+      event.vendor.clerkUserId === user.id
+  );
+  const matchesByUserId = Boolean(
+    event.vendor?.userId &&
+      Number.isFinite(metadataUserId) &&
+      event.vendor.userId === metadataUserId
+  );
+  const matchesByVendorId = Boolean(
+    event.vendor?.id &&
+      Number.isFinite(metadataVendorId) &&
+      event.vendor.id === metadataVendorId
+  );
+
+  const isEventCreator = Boolean(
+    isVendor && (matchesByClerkId || matchesByUserId || matchesByVendorId)
+  );
+  const canDelete = isEventCreator && canDeleteEvent(event);
 
   return (
     <>
@@ -160,6 +301,20 @@ export default function EventDetailPage() {
             Back to Events
           </button>
           <div className="flex items-center gap-2">
+            {isEventCreator && !canDelete && (
+              <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 h-8 flex items-center">
+                Delete disabled (less than 24h left)
+              </div>
+            )}
+            {isEventCreator && canDelete && (
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                title="Delete Event"
+                className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-full transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
             <button className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors">
               <Share2 className="w-4 h-4" />
             </button>
@@ -238,32 +393,16 @@ export default function EventDetailPage() {
               </Section>
 
               {/* Gallery */}
-              {galleryImages.length > 0 && (
-                <Section title="Event Gallery">
-                  <div className="relative rounded-xl overflow-hidden mb-3 h-56 sm:h-72 bg-gray-100">
-                    <Image
-                      src={galleryImages[galleryIndex]}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      width={1200}
-                      height={320}
-                      priority
-                    />
-                    {galleryImages.length > 1 && (
-                      <>
-                        <button onClick={() => setGalleryIndex(i => (i - 1 + galleryImages.length) % galleryImages.length)} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow"><ChevronLeft className="w-4 h-4 text-gray-700" /></button>
-                        <button onClick={() => setGalleryIndex(i => (i + 1) % galleryImages.length)} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow"><ChevronRight className="w-4 h-4 text-gray-700" /></button>
-                      </>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    {galleryImages.map((img, i) => (
-                      <button key={i} onClick={() => setGalleryIndex(i)} className={`w-20 h-14 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-colors ${i === galleryIndex ? "border-[#0d9488]" : "border-transparent"}`}>
-                        <Image src={img} alt="" className="w-full h-full object-cover" width={80} height={56} />
-                      </button>
-                    ))}
-                  </div>
-                </Section>
+              {(event.galleryImages && event.galleryImages.length > 0 || isEventCreator) && (
+                <EventGallery
+                  eventId={event.id}
+                  images={event.galleryImages || []}
+                  isEventCreator={isEventCreator}
+                  token={getToken()}
+                  userId={user?.id}
+                  onImageAdded={handleImageAdded}
+                  onImageDeleted={handleImageDeleted}
+                />
               )}
 
               {/* Reviews */}
@@ -313,7 +452,7 @@ export default function EventDetailPage() {
                   <div className="w-5 h-5 rounded-full bg-[#e8f5f2] flex items-center justify-center flex-shrink-0 mt-0.5"><MapPin className="w-3 h-3 text-[#0d9488]" /></div>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 mb-0.5">Getting There</p>
-                    <p className="text-sm text-gray-500 leading-relaxed">The venue is easily accessible by public transport. Free parking is available on-site. Detailed directions will be sent upon registration.</p>
+                    <p className="text-sm text-gray-500 leading-relaxed">Please contact the vendor for more details regarding transportation options.</p>
                   </div>
                 </div>
               </Section>
@@ -333,7 +472,7 @@ export default function EventDetailPage() {
                   </div>
                   {spotsLeft != null && (
                     <p className={`text-xs mb-4 ${almostFull ? "text-amber-600 font-medium" : "text-gray-500"}`}>
-                      {almostFull ? `⚡ Only ${spotsLeft} spots remaining` : `${spotsLeft} spots remaining`}
+                      {noSpotsLeft ? "Event is full" : almostFull ? `⚡ Only ${spotsLeft} spots remaining` : `${spotsLeft} spots remaining`}
                     </p>
                   )}
                   <div className="space-y-3 mb-5">
@@ -343,28 +482,65 @@ export default function EventDetailPage() {
                   </div>
 
                   {isTraveller && (
-                    <button onClick={() => setShowReg(true)} className="w-full h-11 rounded-xl bg-[#0d9488] hover:bg-[#0b7a70] text-white font-semibold text-sm transition-colors active:scale-[0.98]">
-                      Register Now
-                    </button>
+                    isRegistered ? (
+                      <div>
+                        <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-400 font-medium text-sm flex items-center justify-center cursor-not-allowed">
+                          Register Now
+                        </div>
+                        <p className="text-sm text-[#0d9488] font-medium text-center mt-3 flex items-center justify-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" />
+                          You have already registered in this event
+                        </p>
+                      </div>
+                    ) : noSpotsLeft ? (
+                      <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-500 font-medium text-sm flex items-center justify-center">
+                        Event is full
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowReg(true)}
+                        className="w-full h-11 rounded-xl bg-[#0d9488] hover:bg-[#0b7a70] text-white font-semibold text-sm transition-colors active:scale-[0.98]"
+                      >
+                        Register Now
+                      </button>
+                    )
                   )}
                   {isVendor && (
                     <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-500 font-medium text-sm flex items-center justify-center">
                       Vendors cannot register
                     </div>
                   )}
-                  <p className="text-[11px] text-gray-400 text-center mt-3">Free cancellation up to 24 hours before the event</p>
                 </div>
 
-                {/* Contact Organiser */}
                 {event.vendor && (
                   <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                     <h3 className="text-sm font-semibold text-gray-900 mb-4">Contact Organiser</h3>
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center gap-2.5 text-sm text-gray-600"><Phone className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>+94 77 123 4567</span></div>
-                      <div className="flex items-center gap-2.5 text-sm text-gray-600"><Mail className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>contact@vendor.lk</span></div>
-                      <div className="flex items-center gap-2.5 text-sm text-gray-600"><Globe className="w-4 h-4 text-[#0d9488] flex-shrink-0" /><span>www.vendor.lk</span></div>
-                    </div>
-                    <button className="w-full h-9 rounded-lg border border-[#0d9488] text-[#0d9488] text-sm font-semibold hover:bg-[#0d9488] hover:text-white transition-colors">Send Message</button>
+                    {!hasContactDetails ? (
+                      <p className="text-sm text-gray-500 italic text-center py-2 bg-gray-50 rounded-lg border border-gray-100">
+                        Contact details have not been provided by the organiser.
+                      </p>
+                    ) : (
+                      <div className="space-y-3 mb-4">
+                        {organiserPhone && (
+                          <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                            <Phone className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <span>{organiserPhone}</span>
+                          </div>
+                        )}
+                        {organiserEmail && (
+                          <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                            <Mail className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <span>{organiserEmail}</span>
+                          </div>
+                        )}
+                        {organiserWebsite && (
+                          <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                            <Globe className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <span>{organiserWebsite}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -398,6 +574,16 @@ export default function EventDetailPage() {
           error={regError}
           onConfirm={handleRegister}
           onClose={() => { setShowReg(false); setRegSuccess(false); setRegError(null); }}
+        />
+      )}
+
+      {isEventCreator && showDeleteModal && (
+        <DeleteEventModal
+          event={event}
+          loading={deleteLoading}
+          error={deleteError}
+          onConfirm={handleDelete}
+          onClose={() => { setShowDeleteModal(false); setDeleteError(null); }}
         />
       )}
     </>
@@ -453,6 +639,81 @@ function RegisterModal({ event, loading, success, error, onConfirm, onClose }: {
               </div>
             </>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Delete event modal
+function DeleteEventModal({
+  event,
+  loading,
+  error,
+  onConfirm,
+  onClose,
+}: {
+  event: Event;
+  loading: boolean;
+  error: string | null;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-start gap-3">
+          <div className="w-9 h-9 rounded-full bg-red-50 text-red-600 flex items-center justify-center flex-shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-gray-900">Delete Event</h3>
+            <p className="text-xs text-gray-500 mt-0.5">This action cannot be undone.</p>
+          </div>
+        </div>
+
+        <div className="px-5 py-4 space-y-3">
+          <p className="text-sm text-gray-700">
+            Are you sure you want to delete{" "}
+            <span className="font-semibold">{event.title}</span>?
+          </p>
+
+          {error && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+        </div>
+
+        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+          <button
+            onClick={() => {
+              if (loading) return;
+              onClose();
+            }}
+            className="flex-1 h-10 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 h-10 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Delete Event"
+            )}
+          </button>
         </div>
       </div>
     </div>

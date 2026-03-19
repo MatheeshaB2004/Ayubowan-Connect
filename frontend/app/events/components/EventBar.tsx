@@ -91,7 +91,7 @@ export function EventBar({ event, isGuest, innerRef }: EventBarProps) {
             )}
             <span className="flex items-center gap-1.5 truncate">
               <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-              {event.location}
+              {event.district || event.location}
             </span>
             {event.maxParticipants != null && (
               <span className="flex items-center gap-1.5 truncate">
