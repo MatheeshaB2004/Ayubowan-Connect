@@ -1,34 +1,78 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 
 @Injectable()
 export class AiServicesService {
-  generateItinerary(preferences: any) {
-    const { destination, duration, budget, travelStyle } = preferences;
+  async generateItinerary(preferences: any) {
+    const { destination, duration, budget, travelStyle, interests } = preferences;
     
-    // Generate a simple mock itinerary based on user preferences
-    const dailyPlan: any[] = [];
-    for (let i = 1; i <= (duration || 3); i++) {
-        dailyPlan.push({
-            day: i,
-            title: `Exploring ${destination || 'Sri Lanka'} - Day ${i}`,
-            activities: [
-                `Morning visit to local attractions in ${destination || 'the city'}`,
-                `Afternoon adventure matching a ${travelStyle || 'Relaxed'} pace`,
-                `Evening cultural experience`
-            ],
-            meals: [
-                'Breakfast at hotel',
-                'Lunch at a recommended local restaurant',
-                'Dinner exploring local cuisine'
-            ]
-        });
-    }
+    const prompt = `You are a professional travel planner specializing in Sri Lanka.
+Generate a cohesive travel itinerary for a ${duration}-day trip to ${destination}.
+Budget level: ${budget}
+Travel Style: ${travelStyle}
+Interests: ${(interests || []).join(', ')}
 
-    return {
-      tripTitle: `${duration || 3}-Day ${travelStyle || 'Relaxed'} Gateway to ${destination || 'Sri Lanka'}`,
-      summary: `A personalized ${budget || 'Medium'}-budget itinerary focused on your preferred interests.`,
-      estimatedTotalCost: budget === 'Luxury' ? '$1200 - $2500' : budget === 'Budget' ? '$150 - $400' : '$400 - $1000',
-      dailyPlan
-    };
+Return ONLY a valid JSON object matching this schema exactly, with NO markdown formatting, NO \`\`\`json, NO extra text:
+{
+    "tripTitle": "A catchy title for the trip",
+    "summary": "A 2-sentence summary of the trip",
+    "estimatedTotalCost": "A realistic estimated total cost range in Sri Lankan Rupees LKR (e.g. LKR 50,000 - LKR 120,000)",
+    "dailyPlan": [
+        {
+            "day": 1,
+            "title": "Title for this day",
+            "activities": ["Activity 1", "Activity 2", "Activity 3"],
+            "meals": ["Breakfast: ...", "Lunch: ...", "Dinner: ..."]
+        }
+    ]
+}
+
+Ensure the number of days in dailyPlan exactly matches ${duration}.`;
+
+    try {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: 'You are an expert AI travel agent.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+        })
+      });
+
+      if (!response.ok) {
+        const errortext = await response.text();
+        console.error('Groq API Error details:', errortext);
+        throw new Error(`Groq API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      let aiContent = data.choices[0].message.content.trim();
+      
+      if (aiContent.startsWith('\`\`\`json')) {
+        aiContent = aiContent.substring(7);
+      }
+      if (aiContent.startsWith('\`\`\`')) {
+        aiContent = aiContent.substring(3);
+      }
+      if (aiContent.endsWith('\`\`\`')) {
+        aiContent = aiContent.substring(0, aiContent.length - 3);
+      }
+      aiContent = aiContent.trim();
+      
+      const parsedItinerary = JSON.parse(aiContent);
+      return parsedItinerary;
+    } catch (error) {
+      console.error('Error generating itinerary:', error);
+      throw new HttpException(
+        `Failed to generate itinerary. Detail: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }
