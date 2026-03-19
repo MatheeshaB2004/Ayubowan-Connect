@@ -6,6 +6,7 @@ import ScrollToTopButton from "@/components/common/ScrollToTopButton";
 import ChatWidget from "@/components/common/ChatWidget";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
+import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,22 +30,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <AuthProvider>
-          <CartProvider>
-            <GlobalHeader />
-            <main className="min-h-screen pt-20">
-              {children}
-            </main>
-            <Footer />
-            <ScrollToTopButton />
-            <ChatWidget />
-          </CartProvider>
-        </AuthProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          <AuthProvider>
+            <CartProvider>
+              <GlobalHeader />
+              <main className="min-h-screen pt-20">
+                {children}
+              </main>
+              <Footer />
+              <ScrollToTopButton />
+              <ChatWidget />
+            </CartProvider>
+          </AuthProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
