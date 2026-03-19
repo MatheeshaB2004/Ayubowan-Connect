@@ -10,6 +10,7 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { FilesController } from './files.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EventsModule } from './modules/events/events.module';
+import { AiServicesModule } from './modules/ai-services/ai-services.module';
 
 @Module({
   imports: [
@@ -21,10 +22,9 @@ import { EventsModule } from './modules/events/events.module';
     MarketplaceModule,
     VendorManagementModule,
     CartModule,
-    feature/ai-services
     ChatbotModule,
     EventsModule,
-    Develop
+    AiServicesModule,
   ],
   controllers: [AppController, FilesController],
   providers: [AppService],
