@@ -14,6 +14,7 @@ import { fetchEventById, registerForEvent, fetchUserRegisteredEvents, deleteEven
 import { EventGallery } from "../components/EventGallery";
 import { Event, EventGalleryImage } from "../types/events";
 import { formatFullDate, formatPrice } from "../lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 
 // Fallback data shown when vendor hasn't provided content
 const FALLBACK_LEARN = [
@@ -498,7 +499,32 @@ export default function EventDetailPage() {
                       </div>
                     ) : (
                       <button
-                        onClick={() => setShowReg(true)}
+                        onClick={async () => {
+                          if (event.isFree || event.price === 0) {
+                            // Free event - register directly
+                            try {
+                              const response = await fetch(`${API_BASE_URL}/events/${event.id}/register`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'x-user-id': user.id
+                                }
+                              });
+
+                              if (response.ok) {
+                                setIsRegistered(true);
+                                router.push(`/payments/success?type=event&eventId=${event.id}&free=true`);
+                              } else {
+                                console.error('Registration failed');
+                              }
+                            } catch (error) {
+                              console.error('Registration error:', error);
+                            }
+                          } else {
+                            // Paid event - redirect to checkout
+                            router.push(`/payments/checkout?type=event&eventId=${event.id}`);
+                          }
+                        }}
                         className="w-full h-11 rounded-xl bg-[#0d9488] hover:bg-[#0b7a70] text-white font-semibold text-sm transition-colors active:scale-[0.98]"
                       >
                         Register Now

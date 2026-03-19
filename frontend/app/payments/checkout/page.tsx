@@ -22,6 +22,19 @@ type DirectBooking = {
   } | null;
 };
 
+type Event = {
+  id: number;
+  title: string;
+  startDate: string;
+  time: string;
+  location: string;
+  price?: number;
+  isFree: boolean;
+  vendor?: {
+    businessName?: string;
+  };
+};
+
 function CheckoutPageContent() {
   const { items, totalAmount, clearCart } = useCart();
   const router = useRouter();
@@ -29,6 +42,8 @@ function CheckoutPageContent() {
   const { user } = useUser();
   const bookingIdParam = searchParams.get('bookingId');
   const directBookingId = bookingIdParam ? Number(bookingIdParam) : null;
+  const eventIdParam = searchParams.get('eventId');
+  const eventId = eventIdParam ? Number(eventIdParam) : null;
   const type = searchParams.get('type');
   const plan = searchParams.get('plan');
   const cycle = searchParams.get('cycle');
@@ -36,12 +51,15 @@ function CheckoutPageContent() {
     type === 'subscription' &&
     (plan === 'user' || plan === 'vendor') &&
     (cycle === 'monthly' || cycle === 'yearly');
+  const isEventCheckout = type === 'event' && eventId && !Number.isNaN(eventId);
 
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
   const [directBooking, setDirectBooking] = useState<DirectBooking | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [isAlreadyRegistered, setIsAlreadyRegistered] = useState(false);
   const [errors, setErrors] = useState<{
     cardName?: string;
     cardNumber?: string;
@@ -68,6 +86,34 @@ function CheckoutPageContent() {
 
     fetchDirectBooking();
   }, [user, directBookingId]);
+
+  useEffect(() => {
+    if (!user || !eventId || Number.isNaN(eventId)) return;
+
+    const fetchEvent = async () => {
+      try {
+        // First fetch the event details
+        const eventResponse = await fetch(`${API_BASE}/events/${eventId}`);
+        if (!eventResponse.ok) return;
+        const eventData = await eventResponse.json();
+        setEvent(eventData);
+
+        // Then check if user is already registered
+        const registeredResponse = await fetch(`${API_BASE}/events/user/registered`, {
+          headers: { 'x-user-id': user.id },
+        });
+        if (registeredResponse.ok) {
+          const registeredEvents = await registeredResponse.json();
+          const alreadyRegistered = registeredEvents.some((e: { id: number }) => e.id === eventId);
+          setIsAlreadyRegistered(alreadyRegistered);
+        }
+      } catch (error) {
+        console.error('Failed loading event for checkout:', error);
+      }
+    };
+
+    fetchEvent();
+  }, [user, eventId]);
 
   const formatTime = (dateString?: string) => {
     if (!dateString) return null;
@@ -127,6 +173,11 @@ function CheckoutPageContent() {
 
     if (isSubscriptionCheckout) {
       router.push(`/payments/success?type=subscription&plan=${plan}&cycle=${cycle}`);
+      return;
+    }
+
+    if (isEventCheckout) {
+      router.push(`/payments/success?type=event&eventId=${eventId}`);
       return;
     }
 
@@ -225,9 +276,11 @@ function CheckoutPageContent() {
       : 0;
   const payableAmount = isSubscriptionCheckout
     ? subscriptionPrice
-    : (directBooking
-      ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
-      : totalAmount);
+    : (isEventCheckout
+      ? (event?.isFree ? 0 : event?.price ?? 0)
+      : (directBooking
+        ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
+        : totalAmount));
   const subscriptionPlanLabel = plan === 'vendor' ? 'Vendor Pro' : 'User Pro';
   const subscriptionCycleLabel = cycle === 'yearly' ? 'Yearly' : 'Monthly';
 
@@ -263,7 +316,20 @@ function CheckoutPageContent() {
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {directBooking ? (
+              {isEventCheckout ? (
+                <div className="flex justify-between items-center py-4">
+                  <div>
+                    <p className="font-medium text-gray-900">{event?.title ?? 'Event'}</p>
+                    <p className="text-sm text-gray-600 mt-1">{event?.vendor?.businessName ?? 'Organizer'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Date: {event ? new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Time: {event?.time ?? 'TBA'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Location: {event?.location ?? 'TBA'}</p>
+                  </div>
+                  <p className="text-sm font-semibold text-[#21a17a]">
+                    {event?.isFree ? 'Free' : `LKR ${event?.price?.toLocaleString() ?? '0'}`}
+                  </p>
+                </div>
+              ) : directBooking ? (
                 <div className="flex justify-between items-center py-4">
                   <div>
                     <p className="font-medium text-gray-900">{directBooking.listing?.title ?? 'Experience'}</p>
@@ -373,12 +439,25 @@ function CheckoutPageContent() {
             <span className="text-sm text-gray-600">Amount to pay</span>
             <span className="text-xl font-bold text-[#21a17a]">LKR {payableAmount.toLocaleString()}</span>
           </div>
-          <button
-            onClick={handlePay}
-            className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
-          >
-            Pay LKR {payableAmount.toLocaleString()}
-          </button>
+          {isEventCheckout && isAlreadyRegistered ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-red-600 font-medium mb-3">
+                You are already registered for this event.
+              </p>
+              <Link href="/events">
+                <button className="w-full rounded-xl border border-gray-300 bg-gray-100 px-5 py-3 text-sm font-semibold text-gray-600 shadow-sm">
+                  Back to Events
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <button
+              onClick={handlePay}
+              className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
+            >
+              Pay LKR {payableAmount.toLocaleString()}
+            </button>
+          )}
         </div>
       </div>
     </div>

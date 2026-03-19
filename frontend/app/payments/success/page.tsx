@@ -33,18 +33,35 @@ type ProductSummaryItem = {
   totalPrice: number;
 };
 
+type Event = {
+  id: number;
+  title: string;
+  startDate: string;
+  time: string;
+  location: string;
+  price?: number;
+  isFree: boolean;
+  vendor?: {
+    businessName?: string;
+  };
+};
+
 function PaymentSuccessPageContent() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const bookingIdParam = searchParams.get('bookingId');
   const bookingId = bookingIdParam ? Number(bookingIdParam) : null;
+  const eventIdParam = searchParams.get('eventId');
+  const eventId = eventIdParam ? Number(eventIdParam) : null;
   const type = searchParams.get('type');
   const plan = searchParams.get('plan');
   const cycle = searchParams.get('cycle');
+  const isFreeEvent = searchParams.get('free') === 'true';
   const isSubscriptionSuccess =
     type === 'subscription' &&
     (plan === 'user' || plan === 'vendor') &&
     (cycle === 'monthly' || cycle === 'yearly');
+  const isEventSuccess = type === 'event' && eventId && !Number.isNaN(eventId);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [subscriptionActivated, setSubscriptionActivated] = useState(false);
@@ -52,6 +69,10 @@ function PaymentSuccessPageContent() {
   const [orderCompletionMessage, setOrderCompletionMessage] = useState<string | null>(null);
   const [orderCompletionDone, setOrderCompletionDone] = useState(false);
   const [productSummaryItems, setProductSummaryItems] = useState<ProductSummaryItem[]>([]);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [eventRegistered, setEventRegistered] = useState(false);
+  const [eventRegistrationError, setEventRegistrationError] = useState<string | null>(null);
+  const [hasRegistered, setHasRegistered] = useState(false);
   const hasCompletedOrder = useRef(false);
 
   useEffect(() => {
@@ -79,7 +100,7 @@ function PaymentSuccessPageContent() {
     };
 
     fetchBooking();
-  }, [user, bookingId, isSubscriptionSuccess]);
+  }, [user, bookingId, isSubscriptionSuccess, isEventSuccess]);
 
   useEffect(() => {
     if (!isSubscriptionSuccess || !user || subscriptionActivated) return;
@@ -116,6 +137,70 @@ function PaymentSuccessPageContent() {
 
     activateSubscription();
   }, [isSubscriptionSuccess, user, subscriptionActivated, plan, cycle]);
+
+  useEffect(() => {
+    if (!isEventSuccess || !user || eventRegistered || hasRegistered || isFreeEvent) return;
+    setHasRegistered(true);
+
+    const fetchEventAndRegister = async () => {
+      setIsLoading(true);
+      setEventRegistrationError(null);
+      
+      try {
+        // First fetch the event details
+        const eventResponse = await fetch(`${API_BASE}/events/${eventId}`);
+        if (!eventResponse.ok) {
+          setEventRegistrationError('Failed to load event details.');
+          return;
+        }
+        const eventData = await eventResponse.json();
+        setEvent(eventData);
+
+        // Then register for the event
+        const registerResponse = await fetch(`${API_BASE}/events/${eventId}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id,
+          },
+        });
+
+        if (!registerResponse.ok) {
+          console.error('Event registration failed');
+          setEventRegistrationError('Failed to register for event.');
+          return;
+        }
+
+        setEventRegistered(true);
+      } catch (error) {
+        console.error('Event registration error:', error);
+        setEventRegistrationError('Failed to register for event.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEventAndRegister();
+  }, [isEventSuccess, user, eventId, eventRegistered, isFreeEvent]);
+
+  // For free events, just fetch event details and mark as registered
+  useEffect(() => {
+    if (!isEventSuccess || !user || !isFreeEvent || event) return;
+
+    const fetchEventDetails = async () => {
+      try {
+        const eventResponse = await fetch(`${API_BASE}/events/${eventId}`);
+        if (!eventResponse.ok) return;
+        const eventData = await eventResponse.json();
+        setEvent(eventData);
+        setEventRegistered(true); // Free events are already registered
+      } catch (error) {
+        console.error('Failed loading event details:', error);
+      }
+    };
+
+    fetchEventDetails();
+  }, [isEventSuccess, user, eventId, isFreeEvent, event]);
 
   useEffect(() => {
     if (isSubscriptionSuccess || bookingId || !user || orderCompletionDone) return;
@@ -271,7 +356,9 @@ function PaymentSuccessPageContent() {
             Payment Successful
           </h1>
           <p className="text-sm text-gray-600 text-center mb-6">
-            {bookingId
+            {isEventSuccess
+              ? 'You have successfully registered for this event.'
+              : bookingId
               ? 'Your booking request has been sent to the vendor. You can track its status in Pending Bookings.'
               : 'Your order has been completed.'}
           </p>
@@ -283,7 +370,7 @@ function PaymentSuccessPageContent() {
           ) : (
             <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6 mt-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                {booking ? 'Booking Details' : 'Order Summary'}
+                {isEventSuccess ? 'Event Details' : booking ? 'Booking Details' : 'Order Summary'}
               </h2>
               {isSubscriptionSuccess ? (
                 <div className="space-y-0">
@@ -297,6 +384,27 @@ function PaymentSuccessPageContent() {
                   <div className="py-4 flex items-center justify-between">
                     <span className="text-sm text-gray-600">Total Paid</span>
                     <span className="text-xl font-bold text-[#21a17a]">LKR {subscriptionPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+              ) : isEventSuccess ? (
+                <div className="space-y-0">
+                  <div className="py-4 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-900">{event?.title ?? 'Event'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Organizer: {event?.vendor?.businessName ?? 'TBA'}</p>
+                  </div>
+                  <div className="py-4 border-b border-gray-100">
+                    <p className="text-sm text-gray-600">Date: {event ? new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Time: {event?.time ?? 'TBA'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Location: {event?.location ?? 'TBA'}</p>
+                  </div>
+                  <div className="py-4 border-b border-gray-100">
+                    <p className="text-sm text-gray-600">Status: {eventRegistrationError ?? (eventRegistered ? 'Successfully registered' : 'Registration pending')}</p>
+                  </div>
+                  <div className="py-4 flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Total Paid</span>
+                    <span className="text-xl font-bold text-[#21a17a]">
+                      {event?.isFree ? 'Free' : `LKR ${event?.price?.toLocaleString() ?? '0'}`}
+                    </span>
                   </div>
                 </div>
               ) : booking ? (
@@ -346,7 +454,20 @@ function PaymentSuccessPageContent() {
           )}
 
           <div className="mt-6 grid gap-3">
-            {bookingId ? (
+            {isEventSuccess ? (
+              <>
+                <Link href="/dashboard/upcoming">
+                  <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                    View My Events
+                  </button>
+                </Link>
+                <Link href="/events">
+                  <button className="w-full rounded-xl border border-[#0d9488] px-5 py-2.5 text-sm font-semibold text-[#0d9488] shadow-sm transition-all hover:bg-[#0d9488]/5 active:scale-[0.98]">
+                    Back to Events
+                  </button>
+                </Link>
+              </>
+            ) : bookingId ? (
               <>
                 <Link href="/dashboard/bookings">
                   <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
