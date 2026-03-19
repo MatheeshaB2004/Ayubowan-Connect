@@ -27,7 +27,10 @@ export async function fetchAllEvents(params?: {
   if (params?.category) q.set("category", params.category);
   if (params?.location) q.set("location", params.location);
 
-  const res = await fetch(requireApiUrl(`/events?${q.toString()}`), { cache: "no-store" });
+  const queryString = q.toString();
+  const url = queryString ? `/events?${queryString}` : '/events';
+
+  const res = await fetch(requireApiUrl(url), { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch events");
   return res.json();
 }
