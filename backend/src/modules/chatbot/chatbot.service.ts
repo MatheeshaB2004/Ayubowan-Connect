@@ -37,7 +37,7 @@ export class ChatbotService {
         }
 
         // check for specific AI Itinerary Planner redirect
-        if (/\b(plan|trip|itinerary|planner|journey|travel|schedule)\b/i.test(queryText)) {
+        if (/\b(plan|trip|itinerary|planner|journey|travel|schedule)\b/i.test(queryText) && /\b(take|go|bring|show)\b/i.test(queryText)) {
             return {
                 fulfillmentText: 'For trip planning, please use our dedicated AI Itinerary Planner feature! 🗺️',
                 payload: { navigation: '/ai' },
@@ -132,7 +132,9 @@ PLATFORM RULES & POLICIES (FAQ):
 - Profile Management: Tell users they can change their name, profile picture, or settings from their Account Settings or User Profile Manager dashboard.
 
 ROUTING & NAVIGATION (IMPORTANT):
-If the user explicitly asks to be taken, redirected, or navigated to a specific page or dashboard, you must append a secret navigation tag at the very end of your response in the exact format: [NAVIGATE:/path]
+ONLY append the secret navigation tag IF AND ONLY IF the user explicitly asks to be taken, redirected, or navigated to a page (e.g., "take me to...", "go to...", "bring me to...").
+DO NOT use the [NAVIGATE:/path] tag for general questions, explanations, or informational queries! If a user simply asks "What is...", "How to...", or general advice, just answer in text with NO tags.
+When you DO need to navigate, append the tag at the very end of your response in the exact format: [NAVIGATE:/path]
 Use these EXACT paths:
 - User Profile / Name Edit / Account Settings: [NAVIGATE:/User_profile_manager]
 - Marketplace / Search: [NAVIGATE:/marketplace]
