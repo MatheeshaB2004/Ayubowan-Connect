@@ -19,79 +19,210 @@ export class VendorManagementService {
   ) { }
 
   /**
-   * Register a new Vendor Profile
+   * Get vendor profile by Clerk userId
    */
-  async registerVendor(dto: RegisterVendorDto) {
-    try {
-      // 1. Check if a base User exists
-      let user = await this.prisma.user.findUnique({
-        where: { email: dto.email },
+  async getVendorProfileByUserId(clerkUserId: string) {
+    const vendor = await this.prisma.vendor.findFirst({
+      where: { clerkUserId },
+      include: {
+        locations: {
+          where: { isMainLocation: true },
+          take: 1,
+        },
+      },
+    });
+
+    if (!vendor) throw new NotFoundException('Vendor not found');
+
+    const location = vendor.locations[0] || null;
+
+    return {
+      vendorId: vendor.id,
+      businessName: vendor.businessName,
+      shortTagline: vendor.shortTagline,
+      contactPhone: vendor.contactPhone,
+      establishedYear: vendor.establishedYear,
+      location: location ? {
+        addressLine1: location.addressLine1,
+        addressLine2: location.addressLine2,
+        city: location.city,
+        district: location.district,
+        province: location.province,
+        postalCode: location.postalCode,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      } : null,
+    };
+  }
+
+  /**
+   * Update vendor profile by Clerk userId.
+   * Creates the vendor record on first save if it does not exist yet.
+   */
+  async updateVendorProfileByUserId(body: any) {
+    const { clerkUserId, businessName, shortTagline, contactPhone, establishedYear, location } = body;
+
+    if (!clerkUserId || !businessName) {
+      throw new BadRequestException('clerkUserId and businessName are required');
+    }
+
+    let vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId },
+      include: { locations: { where: { isMainLocation: true }, take: 1 } },
+    });
+
+    const parsedEstablishedYear =
+      establishedYear !== undefined && establishedYear !== null && establishedYear !== ''
+        ? parseInt(String(establishedYear), 10)
+        : null;
+
+    const hasLocation =
+      !!location?.addressLine1 &&
+      !!location?.city &&
+      !!location?.district &&
+      !!location?.province;
+
+    let created = false;
+
+    if (!vendor) {
+      let backendUser = await this.prisma.user.findFirst({
+        where: { email: `clerk_${clerkUserId}@placeholder.local` },
       });
 
-      // 2. If it doesn't exist, create it
-      if (!user) {
-        const randomPassword = crypto.randomBytes(32).toString('hex');
-        const hash = await bcrypt.hash(randomPassword, 10);
-
-        user = await this.prisma.user.create({
+      if (!backendUser) {
+        backendUser = await this.prisma.user.create({
           data: {
-            fullName: dto.fullName,
-            email: dto.email,
-            passwordHash: hash,
+            fullName: businessName,
+            email: `clerk_${clerkUserId}@placeholder.local`,
+            passwordHash: 'clerk-managed',
             role: 'USER',
-            isActive: true,
           },
         });
       }
 
-      // 3. Upsert the Vendor profile connected to this User
-      const vendor = await this.prisma.vendor.upsert({
-        where: { userId: user.id },
-        update: {
-          businessName: dto.businessName,
-          shortTagline: dto.shortTagline,
-          contactPhone: dto.contactPhone,
-          establishedYear: dto.establishedYear,
-          profileComplete: true,
+      vendor = await this.prisma.vendor.create({
+        data: {
+          userId: backendUser.id,
+          clerkUserId,
+          businessName,
+          shortTagline: shortTagline || null,
+          contactPhone: contactPhone || null,
+          establishedYear: parsedEstablishedYear,
+          profileComplete: hasLocation,
         },
-        create: {
-          userId: user.id,
-          businessName: dto.businessName,
-          shortTagline: dto.shortTagline,
-          contactPhone: dto.contactPhone,
-          establishedYear: dto.establishedYear,
-          profileComplete: true,
-          verifiedStatus: 'PENDING',
-        },
+        include: { locations: { where: { isMainLocation: true }, take: 1 } },
       });
 
-      // 4. Upsert the VendorLocation (Main Location)
+      created = true;
+    }
+
+    await this.prisma.vendor.update({
+      where: { clerkUserId },
+      data: {
+        ...(businessName && { businessName }),
+        ...(shortTagline !== undefined && { shortTagline }),
+        ...(contactPhone && { contactPhone }),
+        ...(parsedEstablishedYear !== null && { establishedYear: parsedEstablishedYear }),
+        profileComplete: hasLocation,
+      },
+    });
+
+    if (hasLocation) {
+      const existingLocation = vendor.locations[0];
+      if (existingLocation) {
+        await this.prisma.vendorLocation.update({
+          where: { id: existingLocation.id },
+          data: {
+            addressLine1: location.addressLine1,
+            addressLine2: location.addressLine2 || null,
+            city: location.city,
+            district: location.district,
+            province: location.province,
+            postalCode: location.postalCode || null,
+            latitude: location.latitude || null,
+            longitude: location.longitude || null,
+          },
+        });
+      } else {
+        await this.prisma.vendorLocation.create({
+          data: {
+            vendorId: vendor.id,
+            addressLine1: location.addressLine1,
+            addressLine2: location.addressLine2 || null,
+            city: location.city,
+            district: location.district,
+            province: location.province,
+            postalCode: location.postalCode || null,
+            latitude: location.latitude || null,
+            longitude: location.longitude || null,
+            isMainLocation: true,
+          },
+        });
+      }
+    }
+
+    return { message: created ? 'Profile created successfully' : 'Profile updated successfully' };
+  }
+
+  /* Register a vendor via Clerk (creates a Vendor record linked by clerkUserId) */
+  async registerVendorFromClerk(body: any) {
+    const { userId: clerkUserId, businessName, shortTagline, contactPhone, establishedYear, location } = body;
+
+    if (!clerkUserId || !businessName) {
+      throw new BadRequestException('userId and businessName are required');
+    }
+
+    // Check if vendor already registered
+    const existing = await this.prisma.vendor.findUnique({ where: { clerkUserId } });
+    if (existing) {
+      
+      return { message: 'Already registered', vendorId: existing.id };
+    }
+
+    let backendUser = await this.prisma.user.findFirst({ where: { email: `clerk_${clerkUserId}@placeholder.local` } });
+    if (!backendUser) {
+      backendUser = await this.prisma.user.create({
+        data: {
+          fullName: businessName,
+          email: `clerk_${clerkUserId}@placeholder.local`,
+          passwordHash: 'clerk-managed',
+          role: 'USER',
+        },
+      });
+    }
+
+    const vendor = await this.prisma.vendor.create({
+      data: {
+        userId: backendUser.id,
+        clerkUserId,
+        businessName,
+        shortTagline: shortTagline || null,
+        contactPhone: contactPhone || null,
+        establishedYear: establishedYear ? parseInt(establishedYear) : null,
+      },
+    });
+
+    if (location) {
       await this.prisma.vendorLocation.create({
         data: {
           vendorId: vendor.id,
-          addressLine1: dto.location.addressLine1,
-          addressLine2: dto.location.addressLine2,
-          city: dto.location.city,
-          district: dto.location.district,
-          province: dto.location.province,
-          postalCode: dto.location.postalCode,
+          addressLine1: location.addressLine1,
+          addressLine2: location.addressLine2 || null,
+          city: location.city,
+          district: location.district,
+          province: location.province,
+          postalCode: location.postalCode || null,
+          latitude: location.latitude || null,
+          longitude: location.longitude || null,
           isMainLocation: true,
         },
       });
-
-      return {
-        message: 'Vendor profile registered successfully',
-        data: vendor,
-      };
-    } catch (error) {
-      console.error(error);
-      throw new InternalServerErrorException('Failed to register vendor profile');
     }
+
+    return { message: 'Vendor registered successfully', vendorId: vendor.id };
   }
 
-  /**
-   * Get all active categories that vendors can choose from
-   */
+
   async getAvailableCategories() {
     const categories = await this.prisma.listingCategory.findMany({
       where: { isActive: true },
@@ -122,9 +253,7 @@ export class VendorManagementService {
     return locations;
   }
 
-  /**
-   * Get available listing types (fixed enum)
-   */
+  /* Get available listing types */
   getAvailableListingTypes() {
     return [
       { value: 'EXPERIENCE', label: 'Experience' },
@@ -132,12 +261,10 @@ export class VendorManagementService {
     ];
   }
 
-  /**
-   * Create a new listing with validation
-   */
+  /* Create a new listing with validation*/
   async createListing(vendorId: number, dto: CreateListingDto, file?: Express.Multer.File,) {
     console.time("CREATE_LISTING_TOTAL");
-    // Validate category exists and is active
+  
     const category = await this.prisma.listingCategory.findUnique({
       where: { id: dto.categoryId },
     });
@@ -169,7 +296,7 @@ export class VendorManagementService {
       );
     }
 
-    // 1. Create the listing (Wait for this to get the ID)
+    // Create the listing 
     const listing = await this.prisma.listing.create({
       data: {
         vendorId,
@@ -183,14 +310,22 @@ export class VendorManagementService {
         priceMax: dto.priceMax,
         priceNote: dto.priceNote,
         duration: dto.duration,
-        capacity: dto.capacity,
+        capacity: null,
+        stock:
+          dto.listingType === "PRODUCT" && dto.stock
+            ? Number(dto.stock)
+            : null,
+        visibilityStatus: dto.visibilityStatus || "DRAFT",
         availability: dto.availability,
         tags:
           typeof dto.tags === 'string'
             ? JSON.parse(dto.tags)
             : dto.tags || [],
 
-        inclusions: dto.inclusions,
+        inclusions:
+          typeof dto.inclusions === "string"
+            ? JSON.parse(dto.inclusions)
+            : dto.inclusions,
         specs: dto.specs,
         isFeatured: dto.isFeatured || false,
         displayPriority: dto.displayPriority || 0,
@@ -201,7 +336,7 @@ export class VendorManagementService {
       },
     });
 
-    // Index listing in background
+    
     setImmediate(() => {
       this.prisma.listingSearchIndex.create({
         data: {
@@ -216,7 +351,6 @@ export class VendorManagementService {
       }).catch(err => console.error("Background Indexing Error:", err));
     });
 
-    // Handle image upload async
     if (file) {
       const media = await this.prisma.listingMedia.create({
         data: {
@@ -241,14 +375,14 @@ export class VendorManagementService {
           console.error(e);
         }
       });
+
     }
     console.timeEnd("CREATE_LISTING_TOTAL");
+
     return listing;
   }
 
-  /**
-   * Update an existing listing with validation
-   */
+  /* Update an existing listing with validation*/
   async updateListing(
     vendorId: number,
     listingId: number,
@@ -312,6 +446,7 @@ export class VendorManagementService {
         ...(dto.categoryId && { categoryId: dto.categoryId }),
         ...(dto.addressId && { addressId: dto.addressId }),
         ...(dto.listingType && { listingType: dto.listingType }),
+        ...(dto.visibilityStatus && { visibilityStatus: dto.visibilityStatus }),
         ...(dto.title && { title: dto.title }),
         ...(dto.shortDescription && { shortDescription: dto.shortDescription }),
         ...(dto.longDescription !== undefined && {
@@ -321,10 +456,9 @@ export class VendorManagementService {
         ...(dto.priceMax !== undefined && { priceMax: dto.priceMax }),
         ...(dto.priceNote !== undefined && { priceNote: dto.priceNote }),
         ...(dto.duration !== undefined && { duration: dto.duration }),
-        ...(dto.capacity !== undefined && dto.capacity > 0
-          ? { capacity: dto.capacity }
-          : { capacity: null }),
-
+        ...(dto.listingType === "PRODUCT"
+          ? { stock: dto.stock ? Number(dto.stock) : null }
+          : { stock: null }),
         ...(dto.availability !== undefined && {
           availability: dto.availability,
         }),
@@ -337,7 +471,14 @@ export class VendorManagementService {
           }
           : {}),
 
-        ...(dto.inclusions !== undefined && { inclusions: dto.inclusions }),
+        ...(dto.inclusions !== undefined
+          ? {
+            inclusions:
+              typeof dto.inclusions === "string"
+                ? JSON.parse(dto.inclusions)
+                : dto.inclusions,
+          }
+          : {}),
         ...(dto.specs !== undefined && { specs: dto.specs }),
         ...(dto.isFeatured !== undefined && { isFeatured: dto.isFeatured }),
         ...(dto.displayPriority !== undefined && {
@@ -470,16 +611,18 @@ export class VendorManagementService {
   }
 
   async recordProfileView(vendorId: number, userId: number) {
-  try {
-    return await this.prisma.profileView.create({
-      data: {
-        vendorId,
-        userId,
-      },
-    });
-  } catch (error) {
-    // Unique constraint prevents duplicates
-    return null;
+    try {
+      return await this.prisma.profileView.create({
+        data: {
+          vendorId,
+          userId,
+        },
+      });
+    } catch (error) {
+    
+      return null;
+    }
   }
-}
+
+
 }

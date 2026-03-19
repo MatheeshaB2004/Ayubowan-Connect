@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ListingType, Prisma } from '@prisma/client';
+import { ListingType, Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import {
@@ -34,7 +34,7 @@ type ListingSummary = {
 
 @Injectable()
 export class MarketplaceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findAll(query: MarketplaceQuery) {
     const {
@@ -52,6 +52,7 @@ export class MarketplaceService {
     const priceBounds = this.resolvePriceBounds(minPrice, maxPrice, priceRange);
 
     const where: Prisma.ListingWhereInput = {
+       visibilityStatus: "PUBLISHED",
       ...(type ? { listingType: type } : {}),
       ...(categories?.length
         ? { category: { categoryName: { in: categories } } }
@@ -59,20 +60,20 @@ export class MarketplaceService {
       ...(location ? { location: { district: location } } : {}),
       ...(priceBounds
         ? {
-            priceMin: {
-              gte: priceBounds.min,
-              lte: priceBounds.max,
-            },
-          }
+          priceMin: {
+            gte: priceBounds.min,
+            lte: priceBounds.max,
+          },
+        }
         : {}),
       ...(search
         ? {
-            OR: [
-              { title: { contains: search, mode: 'insensitive' } },
-              { shortDescription: { contains: search, mode: 'insensitive' } },
-              { longDescription: { contains: search, mode: 'insensitive' } },
-            ],
-          }
+          OR: [
+            { title: { contains: search, mode: 'insensitive' } },
+            { shortDescription: { contains: search, mode: 'insensitive' } },
+            { longDescription: { contains: search, mode: 'insensitive' } },
+          ],
+        }
         : {}),
     };
 
@@ -84,6 +85,9 @@ export class MarketplaceService {
           category: true,
           location: true,
           media: true,
+          reviews: {
+            select: { rating: true },
+          },
         },
         orderBy: [{ displayPriority: 'desc' }, { createdAt: 'desc' }],
         skip: offset,
@@ -112,6 +116,9 @@ export class MarketplaceService {
           },
         },
         media: true,
+        reviews: {
+          select: { rating: true }
+        },
         vendor: {
           include: {
             user: {
@@ -128,14 +135,31 @@ export class MarketplaceService {
       throw new NotFoundException(`Listing with ID ${id} not found`);
     }
 
-    // Transform to include contactEmail in vendor
+    const ratingAverage =
+      listing.reviews.length > 0
+        ? Number(
+          (
+            listing.reviews.reduce((sum, r) => sum + r.rating, 0) /
+            listing.reviews.length
+          ).toFixed(1)
+        )
+        : 0;
+
+    const ratingCount = listing.reviews.length;
+
+    // Transform to include contactEmail in vendor and ensure vendorId is at top level
     const result = {
       ...listing,
+      vendorId: listing.vendorId,
       vendor: listing.vendor
         ? {
-            ...listing.vendor,
-            contactEmail: listing.vendor.user.email,
-            contactPhone: '+94 77 123 4567', // Placeholder - add phone field to schema later
+            id: listing.vendor.id,
+            businessName: listing.vendor.businessName,
+            shortTagline: listing.vendor.shortTagline,
+            contactEmail: listing.vendor.user.email.includes('@placeholder.local') 
+              ? null 
+              : listing.vendor.user.email,
+            contactPhone: listing.vendor.contactPhone,
           }
         : null,
     };
@@ -218,7 +242,7 @@ export class MarketplaceService {
     title: string;
     shortDescription: string;
     priceMin: number;
-    ratingAverage: number;
+    reviews: { rating: number }[];
     listingType: ListingType;
     category: { categoryName: string };
     location: { city: string; district: string };
@@ -227,13 +251,23 @@ export class MarketplaceService {
     const primaryMedia =
       listing.media.find((media) => media.isPrimary) ?? listing.media[0];
 
+    const rating =
+      listing.reviews.length > 0
+        ? Number(
+          (
+            listing.reviews.reduce((sum, r) => sum + r.rating, 0) /
+            listing.reviews.length
+          ).toFixed(1)
+        )
+        : 0;
+
     return {
       id: listing.id,
       title: listing.title,
       price: listing.priceMin,
       location: listing.location.city,
       district: listing.location.district,
-      rating: listing.ratingAverage,
+      rating: rating,
       imageUrl: primaryMedia?.mediaUrl ?? null,
       category: listing.category.categoryName,
       type:
@@ -300,16 +334,26 @@ export class MarketplaceService {
       }),
     ]);
 
+    const averageRating =
+      total > 0
+        ? Number(
+          (
+            reviews.reduce((sum, r) => sum + r.rating, 0) / total
+          ).toFixed(1)
+        )
+        : 0;
+
     return {
       total,
-      averageRating: listing?.ratingAverage || 0,
+      averageRating,
       reviews: reviews.map((review) => ({
         id: review.id,
         listingId: review.listingId,
         userId: review.userId,
-        userName: review.user.fullName,
+        userName: review.user?.fullName ?? "Unknown User",
         rating: review.rating,
         comment: review.comment,
+        reply: review.reply,
         media: review.media.map((m) => ({
           id: m.id,
           mediaType: m.mediaType,
@@ -324,8 +368,29 @@ export class MarketplaceService {
 
   async createReview(
     createReviewDto: CreateReviewDto,
-    userId: number,
   ): Promise<ReviewResponseDto> {
+    // Resolve user by email sent from the frontend (logged-in Clerk user).
+    // Upsert so the stored fullName stays in sync with Clerk profile changes.
+    let resolvedUserId = 1; // fallback for unauthenticated requests
+    if (createReviewDto.userEmail) {
+      const displayName =
+        createReviewDto.userName?.trim() ||
+        createReviewDto.userEmail.split('@')[0];
+      const user = await this.prisma.user.upsert({
+        where: { email: createReviewDto.userEmail },
+        create: {
+          fullName: displayName,
+          email: createReviewDto.userEmail,
+          passwordHash: 'clerk-managed',
+          role: UserRole.USER,
+        },
+        update: {
+          fullName: displayName,
+        },
+      });
+      resolvedUserId = user.id;
+    }
+
     // Check if listing exists
     const listing = await this.prisma.listing.findUnique({
       where: { id: createReviewDto.listingId },
@@ -347,7 +412,7 @@ export class MarketplaceService {
       const newReview = await tx.review.create({
         data: {
           listingId: createReviewDto.listingId,
-          userId: userId,
+          userId: resolvedUserId,
           rating: createReviewDto.rating,
           comment: createReviewDto.comment,
         },
@@ -413,6 +478,127 @@ export class MarketplaceService {
       createdAt: completeReview.createdAt,
       updatedAt: completeReview.updatedAt,
     };
+  }
+
+  async getUserReviewForListing(
+    listingId: number,
+    userEmail: string,
+  ): Promise<ReviewResponseDto | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+    if (!user) return null;
+
+    const review = await this.prisma.review.findUnique({
+      where: { userId_listingId: { userId: user.id, listingId } },
+      include: {
+        user: { select: { fullName: true } },
+        media: { orderBy: { displayOrder: 'asc' } },
+      },
+    });
+    if (!review) return null;
+
+    return {
+      id: review.id,
+      listingId: review.listingId,
+      userId: review.userId,
+      userName: review.user.fullName,
+      rating: review.rating,
+      comment: review.comment,
+      media: review.media.map((m) => ({
+        id: m.id,
+        mediaType: m.mediaType,
+        mediaUrl: m.mediaUrl,
+        displayOrder: m.displayOrder,
+      })),
+      createdAt: review.createdAt,
+      updatedAt: review.updatedAt,
+    };
+  }
+
+  async updateReview(
+    reviewId: number,
+    userEmail: string,
+    rating: number,
+    comment: string,
+    mediaUrls?: string[],
+  ): Promise<ReviewResponseDto> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const existing = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+    });
+    if (!existing) throw new NotFoundException('Review not found');
+    if (existing.userId !== user.id)
+      throw new NotFoundException('Review not found');
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.review.update({
+        where: { id: reviewId },
+        data: { rating, comment },
+      });
+
+      if (mediaUrls !== undefined) {
+        await tx.reviewMedia.deleteMany({ where: { reviewId } });
+        if (mediaUrls.length > 0) {
+          await tx.reviewMedia.createMany({
+            data: mediaUrls.map((url, index) => ({
+              reviewId,
+              mediaType: url.match(/\.(mp4|webm|ogg|mov)$/i) ? 'VIDEO' : 'IMAGE',
+              mediaUrl: url,
+              displayOrder: index,
+            })),
+          });
+        }
+      }
+    });
+
+    await this.updateListingRating(existing.listingId);
+
+    const updated = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+      include: {
+        user: { select: { fullName: true } },
+        media: { orderBy: { displayOrder: 'asc' } },
+      },
+    });
+
+    return {
+      id: updated!.id,
+      listingId: updated!.listingId,
+      userId: updated!.userId,
+      userName: updated!.user.fullName,
+      rating: updated!.rating,
+      comment: updated!.comment,
+      media: updated!.media.map((m) => ({
+        id: m.id,
+        mediaType: m.mediaType,
+        mediaUrl: m.mediaUrl,
+        displayOrder: m.displayOrder,
+      })),
+      createdAt: updated!.createdAt,
+      updatedAt: updated!.updatedAt,
+    };
+  }
+
+  async deleteReview(reviewId: number, userEmail: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email: userEmail },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    const existing = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+    });
+    if (!existing) throw new NotFoundException('Review not found');
+    if (existing.userId !== user.id)
+      throw new NotFoundException('Review not found');
+
+    await this.prisma.review.delete({ where: { id: reviewId } });
+    await this.updateListingRating(existing.listingId);
   }
 
   private async updateListingRating(listingId: number): Promise<void> {

@@ -13,7 +13,7 @@ function AuthCallbackContent() {
     const error = searchParams.get("error");
 
     if (error) {
-      console.error("Authentication error:", error);
+      console.log("Authentication error:", error);
       router.push("/auth/login?error=" + error);
       return;
     }
@@ -23,8 +23,8 @@ function AuthCallbackContent() {
       localStorage.setItem("access_token", accessToken);
       localStorage.setItem("refresh_token", refreshToken);
 
-      // Redirect to dashboard or home page
-      router.push("/dashboard");
+      // Redirect to post-login check which will route based on role
+      router.push("/");
     } else {
       // No tokens received, redirect to login
       router.push("/auth/login");

@@ -1,105 +1,101 @@
 "use client";
 
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
-import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Event } from "@/app/events/types/events";
+import { Calendar, Clock, MapPin, Users, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Event } from "../types/events";
+import { formatDateRange, formatPrice } from "../lib/utils";
 
 interface EventBarProps {
   event: Event;
+  isGuest: boolean;
   innerRef?: (el: HTMLDivElement | null) => void;
 }
 
-function formatEventDate(startDate: string, endDate?: string): string {
-  const start = new Date(startDate);
-  const months = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
-  if (!endDate || startDate.slice(0, 10) === endDate.slice(0, 10)) {
-    return `${months[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()}`;
-  }
-  const end = new Date(endDate);
-  return `${months[start.getMonth()]} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
-}
-
-export function EventBar({ event, innerRef }: EventBarProps) {
+export function EventBar({ event, isGuest, innerRef }: EventBarProps) {
   const router = useRouter();
+  const isFree = event.isFree || !event.price;
+
+  const handleClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (isGuest) {
+      // Redirect guests to login with return URL
+      router.push(`/auth/login?redirect=/events/${event.id}`);
+    } else {
+      router.push(`/events/${event.id}`);
+    }
+  };
 
   return (
     <div
       ref={innerRef}
-      className="group bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-[#379683]/30 transition-all duration-200 cursor-pointer p-4 mb-3"
-      onClick={() => router.push(`/events/${event.id}`)}
+      onClick={handleClick}
+      className="bg-white rounded-xl border border-gray-200 hover:border-[#0d9488]/40 hover:shadow-md transition-all duration-200 cursor-pointer p-4 mb-3"
     >
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-4">
+
         {/* Thumbnail */}
-        <div className="relative w-28 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+        <div className="relative w-[110px] h-[78px] flex-shrink-0 rounded-lg overflow-hidden bg-[#e8f5f2]">
           {event.imageUrl ? (
             <Image
               src={event.imageUrl}
               alt={event.title}
               fill
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="object-cover hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#379683]/20 to-[#379683]/5 flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-[#379683]/40" />
+            <div className="w-full h-full flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-[#0d9488]/30" />
             </div>
           )}
           {event.isLive && (
             <div className="absolute top-1.5 left-1.5">
-              <span className="flex items-center gap-1 bg-red-500 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping inline-block" />
+              <span className="flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm leading-tight">
+                <span className="w-1 h-1 bg-white rounded-full animate-ping inline-block" />
                 Live
               </span>
             </div>
           )}
         </div>
 
-        {/* Details */}
+        {/* Main content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3 mb-1.5">
-            <div className="min-w-0">
-              <h3 className="font-semibold text-gray-900 text-base leading-snug truncate">
+          <div className="flex items-start gap-3 mb-1">
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 text-[15px] leading-tight truncate">
                 {event.title}
               </h3>
               {event.vendor && (
-                <p className="text-sm text-[#379683] mt-0.5 truncate">
+                <p className="text-[13px] text-[#21a17a] font-medium mt-0.5 truncate">
                   {event.vendor.businessName}
                 </p>
               )}
             </div>
             {event.category && (
-              <Badge
-                variant="outline"
-                className="border-[#379683]/50 text-[#379683] text-xs flex-shrink-0 font-normal"
-              >
+              <span className="flex-shrink-0 text-[11px] text-[#0d9488] border border-[#0d9488]/50 rounded-full px-2.5 py-0.5 bg-white whitespace-nowrap">
                 {event.category}
-              </Badge>
+              </span>
             )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 text-xs text-gray-500">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-0.5 mt-2 text-[12px] text-gray-500">
             <span className="flex items-center gap-1.5 truncate">
-              <Calendar className="w-3.5 h-3.5 text-[#379683] flex-shrink-0" />
-              {formatEventDate(event.startDate, event.endDate)}
+              <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              {formatDateRange(event.startDate, event.endDate)}
             </span>
             {event.time && (
               <span className="flex items-center gap-1.5 truncate">
-                <Clock className="w-3.5 h-3.5 text-[#379683] flex-shrink-0" />
+                <Clock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 {event.time}
               </span>
             )}
             <span className="flex items-center gap-1.5 truncate">
-              <MapPin className="w-3.5 h-3.5 text-[#379683] flex-shrink-0" />
-              {event.location}
+              <MapPin className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+              {event.district || event.location}
             </span>
             {event.maxParticipants != null && (
               <span className="flex items-center gap-1.5 truncate">
-                <Users className="w-3.5 h-3.5 text-[#379683] flex-shrink-0" />
+                <Users className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                 {event.participantCount}/{event.maxParticipants} participants
               </span>
             )}
@@ -107,27 +103,29 @@ export function EventBar({ event, innerRef }: EventBarProps) {
         </div>
 
         {/* Price + CTA */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          {event.isFree || !event.price ? (
-            <Badge className="bg-[#379683] hover:bg-[#379683] text-white text-xs px-2.5 py-0.5">
-              Free
-            </Badge>
+        <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-2">
+          <span className={`text-[12px] font-semibold px-3 py-1 rounded-md ${isFree ? "bg-[#0d9488] text-white" : "bg-[#f59e0b] text-white"}`}>
+            {formatPrice(event.price, event.isFree)}
+          </span>
+
+          {isGuest ? (
+            <button
+              onClick={handleClick}
+              className="flex items-center gap-1.5 text-[12px] font-semibold text-[#0d9488] border border-[#0d9488] rounded-lg px-3 py-[7px] hover:bg-[#0d9488] hover:text-white transition-colors whitespace-nowrap"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              Sign in to view
+            </button>
           ) : (
-            <Badge className="bg-amber-500 hover:bg-amber-500 text-white text-xs px-2.5 py-0.5">
-              Rs. {event.price.toLocaleString()}
-            </Badge>
+            <button
+              onClick={handleClick}
+              className="text-[12px] font-semibold text-white bg-[#0d9488] rounded-lg px-4 py-[7px] hover:bg-[#0b7a70] active:scale-95 transition-all whitespace-nowrap"
+            >
+              View Details
+            </button>
           )}
-          <Button
-            size="sm"
-            className="bg-[#379683] hover:bg-[#2d7a6a] text-white text-xs h-8 px-3 whitespace-nowrap"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/events/${event.id}`);
-            }}
-          >
-            View Details
-          </Button>
         </div>
+
       </div>
     </div>
   );

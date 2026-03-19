@@ -4,6 +4,9 @@ import {
   IsBoolean,
   IsNumber,
   IsDateString,
+  IsArray,
+  IsEmail,
+  IsUrl,
 } from 'class-validator';
 
 export class CreateEventDto {
@@ -27,6 +30,18 @@ export class CreateEventDto {
 
   @IsString()
   location: string;
+
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
+
+  @IsOptional()
+  @IsEmail()
+  contactEmail?: string;
+
+  @IsOptional()
+  @IsUrl()
+  contactWebsite?: string;
 
   @IsString()
   city: string;
@@ -56,4 +71,14 @@ export class CreateEventDto {
   @IsOptional()
   @IsNumber()
   maxParticipants?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  whatYouWillLearn?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  importantInfo?: string[];
 }

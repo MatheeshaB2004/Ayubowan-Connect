@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
+import { MessageCircle, X, Send, Loader2, Mic } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 import './ChatWidget.css';
 
 interface Message {
@@ -20,7 +21,9 @@ export default function ChatWidget() {
     ]);
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isListening, setIsListening] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const recognitionRef = useRef<any>(null);
     const router = useRouter();
 
     // Auto-scroll to bottom when messages change
@@ -28,8 +31,47 @@ export default function ChatWidget() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    const toggleListening = () => {
+        if (isListening) {
+            if (recognitionRef.current) recognitionRef.current.stop();
+            setIsListening(false);
+            return;
+        }
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert('Your browser does not support speech recognition. Please try using Chrome or Edge.');
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => setIsListening(true);
+
+        recognition.onresult = (event: any) => {
+            const transcript = Array.from(event.results)
+                .map((result: any) => result[0].transcript)
+                .join('');
+            setInputText(transcript);
+        };
+
+        recognition.onerror = () => setIsListening(false);
+        recognition.onend = () => setIsListening(false);
+
+        recognition.start();
+    };
+
     const sendMessage = async () => {
         if (!inputText.trim() || isLoading) return;
+
+        if (isListening && recognitionRef.current) {
+            recognitionRef.current.stop();
+            setIsListening(false);
+        }
 
         const userMessage = inputText.trim();
         setInputText('');
@@ -39,8 +81,14 @@ export default function ChatWidget() {
         setIsLoading(true);
 
         try {
+            const webhookUrl = getApiUrl('/chatbot/webhook');
+
+            if (!webhookUrl) {
+                throw new Error('Chatbot backend URL is not configured.');
+            }
+
             // Send to backend webhook
-            const response = await fetch('http://localhost:3001/chatbot/webhook', {
+            const response = await fetch(webhookUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -103,6 +151,7 @@ export default function ChatWidget() {
                         </div>
                     </div>
                     <button
+                        suppressHydrationWarning
                         onClick={() => setIsOpen(false)}
                         className="chat-close-btn"
                         title="Close chat"
@@ -138,15 +187,27 @@ export default function ChatWidget() {
                 <div className="chat-input-area">
                     <div className="chat-input-row">
                         <input
+                            suppressHydrationWarning
                             type="text"
                             value={inputText}
                             onChange={(e) => setInputText(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            placeholder="Ask me anything..."
+                            placeholder={isListening ? "Listening..." : "Ask me anything..."}
                             disabled={isLoading}
-                            className="chat-input"
+                            className={`chat-input ${isListening ? 'listening' : ''}`}
                         />
                         <button
+                            suppressHydrationWarning
+                            onClick={toggleListening}
+                            type="button"
+                            className={`chat-mic-btn ${isListening ? 'active' : ''}`}
+                            title={isListening ? "Stop listening" : "Voice input"}
+                            aria-label="Voice input"
+                        >
+                            <Mic size={20} className={isListening ? "animate-pulse text-red-500" : ""} />
+                        </button>
+                        <button
+                            suppressHydrationWarning
                             onClick={sendMessage}
                             disabled={isLoading || !inputText.trim()}
                             className="chat-send-btn"
@@ -161,6 +222,7 @@ export default function ChatWidget() {
 
             {/* Floating Button */}
             <button
+                suppressHydrationWarning
                 onClick={() => setIsOpen(!isOpen)}
                 className="chat-toggle-btn"
                 aria-label="Toggle chat"

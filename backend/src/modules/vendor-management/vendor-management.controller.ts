@@ -7,6 +7,7 @@ import {
   Body,
   Req,
   Param,
+  Query,
   ParseIntPipe,
   HttpCode,
   HttpStatus,
@@ -25,55 +26,52 @@ import { RegisterVendorDto } from './dto/register-vendor.dto';
 export class VendorManagementController {
   constructor(private readonly vendorService: VendorManagementService) { }
 
-  /**
-   * Register a new Vendor Profile
-   * POST /vendor/register
-   */
-  @Post('register')
-  @HttpCode(HttpStatus.CREATED)
-  async registerVendor(@Body() dto: RegisterVendorDto) {
-    return this.vendorService.registerVendor(dto);
+   /*Get vendor profile by Clerk userId */
+  @Get('profile')
+  async getVendorProfile(@Query('userId') userId: string) {
+    return this.vendorService.getVendorProfileByUserId(userId);
   }
 
-  /**
-   * Get all active categories (fixed list)
-   * GET /vendor/categories
-   */
+  
+   /* Update vendor profile by Clerk userId */
+  
+  @Put('profile')
+  async updateVendorProfile(@Body() body: any) {
+    return this.vendorService.updateVendorProfileByUserId(body);
+  }
+
+
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  async registerVendor(@Body() body: any) {
+    return this.vendorService.registerVendorFromClerk(body);
+  }
   @Get('categories')
   async getCategories() {
     return this.vendorService.getAvailableCategories();
   }
 
-  /**
-   * Get all listing types (fixed enum)
-   * GET /vendor/listing-types
-   */
+
   @Get('listing-types')
   getListingTypes() {
     return this.vendorService.getAvailableListingTypes();
   }
 
-  /**
-   * Get vendor's locations (fixed list per vendor)
-   * GET /vendor/:vendorId/locations
-   */
+  
   @Get(':vendorId/locations')
   async getLocations(@Param('vendorId', ParseIntPipe) vendorId: number) {
     return this.vendorService.getVendorLocations(vendorId);
   }
 
-  /**
-   * Get all listings for a vendor
-   * GET /vendor/:vendorId/listings
-   */
+  
+   /* Get all listings for a vendor*/
   @Get(':vendorId/listings')
   async getListings(@Param('vendorId', ParseIntPipe) vendorId: number) {
     return this.vendorService.getVendorListings(vendorId);
   }
 
-  /**
-   * Create a new listing
-   * POST /vendor/:vendorId/listings
+  
+  /* Create a new listing
    */
   @Post(':vendorId/listings')
   @HttpCode(HttpStatus.CREATED)
@@ -83,14 +81,11 @@ export class VendorManagementController {
     @Body() createListingDto: CreateListingDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log("DTO RECEIVED:", createListingDto);
+
     return this.vendorService.createListing(vendorId, createListingDto, file);
   }
 
-  /**
-   * Update an existing listing
-   * PUT /vendor/:vendorId/listings/:listingId
-   */
+  /* Update an existing listing*/
   @Put(':vendorId/listings/:listingId')
   @UseInterceptors(FileInterceptor('image'))
   async updateListing(
@@ -100,7 +95,6 @@ export class VendorManagementController {
     @UploadedFile() file?: Express.Multer.File,
   ) {
 
-    console.log("UPDATE DTO RECEIVED:", updateListingDto);
     return this.vendorService.updateListing(
       vendorId,
       listingId,
@@ -109,10 +103,7 @@ export class VendorManagementController {
     );
   }
 
-  /**
-   * Delete a listing
-   * DELETE /vendor/:vendorId/listings/:listingId
-   */
+  /* Delete a listing */
   @Delete(':vendorId/listings/:listingId')
   @HttpCode(HttpStatus.OK)
   async deleteListing(
@@ -122,17 +113,18 @@ export class VendorManagementController {
     return this.vendorService.deleteListing(vendorId, listingId);
   }
 
+
   @Post(":id/view")
   async recordProfileView(
     @Param("id") id: string,
     @Req() req: any
   ) {
-    //const userId = req.user?.id; // After profile is built
-    const userId = 4;//Temporary test
+    const userId = req.user?.id; 
 
-    /*if (!userId) {
+
+    if (!userId) {
       throw new UnauthorizedException("Login required");
-    }*/
+    }
 
     return this.vendorService.recordProfileView(
       Number(id),

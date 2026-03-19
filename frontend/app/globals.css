@@ -1,3 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -28,11 +31,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Global CSS variables */
 :root {
 
   --primary: oklch(0.208 0.042 265.755);
   --lochinvar: #379683;
-  --lochinvar-dark: #2d7a6a;
   --waikawa: #577399;
   --trendy: #8D5A97;
   --light-gray: #f9fafb;
@@ -75,7 +78,9 @@ html {
 }
 
 body {
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: Inter, Arial, Helvetica, sans-serif;
 }
 
 /* Animation for Logo */

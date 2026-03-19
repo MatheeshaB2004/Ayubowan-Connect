@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Toaster, toast } from "react-hot-toast";
+import Link from "next/link";
 import "./page.css";
+import { useUser } from "@clerk/nextjs";
 
 type Ratings = {
     avgRating: number
@@ -10,6 +13,10 @@ type Ratings = {
 }
 
 export default function Dashboard() {
+    const { user, isLoaded } = useUser();
+
+    const userId = user?.id;
+
     const times: string[] = [];
 
     for (let h = 0; h < 24; h++) {
@@ -21,16 +28,74 @@ export default function Dashboard() {
     }
     const [startTime, setStartTime] = useState("09:00");
     const [endTime, setEndTime] = useState("10:00");
+    const [selectedListing, setSelectedListing] = useState<number | null>(null);
+    const [maxGuests, setMaxGuests] = useState(5);
     const [activeTab, setActiveTab] = useState("All");
     const [isEditingCal, setIsEditingCal] = useState(false);
     const today = new Date();
     const [reviews, setReviews] = useState<any[]>([]);
+    const [showAllReviews, setShowAllReviews] = useState(false);
+    const [isProVendor, setIsProVendor] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const [ratings, setRatings] = useState<Ratings>({
         avgRating: 0,
         totalReviews: 0,
         percentages: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
     });
+
+    const checkProVendor = async () => {
+
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/profile?userId=${userId}`
+        );
+
+        const data = await res.json();
+        console.log("API RESPONSE:", data);
+
+        setIsProVendor(data?.isProUser ?? false);
+    };
+
+    const deleteReply = async (reviewId: number) => {
+
+        await fetch("http://localhost:3001/dashboard/vendor/delete-reply", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ reviewId })
+        })
+
+        setReviews(prev =>
+            prev.map(r =>
+                r.id === reviewId ? { ...r, reply: null } : r
+            )
+        )
+
+    }
+
+    const sendReply = async (reviewId: number) => {
+
+        await fetch("http://localhost:3001/dashboard/vendor/reply", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reviewId,
+                reply: replyText
+            })
+        })
+
+        setReplyText("")
+        setSelectedReview(null)
+
+        // reload reviews
+        const res = await fetch(`http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`)
+        const data = await res.json()
+        setReviews(data)
+
+    }
 
     const [listings, setListings] = useState<any[]>([]);
 
@@ -40,11 +105,81 @@ export default function Dashboard() {
         completedBookings: 0,
         events: 0,
     });
-    const userId = 2; // temporary for testing
+    const fetchStats = async () => {
+        if (!userId) return;
+
+        try {
+            const res = await fetch(
+                `http://localhost:3001/dashboard/vendor/stats?userId=${userId}`
+            );
+
+            const text = await res.text();
+            const data = JSON.parse(text);
+
+            setStats(data);
+
+        } catch (error) {
+            console.error("Failed to fetch stats:", error);
+        }
+    };
+
+    const fetchRatings = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/rating-summary?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        setRatings({
+            avgRating: data?.avgRating ?? 0,
+            totalReviews: data?.totalReviews ?? 0,
+            percentages: data?.percentages ?? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        });
+    };
+
+    const fetchReviews = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        setReviews(data);
+    };
+
+    const fetchListings = async () => {
+        try {
+            const res = await fetch(
+                `http://localhost:3001/dashboard/vendor/listings?userId=${userId}`
+            );
+
+            const data = await res.json();
+            setListings(data);
+
+        } catch (error) {
+            console.error("Failed to fetch listings:", error);
+        }
+    };
+
+    const refreshDashboard = async () => {
+        await Promise.all([
+            fetchBookings(),
+            fetchStats(),
+            fetchRatings(),
+            fetchReviews(),
+            fetchListings()
+        ]);
+    };
+
+
     const [currentDate, setCurrentDate] = useState(today)
+
     type Slot = {
+        id?: number
         start: string
         end: string
+        listingId: number
+        maxGuests: number
     }
 
     type AvailabilityState = {
@@ -56,38 +191,7 @@ export default function Dashboard() {
 
     const [replyText, setReplyText] = useState("");
     const [selectedReview, setSelectedReview] = useState(null);
-    const [bookings, setBookings] = useState([
-        {
-            id: 1,
-            name: "John Martinez",
-            property: "Downtown Loft",
-            nights: 3,
-            dates: "Dec 15-18",
-            price: 450,
-            avatar: "https://i.pravatar.cc/150?img=11",
-            status: "incoming",
-        },
-        {
-            id: 2,
-            name: "Emma Thompson",
-            property: "Luxury Villa",
-            nights: 5,
-            dates: "Dec 20-25",
-            price: 1250,
-            avatar: "https://i.pravatar.cc/150?img=5",
-            status: "incoming",
-        },
-        {
-            id: 3,
-            name: "Marcus Cole",
-            property: "Oceanview Retreat",
-            nights: 2,
-            dates: "Nov 10-12",
-            price: 600,
-            avatar: "https://i.pravatar.cc/150?img=3",
-            status: "completed",
-        },
-    ]);
+    const [bookings, setBookings] = useState<any[]>([])
 
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -95,24 +199,88 @@ export default function Dashboard() {
     const firstDay = new Date(year, month, 1).getDay()
     const daysInMonth = new Date(year, month + 1, 0).getDate()
 
+    const fetchBookings = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/bookings?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+            console.error("Invalid API response:", data);
+            return;
+        }
+
+
+        const mapped = data.map((b: any) => {
+
+            const start = b.slot?.startTime || null;
+            const end = b.slot?.endTime || null;
+            const date = b.slot?.date || null;
+
+            return {
+                id: b.id,
+                name: b.localTourist?.user?.fullName || "Guest",
+                property: b.listing?.title || "Listing",
+                nights: 1,
+                price: b.totalPrice || 0,
+                guests: b.guests,
+                avatar: b.localTourist?.profilePhotoUrl || "/vendor_management/default.png",
+
+                slot: b.slot
+                    ? {
+                        date: date,
+                        start: start,
+                        end: end,
+                        maxGuests: b.slot.maxGuests,
+                        bookedGuests: b.slot.bookedGuests
+                    }
+                    : null,
+
+
+                status:
+                    b.status === "PENDING"
+                        ? "incoming"
+                        : b.status === "CONFIRMED"
+                            ? "accepted"
+                            : b.status === "COMPLETED"
+                                ? "completed"
+                                : "rejected"
+            };
+
+        });
+        setBookings(mapped)
+    };
+
     useEffect(() => {
+        if (!isLoaded || !userId) return;
+
+        checkProVendor();
+    }, [isLoaded, userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+        fetchBookings();
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId) return;
 
         const interval = setInterval(async () => {
             const now = new Date()
-            //const now = new Date(today.getFullYear(), today.getMonth() + 1, 1)
 
             if (
                 now.getMonth() !== currentDate.getMonth() ||
                 now.getFullYear() !== currentDate.getFullYear()
 
-                
+
             ) {
-                console.log("MONTH CHANGED — deleting previous availability")
+
                 const res = await fetch(
                     `http://localhost:3001/dashboard/vendor/availability/previous?userId=${userId}`,
                     { method: "DELETE" }
                 );
-                console.log("DELETE RESPONSE:", res.status)
+
                 setCurrentDate(now);
                 setAvailability({});
                 setIsEditingCal(false);
@@ -123,61 +291,22 @@ export default function Dashboard() {
     }, [currentDate])
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await fetch(
-                    `http://localhost:3001/dashboard/vendor/stats?userId=${userId}`
-                );
-
-                console.log("Status:", res.status);
-
-                const text = await res.text();
-                console.log("Response body:", text);
-
-                const data = JSON.parse(text);
-                setStats(data);
-
-            } catch (error) {
-                console.error("Failed to fetch stats:", error);
-            }
-        };
-
         fetchStats();
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
-        const fetchReviews = async () => {
-            const res = await fetch(
-                `http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`
-            );
-
-            const data = await res.json();
-
-            setReviews(data);
-        };
-
-        fetchReviews();
-    }, []);
-
-    useEffect(() => {
-        const fetchRatings = async () => {
-            const res = await fetch(
-                `http://localhost:3001/dashboard/vendor/rating-summary?userId=${userId}`
-            );
-
-            const data = await res.json();
-
-            setRatings({
-                avgRating: data?.avgRating ?? 0,
-                totalReviews: data?.totalReviews ?? 0,
-                percentages: data?.percentages ?? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-            });
-        };
-
+        if (!userId) return;
         fetchRatings();
-    }, []);
+    }, [userId]);
 
     useEffect(() => {
+        if (!userId) return;
+        fetchReviews();
+    }, [userId]);
+
+    useEffect(() => {
+
+        if (!userId) return;
 
         const fetchAvailability = async () => {
 
@@ -191,69 +320,116 @@ export default function Dashboard() {
 
             const mapped: AvailabilityState = {};
 
-            data.forEach((d: any) => {
-                const day = new Date(d.date).getDate();
-                mapped[day] = d.slots || [];
-            });
+            if (Array.isArray(data)) {
+                data.forEach((d: any) => {
+                    const day = new Date(d.date).getDate();
+
+                    mapped[day] = (d.slots || []).map((s: any) => ({
+                        id: s.id,
+                        start: s.start,
+                        end: s.end,
+                        listingId: s.listingId,
+                        maxGuests: s.maxGuests
+                    }));
+                });
+            }
 
             setAvailability(mapped);
         };
 
         fetchAvailability();
 
-    }, [currentDate]);
+    }, [currentDate, userId]);
+
 
     useEffect(() => {
-        const fetchListings = async () => {
-            try {
-                const res = await fetch(
-                    `http://localhost:3001/dashboard/vendor/listings?userId=${userId}`
-                );
-
-                const data = await res.json();
-                setListings(data);
-
-            } catch (error) {
-                console.error("Failed to fetch listings:", error);
-            }
-        };
-
+        if (!userId) return;
         fetchListings();
-    }, []);
+    }, [userId]);
 
-    const handleAccept = (id: number) => {
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "accepted" } : b));
+    useEffect(() => {
+        if (!userId) return;
+
+        const interval = setInterval(() => {
+            refreshDashboard();
+        }, 10000); // every 10 seconds
+
+        return () => clearInterval(interval);
+    }, [userId]);
+
+    const handleAccept = async (id: number) => {
+
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/booking/accept/${id}`,
+            { method: "PATCH" }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            toast.error(data.message || "Slot is already full", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b"
+                }
+            });
+            return;
+        }
+
+        toast.success("Booking accepted!", {
+            style: {
+                background: "#dcfce7",
+                color: "#166534"
+            }
+        });
+
+        refreshDashboard();
     };
 
-    const handleDecline = (id: number) => {
-        setBookings(prev => prev.filter(b => b.id !== id));
+    const handleDecline = async (id: number) => {
+
+        await fetch(`http://localhost:3001/dashboard/vendor/booking/reject/${id}`, {
+            method: "PATCH"
+        });
+
+        refreshDashboard();
     };
 
-    const handleMarkDone = (id: number) => {
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "completed" } : b));
+    const handleMarkDone = async (id: number) => {
+        await fetch(`http://localhost:3001/dashboard/vendor/booking/complete/${id}`, {
+            method: "PATCH"
+        });
+
+        refreshDashboard();
     };
 
     const toggleDate = (day: number) => {
-        if (!isEditingCal) return;
 
         setActiveDay(prev => prev === day ? null : day);
 
-        setAvailability(prev => {
-            const copy = { ...prev };
+        if (isEditingCal) {
+            setAvailability(prev => {
+                const copy = { ...prev };
 
-            if (!copy[day]) {
-                copy[day] = []; // create date with empty slots
-            }
+                if (!copy[day]) {
+                    copy[day] = [];
+                }
 
-            return copy;
-        });
+                return copy;
+            });
+        }
     };
     const addSlot = (day: number) => {
 
         if (!startTime || !endTime) return
 
         if (startTime >= endTime) {
-            alert("End time must be later than start time.")
+            toast.error("End time must be later than start time.", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                }
+            })
             return
         }
 
@@ -265,7 +441,12 @@ export default function Dashboard() {
         )
 
         if (duplicate) {
-            alert("This exact slot already exists.")
+            toast.error("This exact slot already exists.", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                }
+            })
             return
         }
 
@@ -275,7 +456,12 @@ export default function Dashboard() {
         )
 
         if (overlapping) {
-            alert("This slot overlaps with an existing slot.")
+            toast.error("This slot overlaps with an existing slot", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                },
+            });
             return
         }
 
@@ -285,9 +471,16 @@ export default function Dashboard() {
 
             const slots = copy[day] ? [...copy[day]] : []
 
+            if (!selectedListing) {
+                toast.error("Please select a listing first")
+                return prev
+            }
+
             slots.push({
                 start: startTime,
-                end: endTime
+                end: endTime,
+                listingId: selectedListing,
+                maxGuests: maxGuests
             })
 
             copy[day] = slots
@@ -301,7 +494,6 @@ export default function Dashboard() {
             const copy = { ...prev };
             copy[day] = copy[day].filter((_, i) => i !== index);
             if (copy[day].length === 0) {
-                delete copy[day];
                 if (activeDay === day) setActiveDay(null);
             }
             return copy;
@@ -317,15 +509,24 @@ export default function Dashboard() {
     };
 
     const filteredBookings = bookings.filter(b => {
+
+        if (b.status === "rejected") return false;
+
         if (activeTab === "All") return true;
         if (activeTab === "Incoming") return b.status === "incoming";
         if (activeTab === "Accepted") return b.status === "accepted";
         if (activeTab === "Completed") return b.status === "completed";
+
         return true;
     });
+    if (!isLoaded || !userId) {
+        return <div>Loading dashboard...</div>;
+    }
+
 
     return (
         <div className="proplux-app">
+            <Toaster position="top-right" reverseOrder={false} />
             <aside className="proplux-sidebar">
                 <div className="proplux-logo">
                     <div className="proplux-logo-icon">
@@ -355,12 +556,22 @@ export default function Dashboard() {
             <main className="proplux-main">
                 <header className="proplux-header">
                     <div className="proplux-header-text">
-                        <h1>Welcome back, Sarah!</h1>
+                        <h1>Welcome {user?.firstName || "Vendor"}!</h1>
                         <p>Here's what's happening with your properties today</p>
                     </div>
                     <div className="proplux-header-actions">
-                        <div className="proplux-live-badge"><span className="live-dot"></span>Live</div>
-                        <img src="https://i.pravatar.cc/150?img=47" alt="Sarah" className="proplux-avatar" />
+                        <div className="proplux-live-badge">
+                            <span className="live-dot"></span>Live
+                        </div>
+
+                        {user?.imageUrl ? (
+                            <img src={user.imageUrl} alt={user?.fullName || "Vendor"} className="proplux-avatar" />
+                        ) : (
+                            <div className="avatar-fallback">
+                                {user?.firstName?.[0]}
+                                {user?.lastName?.[0]}
+                            </div>
+                        )}
                     </div>
                 </header>
 
@@ -370,8 +581,25 @@ export default function Dashboard() {
                         <p>Add new properties and maximize your earnings</p>
                     </div>
                     <div className="proplux-hero-buttons">
-                        <button className="btn-light-green active">Create Listing</button>
-                        <button className="proplux-btn-light">Create Events</button>
+                        <Link href="/vendor/listings" scroll={true}>
+                            <button className="btn-light-green active">Create Listing</button>
+                        </Link>
+                        <Link href="/events" scroll={true}>
+                            <button className="proplux-btn-light">Create Events</button>
+                        </Link>
+
+                        <button
+                            className="proplux-btn-light"
+                            onClick={() => {
+                                if (isProVendor) {
+                                    window.location.href = "/vendor/analytics_dashboard";
+                                } else {
+                                    setShowUpgradeModal(true);
+                                }
+                            }}
+                        >
+                            Analytics Dashboard
+                        </button>
                     </div>
                 </div>
 
@@ -447,7 +675,20 @@ export default function Dashboard() {
                                             <img src={b.avatar} alt={b.name} className="request-avatar" />
                                             <div className="request-info">
                                                 <h4>{b.name}</h4>
-                                                <p>{b.property} • {b.nights} nights</p>
+                                                <div className="booking-meta">
+                                                    <p>
+                                                        {b.property} • {b.slot ? `${b.slot.date} ${b.slot.start} - ${b.slot.end}` : "No slot"}
+                                                    </p>
+
+                                                    <p className="booking-guests">
+                                                        Guests: {b.guests} ({b.slot?.bookedGuests}/{b.slot?.maxGuests})
+                                                    </p>
+                                                </div>
+                                                {b.slot?.isFull && (
+                                                    <span style={{ color: "red", fontWeight: "bold", fontSize: "12px" }}>
+                                                        SLOT FULL
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="request-actions">
@@ -455,7 +696,13 @@ export default function Dashboard() {
                                             <div className="action-buttons">
                                                 {b.status === "incoming" && (
                                                     <>
-                                                        <button className="btn-accept" onClick={() => handleAccept(b.id)}>Accept</button>
+                                                        <button
+                                                            className="btn-accept"
+                                                            disabled={b.slot?.isFull}
+                                                            onClick={() => handleAccept(b.id)}
+                                                        >
+                                                            Accept
+                                                        </button>
                                                         <button className="btn-decline" onClick={() => handleDecline(b.id)}>Decline</button>
                                                     </>
                                                 )}
@@ -512,55 +759,165 @@ export default function Dashboard() {
                         {listings.length === 0 ? (
                             <p style={{ color: "var(--text-muted)" }}>No listings found.</p>
                         ) : (
-                            listings.map((l) => (
-                                <div className="property-item mt-lite" key={l.id}>
-                                    <div className="property-image">
-                                        <img src={l.image || "/vendor_management/Create-listing.png"} />
-                                    </div>
+                            <div className="listings-scroll-container">
 
-                                    <div className="property-details">
-                                        <h4>{l.title}</h4>
-                                        <p>{l.city}</p>
+                                {Array.isArray(listings) && listings.map((l) => (
+                                    <div className="dashboard-listing-card" key={l.id}>
 
-                                        <div className="property-rating">
-                                            <div className="stars">⭐ {l.avgRating}</div>
-                                            <span>({l.reviewCount} reviews)</span>
+                                        <img
+                                            className="listing-thumb"
+                                            src={l.image || "/vendor_management/Create-listing.png"}
+                                            alt={l.title}
+                                        />
+
+                                        <div className="listing-info">
+
+                                            <div className="listing-header">
+
+                                                <div className="listing-title">
+                                                    <h4>{l.title}</h4>
+                                                    <div className="listing-location">
+                                                        {l.city} • {l.categoryName}
+                                                    </div>
+                                                </div>
+
+                                                <div className="listing-meta">
+                                                    <div className="listing-price">LKR {l.priceMin}</div>
+
+                                                    <div className="listing-rating">
+
+                                                        <span>
+                                                            ⭐ ({l.reviewCount} {l.reviewCount === 1 ? "review" : "reviews"})
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                            {l.tags?.length > 0 && (
+                                                <div className="listing-tags">
+                                                    {l.tags.map((tag: string, i: number) => (
+                                                        <span key={i} className="listing-tag">{tag}</span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {l.capacity && (
+                                                <div className="listing-capacity">
+                                                    👥 Up to {l.capacity} people
+                                                </div>
+                                            )}
+
+
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         )}
+
                     </div>
 
-                    <div className="proplux-card col-span-6">
+                    <div className="proplux-card col-span-6 reviews-card">
                         <h3>Recent Reviews</h3>
-                        {Array.isArray(reviews) && reviews.map((r) => (
-                            <div className="review-item mt-lite" key={r.id}>
-                                <div className="review-header">
 
-                                    <img
-                                        src="https://i.pravatar.cc/150"
-                                        className="review-avatar"
-                                    />
+                        <div className="reviews-preview">
+                            {Array.isArray(reviews) && reviews.slice(0, 2).map((r) => (
+                                <div className="review-item mt-lite" key={r.id}>
+                                    <div className="review-header">
 
-                                    <div className="review-meta">
-                                        <span className="reviewer-name">
-                                            {r.user.fullName}
-                                        </span>
+                                        <img
+                                            src={r.user?.profilePhotoUrl || "/vendor_management/default.png"}
+                                            className="review-avatar"
+                                        />
 
-                                        <span className="review-date">
-                                            {new Date(r.createdAt).toLocaleDateString()}
-                                        </span>
+                                        <div className="review-meta">
+                                            <span className="reviewer-name">{r.user.fullName}</span>
+                                            <span className="review-date">
+                                                {new Date(r.createdAt).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric"
+                                                })}
+                                            </span>
+                                            <div className="review-listing-name">
+                                                Reviewed: {r.listingTitle}
+                                            </div>
 
-                                        <div className="stars">
-                                            {"⭐".repeat(r.rating)}
+                                            <div className="stars">
+                                                {"⭐".repeat(r.rating)}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <p className="review-text">{r.comment}</p>
-                            </div>
-                        ))}
+                                    <p className="review-text">{r.comment}</p>
+                                    <button
+                                        className="reply-btn"
+                                        onClick={() => setSelectedReview(r.id)}
+                                    >
+                                        Reply
+                                    </button>
+                                    {r.reply && (
+                                        <div className="vendor-reply">
+                                            <strong>Vendor Reply:</strong>
+                                            <p>{r.reply}</p>
+                                        </div>
+                                    )}
+                                    {r.reply && (
+                                        <button
+                                            className="delete-reply-btn"
+                                            onClick={() => deleteReply(r.id)}
+                                        >
+                                            Delete Reply
+                                        </button>
+                                    )}
+                                    {selectedReview === r.id && (
+                                        <div className="reply-box">
+
+                                            <div className="reply-actions">
+
+                                                <textarea
+                                                    placeholder="Write your reply..."
+                                                    value={replyText}
+                                                    onChange={(e) => setReplyText(e.target.value)}
+                                                />
+
+                                                <div className="reply-buttons">
+
+                                                    <button
+                                                        className="send-reply-btn"
+                                                        onClick={() => sendReply(r.id)}
+                                                    >
+                                                        Send
+                                                    </button>
+
+                                                    <button
+                                                        className="cancel-reply-btn"
+                                                        onClick={() => {
+                                                            setReplyText("")
+                                                            setSelectedReview(null)
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        {/* VIEW ALL REVIEWS BUTTON */}
+
+                        <button
+                            className="view-all-reviews-btn"
+                            onClick={() => setShowAllReviews(true)}
+                        >
+                            View All Reviews
+                        </button>
+
                     </div>
 
                     {/* Availability Calendar (New Section) */}
@@ -588,7 +945,7 @@ export default function Dashboard() {
                                                     `http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`,
                                                     { method: "DELETE" }
                                                 );
-                                                console.log("DELETE STATUS:", res.status);
+
 
                                                 setAvailability({});
                                                 setActiveDay(null);
@@ -600,12 +957,17 @@ export default function Dashboard() {
                                         <button
                                             className="btn-accept"
                                             onClick={async () => {
-
                                                 const monthNumber = month + 1;
 
                                                 const dates = Object.entries(availability).map(([day, slots]) => ({
                                                     date: `${year}-${String(monthNumber).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
-                                                    slots
+                                                    slots: slots.map(s => ({
+                                                        id: s.id,
+                                                        start: s.start,
+                                                        end: s.end,
+                                                        listingId: s.listingId,
+                                                        maxGuests: s.maxGuests
+                                                    }))
                                                 }));
 
                                                 await fetch(
@@ -625,10 +987,31 @@ export default function Dashboard() {
                                                 setIsEditingCal(false);
                                                 setActiveDay(null);
 
+
+                                                const monthString = `${year}-${String(monthNumber).padStart(2, '0')}-01`;
+                                                const res = await fetch(`http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`);
+                                                const data = await res.json();
+
+                                                const mapped: AvailabilityState = {};
+                                                if (Array.isArray(data)) {
+                                                    data.forEach((d: any) => {
+                                                        const day = new Date(d.date).getDate();
+                                                        mapped[day] = (d.slots || []).map((s: any) => ({
+                                                            id: s.id,
+                                                            start: s.start,
+                                                            end: s.end,
+                                                            listingId: s.listingId,
+                                                            maxGuests: s.maxGuests
+                                                        }));
+                                                    });
+                                                }
+                                                setAvailability(mapped);
+
                                             }}
                                         >
                                             Save
                                         </button>
+
                                     </>
                                 )}
                             </div>
@@ -651,38 +1034,73 @@ export default function Dashboard() {
                                         style={{ border: activeDay === day ? '2px solid var(--primary)' : '' }}
                                         onClick={() => toggleDate(day)}
                                     >
-                                        {day}
-                                        {hasSlots && <div style={{ fontSize: '10px', marginTop: '4px', color: 'var(--primary)' }}>{availability[day].length} slot{availability[day].length > 1 ? 's' : ''}</div>}
+                                        <span className="day-number">{day}</span>
+
+                                        {hasSlots && (
+                                            <span className="slot-count">
+                                                {availability[day].length}
+                                            </span>
+                                        )}
                                     </div>
                                 )
                             })}
                         </div>
 
                         {/* Slot Editor Panel */}
-                        {isEditingCal && activeDay !== null && (
+                        {activeDay !== null && (
                             <div className="slot-editor-panel mt-lite" style={{ background: "var(--bg-light)", padding: "20px", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
-                                <h4>Edit Slots for {currentDate.toLocaleString("default", { month: "long" })} {activeDay}</h4>
-                                <div className="add-slot-row" style={{ display: "flex", gap: "10px", marginTop: "15px", alignItems: "flex-end", flexWrap: "wrap" }}>
-                                    <div>
-                                        <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>Start Time</label>
-                                        <select value={startTime} onChange={e => setStartTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
-                                            {times.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
+                                <h4>
+                                    {isEditingCal ? "Edit Slots for" : "Slots for"}{" "}
+                                    {currentDate.toLocaleString("default", { month: "long" })} {activeDay}
+                                </h4>
+                                {isEditingCal && (
+                                    <div className="add-slot-row">
+                                        <div>
+                                            <label>Listing</label>
+                                            <select
+                                                value={selectedListing || ""}
+                                                onChange={(e) => setSelectedListing(Number(e.target.value))}
+                                            >
+                                                <option value="">Select Listing</option>
+                                                {listings.map(l => (
+                                                    <option key={l.id} value={l.id}>
+                                                        {l.title}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>Start Time</label>
+                                            <select value={startTime} onChange={e => setStartTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
+                                                {times.map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>End Time</label>
+                                            <select value={endTime} onChange={e => setEndTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
+                                                {times.map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label>Max Guests</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={maxGuests}
+                                                onChange={(e) => setMaxGuests(Number(e.target.value))}
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn-light-green"
+                                            onClick={() => addSlot(activeDay)}
+                                        >
+                                            Add Slot
+                                        </button>
                                     </div>
-                                    <div>
-                                        <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>End Time</label>
-                                        <select value={endTime} onChange={e => setEndTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
-                                            {times.map(t => <option key={t} value={t}>{t}</option>)}
-                                        </select>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="btn-light-green"
-                                        onClick={() => addSlot(activeDay)}
-                                    >
-                                        Add Slot
-                                    </button>
-                                </div>
+                                )}
 
                                 <div className="slots-list" style={{ marginTop: "20px" }}>
                                     {(availability[activeDay] || []).length === 0 ? (
@@ -694,7 +1112,7 @@ export default function Dashboard() {
                                             .map((slot, idx) => (
 
                                                 <div
-                                                    key={idx}
+                                                    key={slot.id || idx}
                                                     className="slot-card"
                                                     style={{
                                                         display: "flex",
@@ -707,22 +1125,27 @@ export default function Dashboard() {
                                                         marginBottom: "8px"
                                                     }}
                                                 >
+                                                    <div>
+                                                        <div className="slot-info">
+                                                            <div className="slot-time">{slot.start} – {slot.end}</div>
 
-                                                    <span style={{ fontWeight: 500 }}>
-                                                        {slot.start} – {slot.end}
-                                                    </span>
+                                                            <div className="slot-listing">
+                                                                {listings.find(l => l.id === slot.listingId)?.title}
+                                                            </div>
 
-                                                    <button
-                                                        onClick={() => removeSlot(activeDay, idx)}
-                                                        style={{
-                                                            border: "none",
-                                                            background: "transparent",
-                                                            color: "red",
-                                                            cursor: "pointer"
-                                                        }}
-                                                    >
-                                                        🗑
-                                                    </button>
+                                                            <div className="slot-guests">
+                                                                Max Guests: {slot.maxGuests}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {isEditingCal && (
+                                                        <button
+                                                            className="slot-delete"
+                                                            onClick={() => removeSlot(activeDay, idx)}
+                                                        >
+                                                            🗑
+                                                        </button>
+                                                    )}
 
                                                 </div>
 
@@ -746,6 +1169,183 @@ export default function Dashboard() {
 
                 </div>
             </main>
+            {showAllReviews && (
+                <div className="reviews-modal-overlay">
+
+                    <div className="reviews-modal">
+
+                        <div className="reviews-modal-header">
+                            <h3>All Reviews</h3>
+
+                            <button
+                                className="close-modal"
+                                onClick={() => setShowAllReviews(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="reviews-modal-content">
+
+                            {reviews.map((r) => (
+                                <div key={r.id} className="review-item-modal">
+
+                                    <div className="review-header">
+
+                                        <img
+                                            src={r.user?.profilePhotoUrl || "/vendor_management/default.png"}
+                                            className="review-avatar"
+                                        />
+
+                                        <div className="review-meta">
+
+                                            <span className="reviewer-name">
+                                                {r.user.fullName}
+                                            </span>
+
+                                            <span className="review-date">
+                                                {new Date(r.createdAt).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric"
+                                                })}
+                                            </span>
+
+                                            <div className="review-listing-name">
+                                                Reviewed: {r.listingTitle}
+                                            </div>
+
+                                            <div className="stars">
+                                                {"⭐".repeat(r.rating)}
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <p className="review-text-full">{r.comment}</p>
+                                    <button
+                                        className="reply-btn"
+                                        onClick={() => setSelectedReview(r.id)}
+                                    >
+                                        Reply
+                                    </button>
+                                    {r.reply && (
+                                        <div className="vendor-reply">
+                                            <strong>Vendor Reply:</strong>
+                                            <p>{r.reply}</p>
+                                        </div>
+                                    )}
+                                    {r.reply && (
+                                        <button
+                                            className="delete-reply-btn"
+                                            onClick={() => deleteReply(r.id)}
+                                        >
+                                            Delete Reply
+                                        </button>
+                                    )}
+                                    {selectedReview === r.id && (
+                                        <div className="reply-box">
+
+                                            <div className="reply-actions">
+
+                                                <textarea
+                                                    placeholder="Write your reply..."
+                                                    value={replyText}
+                                                    onChange={(e) => setReplyText(e.target.value)}
+                                                />
+
+                                                <div className="reply-buttons">
+
+                                                    <button
+                                                        className="send-reply-btn"
+                                                        onClick={() => sendReply(r.id)}
+                                                    >
+                                                        Send
+                                                    </button>
+
+                                                    <button
+                                                        className="cancel-reply-btn"
+                                                        onClick={() => {
+                                                            setReplyText("")
+                                                            setSelectedReview(null)
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* MEDIA */}
+                                    {r.media?.length > 0 && (
+                                        <div className="review-media">
+
+                                            {r.media.map((m: any) => (
+                                                m.mediaType === "IMAGE" ? (
+                                                    <img
+                                                        key={m.id}
+                                                        src={m.mediaUrl}
+                                                        className="review-media-img"
+                                                    />
+                                                ) : (
+                                                    <video
+                                                        key={m.id}
+                                                        src={m.mediaUrl}
+                                                        controls
+                                                        className="review-media-video"
+                                                    />
+                                                )
+                                            ))}
+
+                                        </div>
+                                    )}
+
+                                </div>
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+            {showUpgradeModal && (
+                <div className="upgrade-modal-overlay">
+
+                    <div className="upgrade-modal">
+
+                        <h2>Unlock Analytics 🚀</h2>
+
+                        <p>
+                            Upgrade to <strong>Pro</strong> to access powerful analytics,
+                            booking trends, performance insights and more.
+                        </p>
+
+                        <div className="upgrade-buttons">
+
+                            <Link href="/pro">
+                                <button className="btn-light-green">
+                                    Upgrade to Pro
+                                </button>
+                            </Link>
+
+                            <button
+                                className="btn-decline"
+                                onClick={() => setShowUpgradeModal(false)}
+                            >
+                                Maybe Later
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
         </div>
     );
 }

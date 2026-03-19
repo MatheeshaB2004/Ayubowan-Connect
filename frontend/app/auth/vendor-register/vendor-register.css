@@ -1,7 +1,7 @@
 /* Vendor Register Page Styles */
 
 .vendor-register-container {
-  min-height: 100vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   font-family:
@@ -553,154 +553,6 @@
   background-color: #5a5a5a;
 }
 
-/* Footer Styles */
-.vendor-footer {
-  background-color: #3d9b8f;
-  color: white;
-  padding: 3rem 2rem 1rem;
-}
-
-.footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  gap: 3rem;
-  margin-bottom: 3rem;
-}
-
-.footer-brand {
-  flex: 1;
-}
-
-.footer-logo {
-  font-size: 1.8rem;
-  font-weight: 600;
-  font-style: italic;
-  margin-bottom: 1rem;
-}
-
-.footer-columns {
-  flex: 3;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 2rem;
-}
-
-.footer-column h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-.footer-column ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.footer-column ul li {
-  margin-bottom: 0.5rem;
-}
-
-.footer-column a {
-  color: white;
-  text-decoration: none;
-  font-size: 0.9rem;
-  opacity: 0.9;
-  transition: opacity 0.3s;
-}
-
-.footer-column a:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-
-.newsletter p {
-  font-size: 0.85rem;
-  line-height: 1.5;
-  margin-bottom: 1rem;
-  opacity: 0.9;
-}
-
-.newsletter-form {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.newsletter-form input {
-  flex: 1;
-  padding: 0.625rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 0.85rem;
-}
-
-.newsletter-form .btn-join {
-  padding: 0.625rem 1.25rem;
-  background-color: #2d7a70;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: background-color 0.3s;
-}
-
-.newsletter-form .btn-join:hover {
-  background-color: #236459;
-}
-
-.footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  padding-top: 1.5rem;
-}
-
-.footer-bottom-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  font-size: 0.85rem;
-}
-
-.footer-links {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.footer-links a {
-  color: white;
-  text-decoration: none;
-  opacity: 0.9;
-  transition: opacity 0.3s;
-}
-
-.footer-links a:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-
-.social-links {
-  display: flex;
-  gap: 1rem;
-}
-
-.social-links a {
-  color: white;
-  text-decoration: none;
-  opacity: 0.9;
-  transition: opacity 0.3s;
-}
-
-.social-links a:hover {
-  opacity: 1;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .vendor-header {
@@ -741,19 +593,6 @@
   .btn-signin-vendor,
   .btn-back-vendor {
     width: 100%;
-  }
-
-  .footer-content {
-    flex-direction: column;
-  }
-
-  .footer-columns {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-bottom-content {
-    flex-direction: column;
-    text-align: center;
   }
 
   .form-step {
