@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
@@ -55,8 +56,14 @@ type Event = {
 
 export default function OrdersPage() {
   const { isSignedIn, user, isLoaded } = useUser();
+  const { role } = useAuth();
   const [orders, setOrders] = useState<Booking[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<{
+    isProUser: boolean;
+    proSubscriptionExpiry: string | null;
+    startDate: string | null;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const hasFetched = useRef(false);
 
@@ -88,14 +95,25 @@ export default function OrdersPage() {
       });
 
       if (eventsResponse.ok) {
-        const eventsData: Event[] = await eventsResponse.json();
+        const eventsData = await eventsResponse.json();
         setEvents(eventsData ?? []);
-      } else {
-        console.error('Failed to fetch events');
-        setEvents([]);
+      }
+
+      // Fetch subscription status
+      const subscriptionResponse = await fetch(`${API_BASE}/payments/status`, {
+        headers: { 'x-user-id': userId },
+      });
+
+      if (subscriptionResponse.ok) {
+        const subscriptionData = await subscriptionResponse.json();
+        setSubscriptionStatus({
+          isProUser: Boolean(subscriptionData?.isProUser),
+          proSubscriptionExpiry: subscriptionData?.proSubscriptionExpiry ?? null,
+          startDate: subscriptionData?.startDate ?? null,
+        });
       }
     } catch (error) {
-      console.error('Network or fetch error:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -129,7 +147,7 @@ export default function OrdersPage() {
   const vendorName = (b: Booking) =>
     b.vendor?.businessName ?? getListing(b)?.vendor?.businessName ?? 'Unknown Vendor';
 
-  const formatDate = (value?: string) => {
+  const formatDate = (value?: string | null) => {
     if (!value) return '-';
     const parsed = new Date(value);
     if (Number.isNaN(parsed.getTime())) return '-';
@@ -402,6 +420,47 @@ export default function OrdersPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Subscriptions Section */}
+        {subscriptionStatus?.isProUser && (
+          <div className="mt-8 bg-white rounded-xl border border-gray-200 shadow-md p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Subscriptions</h2>
+            <div className="mt-4 overflow-x-auto">
+              <table className="table-auto w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Plan Type</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Billing Cycle</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Start Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Expiry Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                      {role === 'vendor' ? 'Vendor Pro' : 'User Pro'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      Monthly
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {formatDate(subscriptionStatus.startDate) || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {formatDate(subscriptionStatus.proSubscriptionExpiry) || '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                        COMPLETED
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
