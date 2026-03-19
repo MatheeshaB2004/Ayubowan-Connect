@@ -43,7 +43,7 @@ export default function ProPage() {
 
     const fetchStatus = async () => {
       try {
-        const response = await fetch(`${API_BASE}/subscriptions/status`, {
+        const response = await fetch(`${API_BASE}/payments/status`, {
           headers: { 'x-user-id': user.id },
         });
         if (!response.ok) return;
