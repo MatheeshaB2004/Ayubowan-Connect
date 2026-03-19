@@ -4,7 +4,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 export class AiServicesService {
   async generateItinerary(preferences: any) {
     const { destination, duration, budget, travelStyle, interests } = preferences;
-    
+
     const prompt = `You are a professional travel planner specializing in Sri Lanka.
 Generate a cohesive travel itinerary for a ${duration}-day trip to ${destination}.
 Budget level: ${budget}
@@ -53,7 +53,7 @@ Ensure the number of days in dailyPlan exactly matches ${duration}.`;
 
       const data = await response.json();
       let aiContent = data.choices[0].message.content.trim();
-      
+
       if (aiContent.startsWith('\`\`\`json')) {
         aiContent = aiContent.substring(7);
       }
@@ -64,7 +64,7 @@ Ensure the number of days in dailyPlan exactly matches ${duration}.`;
         aiContent = aiContent.substring(0, aiContent.length - 3);
       }
       aiContent = aiContent.trim();
-      
+
       const parsedItinerary = JSON.parse(aiContent);
       return parsedItinerary;
     } catch (error) {
