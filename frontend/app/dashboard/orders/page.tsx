@@ -38,14 +38,29 @@ type Booking = {
   } | null;
 };
 
+type Event = {
+  id: number;
+  title: string;
+  startDate: string;
+  time: string;
+  location: string;
+  price?: number;
+  isFree: boolean;
+  vendor?: {
+    businessName?: string;
+  };
+};
+
 export default function OrdersPage() {
   const { isSignedIn, user, isLoaded } = useUser();
   const [orders, setOrders] = useState<Booking[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const hasFetched = useRef(false);
 
   const fetchOrders = useCallback(async (userId: string) => {
     try {
+      // Fetch bookings
       const response = await fetch(`${API_BASE}/bookings`, {
         headers: { 'x-user-id': userId },
       });
@@ -63,6 +78,19 @@ export default function OrdersPage() {
         setOrders([]);
       } else {
         console.error('Server error:', response.status, await response.text());
+      }
+
+      // Fetch events
+      const eventsResponse = await fetch(`${API_BASE}/events/user/registered`, {
+        headers: { 'x-user-id': userId },
+      });
+
+      if (eventsResponse.ok) {
+        const eventsData: Event[] = await eventsResponse.json();
+        setEvents(eventsData ?? []);
+      } else {
+        console.error('Failed to fetch events');
+        setEvents([]);
       }
     } catch (error) {
       console.error('Network or fetch error:', error);
@@ -213,7 +241,7 @@ export default function OrdersPage() {
           </p>
         </div>
 
-        {orders.length === 0 ? (
+        {orders.length === 0 && events.length === 0 ? (
           /* ── Empty state ── */
           <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
@@ -221,13 +249,20 @@ export default function OrdersPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders yet.</h2>
-            <p className="text-gray-500 mb-6">Explore experiences or products to make your first booking or purchase.</p>
-            <Link href="/marketplace">
-              <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                Browse Marketplace
-              </button>
-            </Link>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders or events yet.</h2>
+            <p className="text-gray-500 mb-6">Explore experiences, products, or events to make your first booking, purchase, or registration.</p>
+            <div className="flex gap-3 justify-center">
+              <Link href="/marketplace">
+                <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                  Browse Marketplace
+                </button>
+              </Link>
+              <Link href="/events">
+                <button className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98]">
+                  Browse Events
+                </button>
+              </Link>
+            </div>
           </div>
         ) : (
           <div>
@@ -332,6 +367,49 @@ export default function OrdersPage() {
                           </tr>
                         );
                       })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            
+            {/* Event Orders Section */}
+            {events.filter(event => event.price && event.price > 0).length > 0 && (
+              <div className="mt-8 bg-white rounded-xl border border-gray-200 shadow-md p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Event Orders</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="table-auto w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Event Name</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Time</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Location</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {events.filter(event => event.price && event.price > 0).map((event) => (
+                        <tr key={event.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                            {event.title}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {event.time}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {event.location}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                              Paid
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

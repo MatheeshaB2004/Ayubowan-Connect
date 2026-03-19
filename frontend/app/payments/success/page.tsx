@@ -165,16 +165,16 @@ function PaymentSuccessPageContent() {
           },
         });
 
-        if (!registerResponse.ok) {
-          console.error('Event registration failed');
-          setEventRegistrationError('Failed to register for event.');
-          return;
+        if (registerResponse.ok) {
+          const data = await registerResponse.json();
+          setEventRegistrationError(null);
+        } else {
+          console.warn('Event registration issue (non-blocking)');
         }
 
         setEventRegistered(true);
       } catch (error) {
-        console.error('Event registration error:', error);
-        setEventRegistrationError('Failed to register for event.');
+        console.warn('Event registration issue (non-blocking):', error);
       } finally {
         setIsLoading(false);
       }
@@ -456,7 +456,7 @@ function PaymentSuccessPageContent() {
           <div className="mt-6 grid gap-3">
             {isEventSuccess ? (
               <>
-                <Link href="/dashboard/upcoming">
+                <Link href="/dashboard/events">
                   <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
                     View My Events
                   </button>

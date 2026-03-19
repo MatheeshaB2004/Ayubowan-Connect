@@ -25,23 +25,9 @@ type Booking = {
   } | null;
 };
 
-type Event = {
-  id: number;
-  title: string;
-  startDate: string;
-  time: string;
-  location: string;
-  price?: number;
-  isFree: boolean;
-  vendor?: {
-    businessName?: string;
-  };
-};
-
 export default function UpcomingExperiencesPage() {
   const { isSignedIn, user, isLoaded } = useUser();
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -52,43 +38,28 @@ export default function UpcomingExperiencesPage() {
       return;
     }
 
-    const fetchData = async () => {
+    const fetchBookings = async () => {
       try {
-        // Fetch bookings
-        const bookingsResponse = await fetch(`${API_BASE}/bookings`, {
+        const response = await fetch(`${API_BASE}/bookings`, {
           headers: { 'x-user-id': user.id },
         });
 
-        if (bookingsResponse.ok) {
-          const bookingsData: Booking[] = await bookingsResponse.json();
-          setBookings(bookingsData ?? []);
+        if (response.ok) {
+          const data: Booking[] = await response.json();
+          setBookings(data ?? []);
         } else {
           console.error('Failed to fetch bookings');
           setBookings([]);
         }
-
-        // Fetch events
-        const eventsResponse = await fetch(`${API_BASE}/events/user/registered`, {
-          headers: { 'x-user-id': user.id },
-        });
-
-        if (eventsResponse.ok) {
-          const eventsData: Event[] = await eventsResponse.json();
-          setEvents(eventsData ?? []);
-        } else {
-          console.error('Failed to fetch events');
-          setEvents([]);
-        }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching bookings:', error);
         setBookings([]);
-        setEvents([]);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchData();
+    fetchBookings();
   }, [isLoaded, isSignedIn, user]);
 
   const upcomingBookings = useMemo(
@@ -198,64 +169,6 @@ export default function UpcomingExperiencesPage() {
             </Link>
           </div>
         </div>
-
-        {/* My Events Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">My Events</h2>
-          <p className="text-gray-600 mt-2">
-            Events you have registered for.
-          </p>
-        </div>
-
-        {events.length === 0 ? (
-          <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">You have not registered for any events.</h2>
-            <p className="text-gray-500 mb-6">Explore events to register for upcoming activities.</p>
-            <Link href="/events">
-              <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                Browse Events
-              </button>
-            </Link>
-          </div>
-        ) : (
-          <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-8">
-            <div className="mt-4 overflow-x-auto">
-              <table className="table-auto w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Title</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {events.map((event) => (
-                    <tr key={event.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-4">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{event.title}</div>
-                          <div className="text-xs text-gray-500 mt-1">{event.vendor?.businessName ?? 'Organizer'}</div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-600">
-                        {new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                      </td>
-                      <td className="px-4 py-4 text-sm text-gray-600">{event.time}</td>
-                      <td className="px-4 py-4 text-sm text-gray-600">{event.location}</td>
-                      <td className="px-4 py-4">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusBadge('Registered')}`}>
-                          Registered
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
 
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Upcoming Experiences</h2>

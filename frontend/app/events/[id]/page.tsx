@@ -486,7 +486,7 @@ export default function EventDetailPage() {
                     isRegistered ? (
                       <div>
                         <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-400 font-medium text-sm flex items-center justify-center cursor-not-allowed">
-                          Register Now
+                          Registered
                         </div>
                         <p className="text-sm text-[#0d9488] font-medium text-center mt-3 flex items-center justify-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4" />
@@ -513,7 +513,7 @@ export default function EventDetailPage() {
 
                               if (response.ok) {
                                 setIsRegistered(true);
-                                router.push(`/payments/success?type=event&eventId=${event.id}&free=true`);
+                                router.push('/dashboard/events');
                               } else {
                                 console.error('Registration failed');
                               }
