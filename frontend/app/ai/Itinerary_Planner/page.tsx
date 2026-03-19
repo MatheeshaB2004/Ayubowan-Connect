@@ -106,7 +106,7 @@ export default function ItineraryPlanner() {
 
                 <div className="planner-card">
                     <div className="planner-body">
-                        <form onSubmit={handleSubmit} className="planner-form">
+                        <form onSubmit={handleSubmit} className={`planner-form transition-all duration-300 ${loading ? 'opacity-50 blur-[2px] pointer-events-none' : ''}`}>
                             <div className="planner-form-grid">
                                 {/* Destination */}
                                 <div className="form-group">
