@@ -1,7 +1,7 @@
 const reviews = [
   {
-    name: "Sarah Johnson",
-    role: "Tourist, Australia",
+    name: "Sarah Fernando",
+    role: "Explorer, Sri Lanka",
     rating: 5,
     text: "The cooking class was absolutely incredible! The vendor was warm, knowledgeable and made us feel right at home. Best experience of our trip!",
   },
@@ -12,8 +12,8 @@ const reviews = [
     text: "The platform made it so easy to find and book authentic experiences. All pathways were seamless. Highly recommended!",
   },
   {
-    name: "Diana Williams",
-    role: "Solo Traveller, USA",
+    name: "Ayisha Peiris",
+    role: "Solo Traveller, Sri Lanka",
     rating: 5,
     text: "I found an amazing pottery class through Ayubowan Connect. The vendor was truly passionate about preserving Sri Lankan heritage.",
   },
