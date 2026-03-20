@@ -11,7 +11,19 @@ export class NewsletterService {
     }
 
     try {
-      // 1. Add the user to your Audience List
+      // 1. Check if the user already exists in the Audience
+      const checkResp = await fetch(`https://api.resend.com/audiences/${audienceId}/contacts/${email}`, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+        },
+      });
+
+      if (checkResp.ok) {
+        // If Resend returns 200 OK here, it means the contact already exists!
+        return { message: 'You are already subscribed!' };
+      }
+
+      // 2. Add the user to your Audience List
       const audienceResp = await fetch(`https://api.resend.com/audiences/${audienceId}/contacts`, {
         method: 'POST',
         headers: {
@@ -26,7 +38,7 @@ export class NewsletterService {
 
       const audienceData = await audienceResp.json();
 
-      // Check if Resend returned a duplicate error 
+      // Check if Resend returned a duplicate error or failed for another reason
       if (!audienceResp.ok) {
         const errorMsg = audienceData.message || audienceData.error?.message || '';
         if (errorMsg.toLowerCase().includes('already exists') || audienceData.name === 'validation_error') {
@@ -37,7 +49,7 @@ export class NewsletterService {
         throw new Error(errorMsg || 'Newsletter signup failed');
       }
 
-      // 2. Send the "Thank You / Welcome" Email immediately
+      // 3. Send the "Thank You / Welcome" Email immediately
       const emailResp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -69,7 +81,7 @@ export class NewsletterService {
 
       if (!emailResp.ok) {
         console.error("Failed to send welcome email:", await emailResp.json());
-        
+
       }
 
       return { message: 'Successfully subscribed to the newsletter!' };
