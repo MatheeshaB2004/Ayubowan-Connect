@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './FilterSidebar.css';
 import { ChevronDown } from 'lucide-react';
+import { LocationDropdown } from '../../components/common/LocationDropdown';
 
 interface FilterSidebarProps {
   categories: string[];
@@ -39,57 +40,6 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   maxPrice,
   setMaxPrice,
 }) => {
-  const [isLocationOpen, setIsLocationOpen] = useState(false);
-  const [locationSearch, setLocationSearch] = useState("");
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const locationOptions = ["All Locations", ...locations.filter((loc) => loc && loc !== "All")];
-
-  const filteredLocations = locationOptions.filter((loc) =>
-    loc.toLowerCase().includes(locationSearch.toLowerCase()),
-  );
-
-  // Province-District mapping for Sri Lanka
-  const provinceDistrictMap: { [key: string]: string[] } = {
-    'Western': ['Colombo', 'Gampaha', 'Kalutara'],
-    'Central': ['Kandy', 'Matale', 'Nuwara Eliya'],
-    'Southern': ['Galle', 'Matara', 'Hambantota'],
-    'Northern': ['Jaffna', 'Kilinochchi', 'Mannar', 'Mullaitivu', 'Vavuniya'],
-    'Eastern': ['Ampara', 'Batticaloa', 'Trincomalee'],
-    'North Western': ['Kurunegala', 'Puttalam'],
-    'North Central': ['Anuradhapura', 'Polonnaruwa'],
-    'Uva': ['Badulla', 'Monaragala'],
-    'Sabaragamuwa': ['Ratnapura', 'Kegalle']
-  };
-
-  // Build hierarchical structure for display
-  const locationStructure = Object.entries(provinceDistrictMap).map(([province, districts]) => ({
-    province,
-    districts: districts.filter(district =>
-      locations.includes(district) &&
-      (locationSearch === '' ||
-        district.toLowerCase().includes(locationSearch.toLowerCase()) ||
-        province.toLowerCase().includes(locationSearch.toLowerCase()))
-    )
-  })).filter(item =>
-    // Show province if it has districts, OR if search is empty (show all), OR if province name matches search
-    item.districts.length > 0 ||
-    locationSearch === '' ||
-    item.province.toLowerCase().includes(locationSearch.toLowerCase())
-  );
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsLocationOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   const handleCategoryChange = (category: string) => {
     if (selectedCategories.includes(category)) {
@@ -155,71 +105,13 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
       {/* Location */}
       <div className="filter-group">
         <h3 className="filter-title">Location</h3>
-        <div className="custom-dropdown" ref={dropdownRef}>
-          <div
-            className="dropdown-header"
-            onClick={() => setIsLocationOpen(!isLocationOpen)}
-          >
-            <span>{selectedLocation === 'All' || selectedLocation === 'All Locations' ? 'All Locations' : selectedLocation}</span>
-            <ChevronDown size={16} className={`dropdown-arrow ${isLocationOpen ? 'open' : ''}`} />
-          </div>
-          {isLocationOpen && (
-            <div className="dropdown-list">
-              <div className="location-search-sticky">
-                <input
-                  suppressHydrationWarning
-                  type="text"
-                  autoComplete="off"
-                  placeholder="Search provinces or districts..."
-                  className="custom-input location-search-input"
-                  value={locationSearch}
-                  onChange={(e) => setLocationSearch(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
-
-              {/* All Locations Option */}
-              {(locationSearch === '' || 'all locations'.includes(locationSearch.toLowerCase())) && (
-                <div
-                  className={`dropdown-item ${(selectedLocation === 'All' || selectedLocation === 'All Locations') ? 'selected' : ''}`}
-                  onClick={() => {
-                    setSelectedLocation('All');
-                    setIsLocationOpen(false);
-                    setLocationSearch("");
-                  }}
-                >
-                  All Locations
-                </div>
-              )}
-
-              {/* Provinces with Districts */}
-              {locationStructure.map(({ province, districts }) => (
-                <div key={province}>
-                  <div className="dropdown-section-header">{province} Province</div>
-                  {districts.map((district) => (
-                    <div
-                      key={district}
-                      className={`dropdown-item dropdown-subitem ${selectedLocation === district ? 'selected' : ''}`}
-                      onClick={() => {
-                        setSelectedLocation(district);
-                        setIsLocationOpen(false);
-                        setLocationSearch("");
-                      }}
-                    >
-                      {district}
-                    </div>
-                  ))}
-                </div>
-              ))}
-
-              {locationStructure.length === 0 && locationSearch !== '' && (
-                <div className="dropdown-item dropdown-no-results">
-                  No locations found
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <LocationDropdown 
+          value={selectedLocation}
+          onChange={setSelectedLocation}
+          availableLocations={locations}
+          className="custom-input !py-2.5 !px-3"
+          icon={false}
+        />
       </div>
 
       {/* Category */}

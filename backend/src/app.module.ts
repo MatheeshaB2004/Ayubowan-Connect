@@ -14,6 +14,7 @@ import { EventsModule } from './modules/events/events.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
+import { NewsletterModule } from './modules/newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { VendorManagementModule } from './modules/vendor-management/vendor-manag
     BookingModule,
     OrdersModule,
     VendorManagementModule,
+    NewsletterModule,
   ],
 })
 export class AppModule {}

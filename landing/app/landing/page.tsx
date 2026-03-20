@@ -24,7 +24,7 @@ const heroImages = [
 
 const LandingPage: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [activeProTab, setActiveProTab] = useState<'planning' | 'translation' | 'insights'>('planning');
+  const [activeProTab, setActiveProTab] = useState<'planning' | 'insights'>('planning');
 
   const proFeatures = {
     planning: {
@@ -34,14 +34,6 @@ const LandingPage: React.FC = () => {
       image: '/assets/pro/planner.jpg',
       ctaPrimary: 'Start',
       ctaSecondary: 'Explore'
-    },
-    translation: {
-      tag: 'Connect',
-      title: 'Chat like a local, instantly',
-      desc: 'Real-time translation for chat. Ask questions, bargain respectfully, and make friends without the language barrier.',
-      image: '/assets/photos/B4.webp',
-      ctaPrimary: 'Translate',
-      ctaSecondary: 'Learn how'
     },
     insights: {
       tag: 'Grow',
@@ -165,7 +157,7 @@ const LandingPage: React.FC = () => {
             <div className="text-left">
               <span className="section-tag tag-lochinvar">Pro</span>
               <h3 className="section-title" style={{fontSize: '1.75rem', marginBottom: '1rem'}}>Unlock premium features for deeper discovery</h3>
-              <p className="intro-text" style={{marginBottom: '2rem', textAlign: 'left'}}>Upgrade your journey with AI planning and translation</p>
+              <p className="intro-text" style={{marginBottom: '2rem', textAlign: 'left'}}>Upgrade your journey with AI planning.</p>
               <div className="flex gap-4">
                 <Link href="/pro" className="btn-hero-primary no-underline flex items-center justify-center">
                   Upgrade
@@ -188,7 +180,7 @@ const LandingPage: React.FC = () => {
             <span className="section-tag tag-trendy">Premium</span>
             <h2 className="section-title">Go deeper with Pro</h2>
             <p className="intro-text mb-8">
-              Unlock tools built for serious travelers and vendors. Plan smarter, translate freely, and track what matters.
+              Unlock tools built for serious travelers and vendors. Plan smarter and track what matters.
             </p>
             <div className="flex justify-center items-center gap-4">
               <Link href="/pro" className="btn-hero-primary no-underline flex items-center justify-center">
@@ -207,12 +199,6 @@ const LandingPage: React.FC = () => {
               onClick={() => setActiveProTab('planning')}
             >
               AI planning
-            </button>
-            <button 
-              className={`pro-tab-btn ${activeProTab === 'translation' ? 'active' : ''}`}
-              onClick={() => setActiveProTab('translation')}
-            >
-              Smart translation
             </button>
             <button 
               className={`pro-tab-btn ${activeProTab === 'insights' ? 'active' : ''}`}

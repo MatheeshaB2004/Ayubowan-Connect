@@ -20,6 +20,7 @@ type Review = {
   userName: string;
   rating: number;
   comment: string;
+  reply?: string;
   media: ReviewMedia[];
   createdAt: string;
   updatedAt: string;
@@ -35,16 +36,19 @@ type ReviewSectionProps = {
   listingId: number;
   ratingAverage: number;
   onListingUpdate?: React.Dispatch<React.SetStateAction<any>>;
+  hideTitle?: boolean;
 };
 
 const API_BASE = API_BASE_URL;
 
-export default function ReviewSection({ listingId, ratingAverage, onListingUpdate }: ReviewSectionProps) {
+
+export default function ReviewSection({ listingId, ratingAverage, onListingUpdate, hideTitle  }: ReviewSectionProps) {
   const { user } = useAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const [totalReviews, setTotalReviews] = useState(0);
   const [showAllReviews, setShowAllReviews] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
 
   // Write-new-review state
   const [reviewRating, setReviewRating] = useState(0);
@@ -84,6 +88,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
       const data = (await response.json()) as ReviewsResponse;
       setReviews(data.reviews);
       setTotalReviews(data.total);
+      setAverageRating(data.averageRating);
     } catch (err) {
       if (!isAbortError(err)) {
         console.error('Failed to load reviews:', err);
@@ -330,7 +335,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
     <>
       <section className="review-section">
         <div className="review-header">
-          <h2 className="section-title">Reviews</h2>
+          {!hideTitle && <h2 className="section-title">Reviews</h2>}
           {reviews.length > 3 && (
             <button
               onClick={() => setShowAllReviews(true)}
@@ -349,7 +354,7 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
               <div className="review-summary-score">
                 <Star size={20} fill="#fbbf24" className="review-star" />
                 <span className="review-average">
-                  {ratingAverage > 0 ? ratingAverage.toFixed(1) : '0.0'}
+                  {averageRating > 0 ? averageRating.toFixed(1) : '0.0'}
                 </span>
               </div>
               <span className="review-count">
@@ -404,6 +409,12 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
                     </div>
                   </div>
                   <p className="review-comment">{review.comment}</p>
+                  {review.reply && (
+                    <div className="vendor-reply">
+                      <strong>Vendor Reply:</strong>
+                      <p>{review.reply}</p>
+                    </div>
+                  )}
 
                   {review.media && review.media.length > 0 && (
                     <div className="review-media-grid">
@@ -778,6 +789,12 @@ export default function ReviewSection({ listingId, ratingAverage, onListingUpdat
                       </div>
                     </div>
                     <p className="review-comment">{review.comment}</p>
+                    {review.reply && (
+                      <div className="vendor-reply">
+                        <strong>Vendor Reply:</strong>
+                        <p>{review.reply}</p>
+                      </div>
+                    )}
 
                     {review.media && review.media.length > 0 && (
                       <div className="review-media-grid">

@@ -40,7 +40,7 @@ export default function EngagementInsights({ insights }: EngagementInsightsProps
       }}
       className="insights-container">
 
-      {insights.map((insight, index) => {
+      {(Array.isArray(insights) ? insights : []).map((insight, index) => {
         const Icon = icons[index] ?? TargetIcon;
         return (
           <motion.div

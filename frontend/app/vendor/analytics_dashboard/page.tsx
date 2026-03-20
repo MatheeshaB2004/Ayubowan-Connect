@@ -1,4 +1,5 @@
 import DashboardClient from "./DashboardClient";
+import { auth } from "@clerk/nextjs/server";
 import { getApiUrl } from "@/lib/api";
 
 const emptySummary = {
@@ -42,6 +43,8 @@ export default async function Page({
   searchParams: Promise<{ period?: string }>;
 }) {
 
+  const { userId } = await auth();
+  if (!userId) return null;
   const params = await searchParams;
   const period = params.period || "thisMonth";
   const [
@@ -51,18 +54,19 @@ export default async function Page({
     ratings,
     insights,
     viewsVsBookingsJson,
+    ratingTrend
   ] = await Promise.all([
-    fetchJson(`/dashboard/vendor/summary?userId=2&period=${period}`, emptySummary),
-    fetchJson(`/dashboard/vendor/booking-trend?userId=2&period=${period}`, []),
-    fetchJson(`/dashboard/vendor/top-listings?userId=2&period=${period}`, []),
-    fetchJson(`/dashboard/vendor/ratings?userId=2&period=${period}`, emptyRatings),
-    fetchJson(`/dashboard/vendor/insights?userId=2&period=${period}`, []),
-    fetchJson(`/dashboard/vendor/views-vs-bookings?userId=2&period=${period}`, {
+    fetchJson(`/dashboard/vendor/summary?userId=${userId}&period=${period}`, emptySummary),
+    fetchJson(`/dashboard/vendor/booking-trend?userId=${userId}&period=${period}`, []),
+    fetchJson(`/dashboard/vendor/top-listings?userId=${userId}&period=${period}`, []),
+    fetchJson(`/dashboard/vendor/ratings?userId=${userId}&period=${period}`, emptyRatings),
+    fetchJson(`/dashboard/vendor/insights?userId=${userId}&period=${period}`, []),
+    fetchJson(`/dashboard/vendor/views-vs-bookings?userId=${userId}&period=${period}`, {
       data: [],
       conversionRate: 0,
     }),
+    fetchJson(`/dashboard/vendor/ratings-trend?userId=${userId}&period=${period}`, [])
   ]);
-
   const viewsVsBookings = viewsVsBookingsJson.data;
   const conversionRate = viewsVsBookingsJson.conversionRate;
 
@@ -76,6 +80,7 @@ export default async function Page({
       viewsVsBookings={viewsVsBookings}
       conversionRate={conversionRate}
       period={period}
+      ratingTrend={ratingTrend}
     />
   );
 }

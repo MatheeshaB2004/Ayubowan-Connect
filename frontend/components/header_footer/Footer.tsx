@@ -1,9 +1,42 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { getApiUrl } from "@/lib/api"; // Added getApiUrl
 
 const Footer: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading">("idle");
+  const [message, setMessage] = useState<{type: "success" | "error", text: string} | null>(null);
+
+  const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setStatus("loading");
+    setMessage(null);
+
+    const backendUrl = getApiUrl("/newsletter/subscribe") || "http://localhost:3001/newsletter/subscribe";
+
+    try {
+      const res = await fetch(backendUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to subscribe");
+
+      setMessage({ type: "success", text: data.message || "Thank you for subscribing!" });
+      setEmail("");
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "An error occurred" });
+    } finally {
+      setStatus("idle");
+    }
+  };
+
   return (
     <footer className="site-footer">
       <div className="container mx-auto">
@@ -202,17 +235,32 @@ const Footer: React.FC = () => {
               Get the latest Sri Lankan cultural experiences delivered to your
               inbox.
             </p>
-            <form className="newsletter-form">
+            <form className="newsletter-form" onSubmit={handleSubscribe}>
               <input
                 suppressHydrationWarning
                 type="email"
                 placeholder="Email address here"
                 className="newsletter-input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={status === "loading"}
               />
-              <button suppressHydrationWarning type="submit" className="newsletter-btn">
-                Submit
+              <button 
+                suppressHydrationWarning 
+                type="submit" 
+                className="newsletter-btn"
+                disabled={status === "loading"}
+                style={{ opacity: status === "loading" ? 0.7 : 1 }}
+              >
+                {status === "loading" ? "..." : "Submit"}
               </button>
             </form>
+            {message && (
+              <p style={{ marginTop: '8px', fontSize: '0.875rem', color: message.type === 'success' ? '#10b981' : '#ef4444' }}>
+                {message.text}
+              </p>
+            )}
             <p className="newsletter-disclaimer">
               By subscribing, you agree to our privacy policy and cultural
               sharing guidelines.

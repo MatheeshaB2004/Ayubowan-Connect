@@ -18,6 +18,7 @@ import { useParams, useRouter } from 'next/navigation';
 import './ProductDetail.css';
 import ReviewSection from '../../review';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import toast from 'react-hot-toast';
 
 type ApiListing = {
@@ -60,6 +61,7 @@ const API_BASE = API_BASE_URL;
 const FALLBACK_IMAGE = '/assets/photos/B4.webp';
 
 export default function ProductDetailPage() {
+  const { user } = useAuth();
   const { addToCart } = useCart();
   const params = useParams();
   const router = useRouter();
@@ -69,6 +71,23 @@ export default function ProductDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const viewLogged = React.useRef(false);
+
+
+  useEffect(() => {
+    if (!idStr) return;
+
+    viewLogged.current = true;
+
+    const url = user?.id
+      ? `${API_BASE}/dashboard/vendor/simulate-view/${idStr}?userId=${user.id}`
+      : `${API_BASE}/dashboard/vendor/simulate-view/${idStr}`;
+
+    fetch(url, { method: "POST" });
+
+  }, [idStr, user]);
+
+
   const [quantity, setQuantity] = useState(1);
   const addedRef = useRef(false);
 
@@ -263,9 +282,20 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <p className="product-intro" style={{ marginBottom: '2rem' }}>
-            {listing.longDescription ?? listing.shortDescription}
-          </p>
+          {listing.shortDescription && (
+            <p className="product-intro">
+              {listing.shortDescription}
+            </p>
+          )}
+
+          {listing.longDescription && (
+            <div className="cultural-story">
+              <h3 className="story-title">Cultural Story</h3>
+              <p className="story-text">
+                {listing.longDescription}
+              </p>
+            </div>
+          )}
 
           {/* Pricing */}
           <div className="pricing-card-container">
@@ -346,50 +376,19 @@ export default function ProductDetailPage() {
             </div>
           )}
 
-          {/* Specifications */}
-          <div className="specs-card">
-            <h2 className="specs-title">
-              Product Specifications
-            </h2>
-            <div className="specs-grid">
-              {specs.composition && (
-                <div className="spec-item">
-                  <h4 className="spec-label">
-                    Composition
-                  </h4>
-                  <p className="spec-value">
-                    {specs.composition}
-                  </p>
-                </div>
-              )}
-              {specs.dimensions && (
-                <div className="spec-item">
-                  <h4 className="spec-label">
-                    Dimensions
-                  </h4>
-                  <p className="spec-value">
-                    {specs.dimensions}
-                  </p>
-                </div>
-              )}
-              {specs.care && (
-                <div className="spec-item">
-                  <h4 className="spec-label">
-                    Care Instructions
-                  </h4>
-                  <p className="spec-value">
-                    {specs.care}
-                  </p>
-                </div>
-              )}
+          <div className="product-review-wrapper">
+            <div className="reviews-header">
+              <Star size={20} className="reviews-icon" />
+              <h2 className="reviews-title">Customer Reviews</h2>
             </div>
-          </div>
 
-          <ReviewSection
-            listingId={listing.id}
-            ratingAverage={listing.ratingAverage}
-            onListingUpdate={setListing}
-          />
+            <ReviewSection
+              listingId={listing.id}
+              ratingAverage={listing.ratingAverage}
+              onListingUpdate={setListing}
+              hideTitle
+            />
+          </div>
         </div>
 
         {/* Right Column: Vendor Info */}

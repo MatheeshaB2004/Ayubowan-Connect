@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Search, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { LocationDropdown } from "@/components/common/LocationDropdown";
 
 const heroSlides = [
   {
@@ -31,6 +33,7 @@ export default function HeroSection() {
   const [location, setLocation] = useState("");
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const router = useRouter();
 
   const goTo = useCallback(
     (index: number) => {
@@ -50,6 +53,13 @@ export default function HeroSection() {
     const timer = setInterval(next, 7000); 
     return () => clearInterval(timer);
   }, [next]);
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("search", query.trim());
+    if (location && location !== "all" && location !== "All Locations") params.set("location", location);
+    router.push(`/events?${params.toString()}`);
+  };
 
   return (
     <section className="py-1 bg-[#f9fafb]">
@@ -145,20 +155,17 @@ export default function HeroSection() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          <div className="flex items-center gap-2 flex-1 border border-gray-200 rounded-lg px-3 py-2">
-            <MapPin size={18} className="text-gray-400" />
-            <input
-              type="text"
-              suppressHydrationWarning
-              placeholder="Location"
-              className="w-full outline-none text-sm text-gray-700 bg-transparent"
+          <div className="flex items-center gap-2 flex-1 border border-gray-200 rounded-lg pr-3 pl-1 py-1 z-10 w-full min-w-0">
+            <LocationDropdown
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={setLocation}
+              className="px-2 py-1 !hover:bg-transparent !focus:bg-transparent"
             />
           </div>
           <button
             type="button"
             suppressHydrationWarning
+            onClick={handleSearch}
             className="bg-[#0d9488] hover:bg-[#0b7a6e] text-white font-semibold px-6 py-2 rounded-lg transition-colors text-sm"
           >
             Search

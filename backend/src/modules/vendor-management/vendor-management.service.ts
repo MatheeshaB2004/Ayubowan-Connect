@@ -18,7 +18,7 @@ export class VendorManagementService {
    * Get vendor profile by Clerk userId
    */
   async getVendorProfileByUserId(clerkUserId: string) {
-    const vendor = await this.prisma.vendor.findUnique({
+    const vendor = await this.prisma.vendor.findFirst({
       where: { clerkUserId },
       include: {
         locations: {
@@ -33,6 +33,7 @@ export class VendorManagementService {
     const location = vendor.locations[0] || null;
 
     return {
+      vendorId: vendor.id,
       businessName: vendor.businessName,
       shortTagline: vendor.shortTagline,
       contactPhone: vendor.contactPhone,
@@ -159,9 +160,7 @@ export class VendorManagementService {
     return { message: created ? 'Profile created successfully' : 'Profile updated successfully' };
   }
 
-  /**
-   * Register a vendor via Clerk (creates a Vendor record linked by clerkUserId)
-   */
+  /* Register a vendor via Clerk (creates a Vendor record linked by clerkUserId) */
   async registerVendorFromClerk(body: any) {
     const { userId: clerkUserId, businessName, shortTagline, contactPhone, establishedYear, location } = body;
 
@@ -172,13 +171,10 @@ export class VendorManagementService {
     // Check if vendor already registered
     const existing = await this.prisma.vendor.findUnique({ where: { clerkUserId } });
     if (existing) {
-      // Idempotent: if already registered, just return success
+      
       return { message: 'Already registered', vendorId: existing.id };
     }
 
-    // We need a backend User record — create a placeholder one if needed
-    // (The Vendor table requires a userId FK to users table)
-    // Use clerkUserId as a unique email placeholder so there's no conflict
     let backendUser = await this.prisma.user.findFirst({ where: { email: `clerk_${clerkUserId}@placeholder.local` } });
     if (!backendUser) {
       backendUser = await this.prisma.user.create({
@@ -253,9 +249,7 @@ export class VendorManagementService {
     return locations;
   }
 
-  /**
-   * Get available listing types (fixed enum)
-   */
+  /* Get available listing types */
   getAvailableListingTypes() {
     return [
       { value: 'EXPERIENCE', label: 'Experience' },
@@ -263,12 +257,10 @@ export class VendorManagementService {
     ];
   }
 
-  /**
-   * Create a new listing with validation
-   */
+  /* Create a new listing with validation*/
   async createListing(vendorId: number, dto: CreateListingDto, file?: Express.Multer.File,) {
     console.time("CREATE_LISTING_TOTAL");
-    // Validate category exists and is active
+  
     const category = await this.prisma.listingCategory.findUnique({
       where: { id: dto.categoryId },
     });
@@ -300,7 +292,7 @@ export class VendorManagementService {
       );
     }
 
-    // 1. Create the listing (Wait for this to get the ID)
+    // Create the listing 
     const listing = await this.prisma.listing.create({
       data: {
         vendorId,
@@ -314,14 +306,22 @@ export class VendorManagementService {
         priceMax: dto.priceMax,
         priceNote: dto.priceNote,
         duration: dto.duration,
-        capacity: dto.capacity,
+        capacity: null,
+        stock:
+          dto.listingType === "PRODUCT" && dto.stock
+            ? Number(dto.stock)
+            : null,
+        visibilityStatus: dto.visibilityStatus || "DRAFT",
         availability: dto.availability,
         tags:
           typeof dto.tags === 'string'
             ? JSON.parse(dto.tags)
             : dto.tags || [],
 
-        inclusions: dto.inclusions,
+        inclusions:
+          typeof dto.inclusions === "string"
+            ? JSON.parse(dto.inclusions)
+            : dto.inclusions,
         specs: dto.specs,
         isFeatured: dto.isFeatured || false,
         displayPriority: dto.displayPriority || 0,
@@ -332,7 +332,7 @@ export class VendorManagementService {
       },
     });
 
-    // Index listing in background
+    
     setImmediate(() => {
       this.prisma.listingSearchIndex.create({
         data: {
@@ -347,7 +347,6 @@ export class VendorManagementService {
       }).catch(err => console.error("Background Indexing Error:", err));
     });
 
-    // Handle image upload async
     if (file) {
       const media = await this.prisma.listingMedia.create({
         data: {
@@ -372,14 +371,14 @@ export class VendorManagementService {
           console.error(e);
         }
       });
+
     }
     console.timeEnd("CREATE_LISTING_TOTAL");
+
     return listing;
   }
 
-  /**
-   * Update an existing listing with validation
-   */
+  /* Update an existing listing with validation*/
   async updateListing(
     vendorId: number,
     listingId: number,
@@ -443,6 +442,7 @@ export class VendorManagementService {
         ...(dto.categoryId && { categoryId: dto.categoryId }),
         ...(dto.addressId && { addressId: dto.addressId }),
         ...(dto.listingType && { listingType: dto.listingType }),
+        ...(dto.visibilityStatus && { visibilityStatus: dto.visibilityStatus }),
         ...(dto.title && { title: dto.title }),
         ...(dto.shortDescription && { shortDescription: dto.shortDescription }),
         ...(dto.longDescription !== undefined && {
@@ -452,10 +452,9 @@ export class VendorManagementService {
         ...(dto.priceMax !== undefined && { priceMax: dto.priceMax }),
         ...(dto.priceNote !== undefined && { priceNote: dto.priceNote }),
         ...(dto.duration !== undefined && { duration: dto.duration }),
-        ...(dto.capacity !== undefined && dto.capacity > 0
-          ? { capacity: dto.capacity }
-          : { capacity: null }),
-
+        ...(dto.listingType === "PRODUCT"
+          ? { stock: dto.stock ? Number(dto.stock) : null }
+          : { stock: null }),
         ...(dto.availability !== undefined && {
           availability: dto.availability,
         }),
@@ -468,7 +467,14 @@ export class VendorManagementService {
           }
           : {}),
 
-        ...(dto.inclusions !== undefined && { inclusions: dto.inclusions }),
+        ...(dto.inclusions !== undefined
+          ? {
+            inclusions:
+              typeof dto.inclusions === "string"
+                ? JSON.parse(dto.inclusions)
+                : dto.inclusions,
+          }
+          : {}),
         ...(dto.specs !== undefined && { specs: dto.specs }),
         ...(dto.isFeatured !== undefined && { isFeatured: dto.isFeatured }),
         ...(dto.displayPriority !== undefined && {
@@ -609,8 +615,10 @@ export class VendorManagementService {
         },
       });
     } catch (error) {
-      // Unique constraint prevents duplicates
+    
       return null;
     }
   }
+
+
 }
