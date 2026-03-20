@@ -26,19 +26,18 @@ export class NewsletterService {
 
       const audienceData = await audienceResp.json();
 
-      // Check if Resend returned a duplicate error (they format their errors slightly differently)
+      // Check if Resend returned a duplicate error 
       if (!audienceResp.ok) {
         const errorMsg = audienceData.message || audienceData.error?.message || '';
         if (errorMsg.toLowerCase().includes('already exists') || audienceData.name === 'validation_error') {
           // If they already exist, we RETURN EARLY.
-          // This prevents the email from sending a second time!
+          // This prevents the email from sending a second time
           return { message: 'You are already subscribed!' };
         }
         throw new Error(errorMsg || 'Newsletter signup failed');
       }
 
       // 2. Send the "Thank You / Welcome" Email immediately
-      // Note: If you don't have a custom domain on Resend yet, this will ONLY work if `email` is the same address you used to register for Resend.
       const emailResp = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -46,7 +45,7 @@ export class NewsletterService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'Ayubowan Connect <onboarding@resend.dev>', // Change to your verified domain email later (e.g., hello@ayubowanconnect.com)
+          from: 'Ayubowan Connect <onboarding@resend.dev>', 
           to: [email],
           subject: 'Welcome to Ayubowan Connect! 🌴',
           html: `
@@ -70,7 +69,7 @@ export class NewsletterService {
 
       if (!emailResp.ok) {
         console.error("Failed to send welcome email:", await emailResp.json());
-        // We log the error but still return success to the user since they were added to the list successfully
+        
       }
 
       return { message: 'Successfully subscribed to the newsletter!' };
