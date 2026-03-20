@@ -299,12 +299,12 @@ const LandingPage: React.FC = () => {
 
         <div className="team-grid">
           {[
-            { name: 'Niveka Wijeratne', role: 'Team Lead / Backend Developer', desc: 'Leads the team, manages project structure, and oversees API integration.', image: 'niveka.jpg' },
-            { name: 'Dulesini Jayathilaka', role: 'Backend Developer', desc: 'Develops authentication APIs, manages user data, and handles security logic.', image: 'Dulesini.jpg' },
-            { name: 'Yenulka De Silva', role: 'Backend Developer', desc: 'Creates CRUD APIs, manages database schemas, and handles server-side validation.', image: 'yenulka.jpg' },
-            { name: 'Keerjanapirian Rasakumaran', role: 'Frontend Developer', desc: 'Focuses on styling, responsiveness, and improving overall visual design.', image: 'priyan.jpg' },
-            { name: 'Yeran Srinayaka', role: 'Frontend Developer', desc: 'Handles form pages, user input validation, and connecting UI forms to APIs.', image: 'yeran.jpg' },
-            { name: 'Matheesha Talagune', role: 'Frontend Developer', desc: 'Responsible for building main page layouts and core UI components.', image: 'matheesha.jpg' },
+            { name: 'Niveka Wijeratne', role: 'Team Lead / Co-founder & Developer', desc: 'Architected the core platform and developed the comprehensive Vendor Dashboard and Insights features.', image: 'niveka.jpg' },
+            { name: 'Dulesini Jayathilaka', role: 'Co-founder & Developer', desc: 'Built the secure Authentication pipeline, User Profile management, and Role-based access control.', image: 'Dulesini.jpg' },
+            { name: 'Yenulka De Silva', role: 'Co-founder & Developer', desc: 'Engineered the AI Itinerary Planner and optimized the core database architecture for seamless scaling.', image: 'yenulka.jpg' },
+            { name: 'Keerjanapirian Rasakumaran', role: 'Co-founder & Developer', desc: 'Developed the Cultural Events Calendar and implemented the interactive mapping and discovery features.', image: 'priyan.jpg' },
+            { name: 'Yeran Srinayaka', role: 'Co-founder & Developer', desc: 'Created the dynamic Booking System, Vendor Registration flow, and secure Checkout pipeline.', image: 'yeran.jpg' },
+            { name: 'Matheesha Talagune', role: 'Co-founder & Developer', desc: 'Designed and implemented the main Marketplace, Landing experience, and NLP Chatbot integration.', image: 'matheesha.png' },
           ].map((member, i) => (
             <div key={i} className="team-member">
               <div className="team-img-wrapper">
