@@ -87,16 +87,12 @@
 
 .pro-cards-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  justify-items: center;
   gap: 2rem;
   max-width: 64rem;
   margin-left: auto;
   margin-right: auto;
-}
-
-@media (min-width: 768px) {
-  .pro-cards-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 .pro-card {

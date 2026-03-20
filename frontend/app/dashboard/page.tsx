@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 const cards = [
   {
-    title: 'My Pending Bookings',
+    title: 'Pending Bookings',
     description: 'Track booking requests waiting for vendor approval',
     href: '/dashboard/bookings',
     icon: (
@@ -14,7 +14,27 @@ const cards = [
     ),
   },
   {
-    title: 'My Orders',
+    title: 'Upcoming Experiences',
+    description: 'View your upcoming experience bookings',
+    href: '/dashboard/upcoming',
+    icon: (
+      <svg className="h-8 w-8 text-[#0d9488]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'My Events',
+    description: 'View events you have registered for',
+    href: '/dashboard/events',
+    icon: (
+      <svg className="h-8 w-8 text-[#0d9488]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15zm0 2.25h.008v.008H16.5v-.008z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Orders',
     description: 'View completed purchases',
     href: '/dashboard/orders',
     icon: (
@@ -27,8 +47,8 @@ const cards = [
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 overflow-visible">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
           Customer Dashboard
@@ -38,7 +58,7 @@ export default function DashboardPage() {
         </p>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 min-h-0">
           {cards.map((card) => (
             <div
               key={card.title}
