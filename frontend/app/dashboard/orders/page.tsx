@@ -68,10 +68,14 @@ export default function OrdersPage() {
   const hasFetched = useRef(false);
 
   const fetchOrders = useCallback(async (userId: string) => {
+    if (!userId) return;
+
     try {
       // Fetch bookings
       const response = await fetch(`${API_BASE}/bookings`, {
-        headers: { 'x-user-id': userId },
+        headers: {
+          'x-user-id': userId || '',
+        },
       });
 
       if (response.ok) {
@@ -128,6 +132,7 @@ export default function OrdersPage() {
     if (hasFetched.current) return;
     hasFetched.current = true;
 
+    if (!user.id) return;
     fetchOrders(user.id);
   }, [isLoaded, isSignedIn, user, fetchOrders]);
 
@@ -147,15 +152,18 @@ export default function OrdersPage() {
   const vendorName = (b: Booking) =>
     b.vendor?.businessName ?? getListing(b)?.vendor?.businessName ?? 'Unknown Vendor';
 
-  const formatDate = (value?: string | null) => {
+  const formatDate = (value?: string | Date | null) => {
     if (!value) return '-';
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return '-';
-    return new Intl.DateTimeFormat('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }).format(parsed);
+
+    const date = typeof value === 'string' ? new Date(value) : value;
+
+    if (!date || Number.isNaN(date.getTime())) return '-';
+
+    const year = date.getUTCFullYear();
+    const month = date.toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' });
+    const day = String(date.getUTCDate()).padStart(2, '0');
+
+    return `${day} ${month} ${year}`;
   };
 
   const formatTime = (dateString: string) => {
@@ -201,6 +209,29 @@ export default function OrdersPage() {
   const getDisplayStatus = (order: Booking) => {
     if (isProductOrder(order) && order.status === 'CONFIRMED') return 'COMPLETED';
     return order.status.toUpperCase();
+  };
+
+  const getStartDate = (expiry?: string | null) => {
+    if (!expiry) return null;
+
+    const expiryDate = new Date(expiry);
+    if (Number.isNaN(expiryDate.getTime())) return null;
+
+    const now = new Date();
+    const daysDiff = Math.ceil(
+      (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Detect plan type
+    const isYearly = daysDiff > 60;
+
+    const startDate = new Date(expiryDate);
+
+    startDate.setDate(
+      startDate.getDate() - (isYearly ? 365 : 30)
+    );
+
+    return startDate;
   };
 
   /* ── Loading ── */
@@ -369,7 +400,7 @@ export default function OrdersPage() {
                 </div>
               </div>
             )}
-            
+
             {/* Event Orders Section */}
             {events.filter(event => event.price && event.price > 0).length > 0 && (
               <div className="mt-8 bg-white rounded-xl border border-gray-200 shadow-md p-6">
@@ -447,15 +478,27 @@ export default function OrdersPage() {
                       Monthly
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      {formatDate(subscriptionStatus.startDate) || '-'}
+                      {subscriptionStatus.proSubscriptionExpiry
+                      ? formatDate(getStartDate(subscriptionStatus.proSubscriptionExpiry))
+                      : '-'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {formatDate(subscriptionStatus.proSubscriptionExpiry) || '-'}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                        COMPLETED
-                      </span>
+                      {(() => {
+                        const isExpired = subscriptionStatus?.proSubscriptionExpiry &&
+                          new Date(subscriptionStatus.proSubscriptionExpiry) < new Date();
+
+                        return (
+                          <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${isExpired
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-green-100 text-green-700'
+                            }`}>
+                            {isExpired ? 'EXPIRED' : 'COMPLETED'}
+                          </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 </tbody>
@@ -467,3 +510,5 @@ export default function OrdersPage() {
     </div>
   );
 }
+
+
