@@ -79,7 +79,7 @@ const LandingPage: React.FC = () => {
             Connect with real people, real stories, and real crafts from the island. Experience the warmth of Sri Lankan hospitality through cultural activities and handmade goods that tell generations of tradition.
           </p>
           <div className="hero-actions">
-            <button className="btn-hero-primary">Explore</button>
+            <a href="https://app.ayubowanconnect.com/" className="btn-hero-primary">Explore</a>
             <button className="btn-hero-secondary">Learn</button>
           </div>
         </div>
@@ -420,12 +420,12 @@ const LandingPage: React.FC = () => {
           Step into stories that matter. Support real people. Own something with soul.
         </p>
         <div className="ready-actions">
-          <button className="btn-ready-primary">
+          <a href="https://app.ayubowanconnect.com/" className="btn-ready-primary">
             Explore
-          </button>
-          <button className="btn-ready-secondary">
+          </a>
+          <a href="https://app.ayubowanconnect.com/auth/vendor-register" className="btn-ready-secondary">
             Become a vendor
-          </button>
+          </a>
         </div>
       </section>
     </div>
