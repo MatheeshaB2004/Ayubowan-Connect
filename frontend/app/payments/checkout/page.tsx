@@ -133,19 +133,37 @@ function CheckoutPageContent() {
     return `${start} – ${end}`;
   };
 
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d/]/g, '');
-    const parts = value.split('/');
-    if (parts.length > 2) value = parts[0] + '/' + parts.slice(1).join('');
+  const handleExpiryChange = (value: string) => {
     if (value.length === 2 && !value.includes('/') && expiry.length < 2) value += '/';
     setExpiry(value.slice(0, 5));
   };
+
+  const isValidName = (name: string) => /^[A-Za-z\s]+$/.test(name);
+  const isValidCardNumber = (num: string) => /^\d{16}$/.test(num);
+  const isValidExpiry = (exp: string) => /^(0[1-9]|1[0-2])\/\d{2}$/.test(exp);
+  const isValidCVV = (cvv: string) => /^\d{3}$/.test(cvv);
 
   const handlePay = async () => {
     const newErrors: typeof errors = {};
 
     if (!cardName) newErrors.cardName = 'Cardholder name is required';
-    if (cardNumber.length < 16) newErrors.cardNumber = 'Card number must be 16 digits';
+    if (!isValidName(cardName)) {
+      toast.error('Please enter a valid name (letters only)');
+      return;
+    }
+    if (!isValidCardNumber(cardNumber)) {
+      toast.error('Invalid card number');
+      return;
+    }
+    if (!isValidExpiry(expiry)) {
+      toast.error('Invalid expiry date (MM/YY)');
+      return;
+    }
+    if (!isValidCVV(cvv)) {
+      toast.error('Invalid CVV');
+      return;
+    }
+
     if (!expiry.match(/^\d{2}\/\d{2}$/)) {
       newErrors.expiry = 'Expiry must be in MM/YY format';
     } else {
@@ -161,7 +179,6 @@ function CheckoutPageContent() {
         newErrors.expiry = 'Card has expired';
       }
     }
-    if (cvv.length !== 3) newErrors.cvv = 'CVV must be exactly 3 digits';
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
@@ -275,6 +292,12 @@ function CheckoutPageContent() {
         ? (cycle === 'yearly' ? 25000 : 2500)
         : (cycle === 'yearly' ? 9000 : 900))
       : 0;
+  const displaySubscriptionPrice =
+    isSubscriptionCheckout
+      ? (normalizedPlan === 'vendor'
+        ? (cycle === 'yearly' ? 15000 : 1500)
+        : (cycle === 'yearly' ? 9000 : 900))
+      : 0;
   const payableAmount = isSubscriptionCheckout
     ? subscriptionPrice
     : (isEventCheckout
@@ -282,6 +305,9 @@ function CheckoutPageContent() {
       : (directBooking
         ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
         : totalAmount));
+  const displayPayableAmount = isSubscriptionCheckout
+    ? displaySubscriptionPrice
+    : payableAmount;
   const subscriptionPlanLabel = normalizedPlan === 'vendor' ? 'Vendor Pro' : 'User Pro';
   const subscriptionCycleLabel = cycle === 'yearly' ? 'Yearly' : 'Monthly';
 
@@ -324,7 +350,7 @@ function CheckoutPageContent() {
               </div>
               <div className="py-4 flex items-center justify-between">
                 <span className="text-sm text-gray-600">Price</span>
-                <span className="text-sm font-semibold text-[#21a17a]">LKR {subscriptionPrice.toLocaleString()}</span>
+                <span className="text-sm font-semibold text-[#21a17a]">LKR {displaySubscriptionPrice.toLocaleString()}</span>
               </div>
             </div>
           ) : (
@@ -389,13 +415,12 @@ function CheckoutPageContent() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Cardholder Name</label>
               <input
-                className={`${inputBase} ${errors.cardName ? 'border-red-400' : ''}`}
-                placeholder="Enter your Name"
+                type="text"
                 value={cardName}
-                onChange={(e) => {
-                  setCardName(e.target.value);
-                  if (errors.cardName) setErrors((prev) => ({ ...prev, cardName: undefined }));
-                }}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCardName(e.target.value)}
+                placeholder="Enter your name"
+                required
+                className={`${inputBase} ${errors.cardName ? 'border-red-400' : ''}`}
               />
               {errors.cardName && <p className="mt-1 text-sm text-red-600">{errors.cardName}</p>}
             </div>
@@ -406,7 +431,7 @@ function CheckoutPageContent() {
                 className={`${inputBase} ${errors.cardNumber ? 'border-red-400' : ''}`}
                 placeholder="1234567890123456"
                 value={cardNumber}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16));
                   if (errors.cardNumber) setErrors((prev) => ({ ...prev, cardNumber: undefined }));
                 }}
@@ -421,8 +446,8 @@ function CheckoutPageContent() {
                   className={`${inputBase} ${errors.expiry ? 'border-red-400' : ''}`}
                   placeholder="MM/YY"
                   value={expiry}
-                  onChange={(e) => {
-                    handleExpiryChange(e);
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    handleExpiryChange(e.target.value);
                     if (errors.expiry) setErrors((prev) => ({ ...prev, expiry: undefined }));
                   }}
                 />
@@ -435,7 +460,7 @@ function CheckoutPageContent() {
                   className={`${inputBase} ${errors.cvv ? 'border-red-400' : ''}`}
                   placeholder="123"
                   value={cvv}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setCvv(e.target.value.replace(/\D/g, '').slice(0, 3));
                     if (errors.cvv) setErrors((prev) => ({ ...prev, cvv: undefined }));
                   }}
@@ -450,7 +475,7 @@ function CheckoutPageContent() {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Total Amount</h2>
           <div className="flex justify-between items-center py-4 border-y border-gray-100 mb-4">
             <span className="text-sm text-gray-600">Amount to pay</span>
-            <span className="text-xl font-bold text-[#21a17a]">LKR {payableAmount.toLocaleString()}</span>
+            <span className="text-xl font-bold text-[#21a17a]">LKR {displayPayableAmount.toLocaleString()}</span>
           </div>
           {isEventCheckout && isAlreadyRegistered ? (
             <div className="text-center py-4">
@@ -468,7 +493,7 @@ function CheckoutPageContent() {
               onClick={handlePay}
               className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
             >
-              Pay LKR {payableAmount.toLocaleString()}
+              Pay LKR {displayPayableAmount.toLocaleString()}
             </button>
           )}
         </div>

@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { API_BASE_URL } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const API_BASE = API_BASE_URL;
 
@@ -48,6 +50,8 @@ type Event = {
 
 function PaymentSuccessPageContent() {
   const { user } = useUser();
+  const { role } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const bookingIdParam = searchParams.get('bookingId');
   const bookingId = bookingIdParam ? Number(bookingIdParam) : null;
@@ -324,10 +328,16 @@ function PaymentSuccessPageContent() {
     });
   }, [booking]);
 
+  const getPrice = () => {
+    if (plan === 'VENDOR' || plan === 'vendor') {
+      return cycle === 'yearly' ? 15000 : 1500;
+    } else {
+      return cycle === 'yearly' ? 9000 : 900;
+    }
+  };
+
   const subscriptionPrice = isSubscriptionSuccess
-    ? (plan === 'vendor'
-      ? (cycle === 'yearly' ? 25000 : 2500)
-      : (cycle === 'yearly' ? 9000 : 900))
+    ? getPrice()
     : 0;
   const subscriptionPlanLabel = plan === 'vendor' ? 'Vendor Pro' : 'User Pro';
   const subscriptionCycleLabel = cycle === 'yearly' ? 'Yearly' : 'Monthly';
@@ -481,18 +491,32 @@ function PaymentSuccessPageContent() {
                 </Link>
               </>
             ) : isSubscriptionSuccess ? (
-              <>
-                <Link href="/dashboard/orders">
-                  <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                    View Subscription
+              <div className="flex gap-3 justify-center mt-6">
+                {role === 'vendor' ? (
+                  <button
+                    onClick={() => router.push('/pro')}
+                    className="px-6 py-2 bg-[#0d9488] text-white rounded-lg"
+                  >
+                    Go to Pro
                   </button>
-                </Link>
-                <Link href="/pro">
-                  <button className="w-full rounded-xl border border-[#0d9488] px-5 py-2.5 text-sm font-semibold text-[#0d9488] shadow-sm transition-all hover:bg-[#0d9488]/5 active:scale-[0.98]">
-                    Go to Pro Page
-                  </button>
-                </Link>
-              </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => router.push('/dashboard/orders')}
+                      className="px-6 py-2 bg-[#0d9488] text-white rounded-lg"
+                    >
+                      View Orders
+                    </button>
+
+                    <button
+                      onClick={() => router.push('/pro')}
+                      className="px-6 py-2 border border-gray-300 rounded-lg"
+                    >
+                      Go to Pro
+                    </button>
+                  </>
+                )}
+              </div>
             ) : (
               <>
                 <Link href="/dashboard/orders">

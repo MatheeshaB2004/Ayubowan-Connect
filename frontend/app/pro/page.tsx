@@ -306,7 +306,7 @@ export default function ProPage() {
               )}
               <h3 className="text-lg font-semibold mb-2">Monthly Plan</h3>
               <div className="text-2xl font-bold mb-2">
-                LKR {isVendor ? '2500' : '900'}
+                LKR {isVendor ? '1500' : '900'}
                 <span className="text-sm font-normal text-gray-600">/month</span>
               </div>
               <button
@@ -351,11 +351,11 @@ export default function ProPage() {
               )}
               <h3 className="text-lg font-semibold mb-2">Yearly Plan</h3>
               <div className="text-2xl font-bold mb-2">
-                LKR {isVendor ? '25000' : '9000'}
+                LKR {isVendor ? '15000' : '9000'}
                 <span className="text-sm font-normal text-gray-600">/year</span>
               </div>
               <div className="text-sm text-green-600 font-medium mb-4">
-                Save {isVendor ? '5000' : '1800'} LKR yearly
+                Save {isVendor ? '3000' : '1800'} LKR yearly
               </div>
               <button
                 className={`w-full rounded-xl px-6 py-3 text-sm font-semibold transition-all ${
