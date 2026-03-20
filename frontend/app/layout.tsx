@@ -10,8 +10,6 @@ import ScrollToTopButton from "@/components/common/ScrollToTopButton";
 import ChatWidget from "@/components/common/ChatWidget";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
-import "../styles/Header.css";
-import "../styles/Footer.css";
 import "../styles/design-tokens.css";
 
 const nunito = Nunito({

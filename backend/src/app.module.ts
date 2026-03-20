@@ -11,9 +11,11 @@ import { FilesController } from './files.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { EventsModule } from './modules/events/events.module';
+import { UserModule } from './modules/user/user.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
+import { AiServicesModule } from './modules/ai-services/ai-services.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { NewsletterModule } from './modules/newsletter/newsletter.module';
 
@@ -30,9 +32,11 @@ import { NewsletterModule } from './modules/newsletter/newsletter.module';
     DashboardModule,
     EventsModule,
     ChatbotModule,
+    UserModule,
     BookingModule,
     OrdersModule,
     VendorManagementModule,
+    AiServicesModule,
     PaymentsModule,
     NewsletterModule,
   ],

@@ -100,16 +100,18 @@ export default function UserRegisterPage() {
       const completeSignUp = await signUp.attemptEmailAddressVerification({
         code: verificationCode,
       });
+      console.log("VERIFICATION STATUS:", completeSignUp.status);
 
       if (completeSignUp.status === "complete") {
+        console.log("CALLING BACKEND REGISTER...");
         const sessionId = completeSignUp.createdSessionId;
         const userId = completeSignUp.createdUserId;
         const fullName = `${firstName} ${lastName}`.trim();
 
         const payload = {
-          userId: userId,
           fullName: fullName,
           email: email,
+          password,
           userType,
           nationality,
           dateOfBirth: dateOfBirth ? new Date(dateOfBirth).toISOString() : null,
@@ -117,16 +119,17 @@ export default function UserRegisterPage() {
         };
 
         const API_BASE = API_BASE_URL;
-        const response = await fetch(`${API_BASE}/user/register`, {
+        const response = await fetch(`${API_BASE}/auth/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+        console.log("RESPONSE STATUS:", response.status);
 
         if (!response.ok) {
-          console.warn("Backend user registration endpoint might not be ready yet.");
-        } else {
-          console.log("User registration successful");
+          const err = await response.text();
+          console.error("REGISTER ERROR:", err);
+          throw new Error("Registration failed");
         }
 
         // Set session active to log the user in

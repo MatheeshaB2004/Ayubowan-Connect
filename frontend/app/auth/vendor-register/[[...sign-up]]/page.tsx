@@ -181,10 +181,12 @@ export default function VendorRegisterPage() {
         // After successful verification, register vendor in backend
         const payload = {
           userId: userId,
+          email: user?.primaryEmailAddress?.emailAddress,
+          fullName: user?.fullName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim(),
           ...vendorProfileSeed,
         };
 
-        const API_BASE = API_BASE_URL;
+        const API_BASE = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : "http://localhost:3001";
         const response = await fetch(`${API_BASE}/vendor/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -193,6 +195,7 @@ export default function VendorRegisterPage() {
 
         if (!response.ok) {
           console.warn("Backend vendor registration endpoint failed or might not be ready yet.");
+          throw new Error("Failed to register vendor profile on the server.");
         } else {
           console.log("Vendor registration successful");
         }

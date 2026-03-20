@@ -26,11 +26,15 @@ export class NewsletterService {
 
       const audienceData = await audienceResp.json();
 
+      // Check if Resend returned a duplicate error (they format their errors slightly differently)
       if (!audienceResp.ok) {
-        if (audienceData.message?.includes('already exists')) {
+        const errorMsg = audienceData.message || audienceData.error?.message || '';
+        if (errorMsg.toLowerCase().includes('already exists') || audienceData.name === 'validation_error') {
+          // If they already exist, we RETURN EARLY.
+          // This prevents the email from sending a second time!
           return { message: 'You are already subscribed!' };
         }
-        throw new Error(audienceData.message || 'Newsletter signup failed');
+        throw new Error(errorMsg || 'Newsletter signup failed');
       }
 
       // 2. Send the "Thank You / Welcome" Email immediately

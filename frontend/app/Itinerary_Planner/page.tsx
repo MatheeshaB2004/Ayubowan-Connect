@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Loader2, Calendar, DollarSign, MapPin, Heart } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { API_BASE_URL } from "@/lib/api";
 import "./planner.css";
 
 interface Itinerary {
@@ -18,8 +17,6 @@ interface Itinerary {
     }>;
     estimatedTotalCost: string;
 }
-
-const API_BASE = API_BASE_URL;
 
 export default function ItineraryPlanner() {
     const { isSignedIn } = useUser();
@@ -70,7 +67,7 @@ export default function ItineraryPlanner() {
 
         try {
             const res = await fetch(
-                `${API_BASE}/ai-services/generate-itinerary`,
+                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/ai-services/generate-itinerary`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -109,7 +106,7 @@ export default function ItineraryPlanner() {
 
                 <div className="planner-card">
                     <div className="planner-body">
-                        <form onSubmit={handleSubmit} className="planner-form">
+                        <form onSubmit={handleSubmit} className={`planner-form transition-all duration-300 ${loading ? 'opacity-50 blur-[2px] pointer-events-none' : ''}`}>
                             <div className="planner-form-grid">
                                 {/* Destination */}
                                 <div className="form-group">
@@ -141,11 +138,11 @@ export default function ItineraryPlanner() {
                                         max="14"
                                         required
                                         className="form-input"
-                                        value={formData.duration}
+                                        value={formData.duration || ""}
                                         onChange={(e) =>
                                             setFormData({
                                                 ...formData,
-                                                duration: parseInt(e.target.value),
+                                                duration: parseInt(e.target.value) || 0,
                                             })
                                         }
                                     />

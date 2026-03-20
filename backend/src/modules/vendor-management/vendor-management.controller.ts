@@ -20,11 +20,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { VendorManagementService } from './vendor-management.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
+import { RegisterVendorDto } from './dto/register-vendor.dto';
 
 @Controller('vendor')
 export class VendorManagementController {
   constructor(private readonly vendorService: VendorManagementService) { }
-
 
    /*Get vendor profile by Clerk userId */
   @Get('profile')
@@ -46,8 +46,6 @@ export class VendorManagementController {
   async registerVendor(@Body() body: any) {
     return this.vendorService.registerVendorFromClerk(body);
   }
-
-
   @Get('categories')
   async getCategories() {
     return this.vendorService.getAvailableCategories();

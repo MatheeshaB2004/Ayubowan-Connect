@@ -692,7 +692,7 @@ export default function Dashboard() {
                                             </div>
                                         </div>
                                         <div className="request-actions">
-                                            <div className="request-price">${b.price}</div>
+                                            <div className="request-price">LKR {b.price}</div>
                                             <div className="action-buttons">
                                                 {b.status === "incoming" && (
                                                     <>

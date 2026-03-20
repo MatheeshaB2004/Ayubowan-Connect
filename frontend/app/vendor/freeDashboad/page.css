@@ -406,6 +406,17 @@ html {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 400px;   
+  overflow-y: auto;
+  padding-right: 6px;
+}
+.proplux-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.proplux-list::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
 }
 
 .proplux-request-item {
