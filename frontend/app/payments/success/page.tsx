@@ -116,6 +116,7 @@ function PaymentSuccessPageContent() {
           },
           body: JSON.stringify({
             planType: plan?.toUpperCase(),
+            cycle: cycle,
           }),
         });
 
@@ -144,7 +145,7 @@ function PaymentSuccessPageContent() {
     const fetchEventAndRegister = async () => {
       setIsLoading(true);
       setEventRegistrationError(null);
-      
+
       try {
         // First fetch the event details
         const eventResponse = await fetch(`${API_BASE}/events/${eventId}`);
@@ -358,8 +359,8 @@ function PaymentSuccessPageContent() {
             {isEventSuccess
               ? 'You have successfully registered for this event.'
               : bookingId
-              ? 'Your booking request has been sent to the vendor. You can track its status in Pending Bookings.'
-              : 'Your order has been completed.'}
+                ? 'Your booking request has been sent to the vendor. You can track its status in Pending Bookings.'
+                : 'Your order has been completed.'}
           </p>
 
           {isLoading ? (
@@ -480,11 +481,18 @@ function PaymentSuccessPageContent() {
                 </Link>
               </>
             ) : isSubscriptionSuccess ? (
-              <Link href="/marketplace">
-                <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                  Back to Marketplace
-                </button>
-              </Link>
+              <>
+                <Link href="/dashboard/orders">
+                  <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                    View Subscription
+                  </button>
+                </Link>
+                <Link href="/pro">
+                  <button className="w-full rounded-xl border border-[#0d9488] px-5 py-2.5 text-sm font-semibold text-[#0d9488] shadow-sm transition-all hover:bg-[#0d9488]/5 active:scale-[0.98]">
+                    Go to Pro Page
+                  </button>
+                </Link>
+              </>
             ) : (
               <>
                 <Link href="/dashboard/orders">
@@ -513,3 +521,4 @@ export default function Page() {
     </Suspense>
   );
 }
+

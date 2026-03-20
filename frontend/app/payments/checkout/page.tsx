@@ -289,13 +289,25 @@ function CheckoutPageContent() {
       <div className="max-w-3xl mx-auto">
         {!directBookingId && (
           <Link
-            href={isEventCheckout ? "/events" : "/marketplace"}
+            href={
+              isSubscriptionCheckout
+                ? "/pro"
+                : isEventCheckout
+                  ? "/events"
+                  : "/marketplace"
+            }
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-green-700 mb-6"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
-            Back to {isEventCheckout ? "Events" : "Marketplace"}
+            Back to {
+              isSubscriptionCheckout
+                ? "Pro Page"
+                : isEventCheckout
+                  ? "Events"
+                  : "Marketplace"
+            }
           </Link>
         )}
 
@@ -471,3 +483,4 @@ export default function Page() {
     </Suspense>
   );
 }
+
