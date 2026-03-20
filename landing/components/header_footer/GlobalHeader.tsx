@@ -5,11 +5,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
-  { href: '/landing#experiences', label: 'Experiences' },
-  { href: '/landing#events', label: 'Events' },
-  { href: '/landing#marketplace', label: 'Marketplace' },
-  { href: '/landing#pro', label: 'Pro' },
-  { href: '/landing#team', label: 'Team' },
+  { id: 'experiences', label: 'Experiences' },
+  { id: 'events',      label: 'Events' },
+  { id: 'marketplace', label: 'Marketplace' },
+  { id: 'team',        label: 'Team' },
 ];
 
 const appHomeHref = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'https://app.ayubowanconnect.com/';
@@ -19,66 +18,59 @@ const GlobalHeader: React.FC = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   const pathname = usePathname();
-  const isHome = pathname === '/' || pathname === '/landing';
+  const isLanding = pathname === '/' || pathname === '/landing';
 
   useEffect(() => {
     const controlNavbar = () => {
       if (typeof window !== 'undefined') {
         const currentScrollY = window.scrollY;
 
-        // Hide if scrolling down and past 100px, show if scrolling up
         if (currentScrollY > lastScrollY && currentScrollY > 100) {
           setIsVisible(false);
         } else {
           setIsVisible(true);
         }
 
-        // Add solid background if scrolled away from top
-        if (currentScrollY > 10) {
-          setIsScrolled(true);
-        } else {
-          setIsScrolled(false);
-        }
-
+        setIsScrolled(currentScrollY > 10);
         setLastScrollY(currentScrollY);
       }
     };
 
     window.addEventListener('scroll', controlNavbar);
-    return () => {
-      window.removeEventListener('scroll', controlNavbar);
-    };
+    return () => window.removeEventListener('scroll', controlNavbar);
   }, [lastScrollY]);
 
-  // Determine visual state
-  const isTransparent = isHome && !isScrolled && !isMobileMenuOpen;
-  
-  // Text color class for child navbars
-  // If transparent (Home + Top), text is white. 
-  // If solid (Scrolled or not Home), text is dark gray/lochinvar on hover
+  const isTransparent = isLanding && !isScrolled && !isMobileMenuOpen;
   const textColorClass = isTransparent ? 'text-white' : 'text-gray-700';
-
-  // Base class + conditional class
   const headerClass = `global-header ${isVisible ? '' : 'hidden-header'} ${isTransparent ? 'header-transparent' : 'header-solid'}`;
+
+  // Smooth-scroll to section if on landing; navigate otherwise
+  const handleNavClick = (e: React.MouseEvent, id: string) => {
+    if (isLanding) {
+      e.preventDefault();
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <header className={headerClass}>
       <div className="container header-container relative">
         <div className="header-content">
-          
+
           {/* Logo */}
           <div className="relative z-10 h-full flex items-center">
             <Link href="/" className="logo-container">
-              {/* Image Logo: Visible when transparent (Top of Home) */}
-              <img 
-                src="/logo.png" 
-                alt="Ayubowan Connect" 
-                className={`logo-image ${isTransparent ? '' : 'hidden-logo'}`} 
+              <img
+                src="/logo.png"
+                alt="Ayubowan Connect"
+                className={`logo-image ${isTransparent ? '' : 'hidden-logo'}`}
               />
-              
-              {/* Text Logo: Always visible but changes layout */}
               <div className={`brand-text-container ${isTransparent ? 'layout-stacked' : 'layout-inline'}`}>
                 <span className="brand-ayubowan">Ayubowan</span>
                 <span className="brand-connect">Connect</span>
@@ -91,9 +83,14 @@ const GlobalHeader: React.FC = () => {
             <div className="nav-guest-container">
               <div className="nav-links-center">
                 {navItems.map((item) => (
-                  <Link key={item.href} href={item.href} className={`nav-link ${textColorClass}`}>
+                  <a
+                    key={item.id}
+                    href={`/landing#${item.id}`}
+                    className={`nav-link ${textColorClass}`}
+                    onClick={(e) => handleNavClick(e, item.id)}
+                  >
                     {item.label}
-                  </Link>
+                  </a>
                 ))}
               </div>
 
@@ -110,6 +107,7 @@ const GlobalHeader: React.FC = () => {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="mobile-toggle"
+              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {isMobileMenuOpen ? (
@@ -128,14 +126,14 @@ const GlobalHeader: React.FC = () => {
         <div className="mobile-menu absolute top-full left-0 w-full z-50">
           <span className="section-tag">Menu</span>
           {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
+            <a
+              key={item.id}
+              href={`/landing#${item.id}`}
               className="mobile-link"
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={(e) => handleNavClick(e, item.id)}
             >
               {item.label}
-            </Link>
+            </a>
           ))}
           <div className="mobile-menu-divider">
             <Link href={appHomeHref} className="app-home-button mobile-app-home-button">
