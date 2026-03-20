@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { API_BASE_URL } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 const API_BASE = API_BASE_URL;
 
@@ -33,18 +35,37 @@ type ProductSummaryItem = {
   totalPrice: number;
 };
 
+type Event = {
+  id: number;
+  title: string;
+  startDate: string;
+  time: string;
+  location: string;
+  price?: number;
+  isFree: boolean;
+  vendor?: {
+    businessName?: string;
+  };
+};
+
 function PaymentSuccessPageContent() {
   const { user } = useUser();
+  const { role } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const bookingIdParam = searchParams.get('bookingId');
   const bookingId = bookingIdParam ? Number(bookingIdParam) : null;
+  const eventIdParam = searchParams.get('eventId');
+  const eventId = eventIdParam ? Number(eventIdParam) : null;
   const type = searchParams.get('type');
   const plan = searchParams.get('plan');
   const cycle = searchParams.get('cycle');
+  const isFreeEvent = searchParams.get('free') === 'true';
   const isSubscriptionSuccess =
     type === 'subscription' &&
-    (plan === 'user' || plan === 'vendor') &&
+    (plan === 'user' || plan === 'vendor' || plan === 'USER' || plan === 'VENDOR') &&
     (cycle === 'monthly' || cycle === 'yearly');
+  const isEventSuccess = type === 'event' && eventId && !Number.isNaN(eventId);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [subscriptionActivated, setSubscriptionActivated] = useState(false);
@@ -52,6 +73,10 @@ function PaymentSuccessPageContent() {
   const [orderCompletionMessage, setOrderCompletionMessage] = useState<string | null>(null);
   const [orderCompletionDone, setOrderCompletionDone] = useState(false);
   const [productSummaryItems, setProductSummaryItems] = useState<ProductSummaryItem[]>([]);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [eventRegistered, setEventRegistered] = useState(false);
+  const [eventRegistrationError, setEventRegistrationError] = useState<string | null>(null);
+  const [hasRegistered, setHasRegistered] = useState(false);
   const hasCompletedOrder = useRef(false);
 
   useEffect(() => {
@@ -79,7 +104,7 @@ function PaymentSuccessPageContent() {
     };
 
     fetchBooking();
-  }, [user, bookingId, isSubscriptionSuccess]);
+  }, [user, bookingId, isSubscriptionSuccess, isEventSuccess]);
 
   useEffect(() => {
     if (!isSubscriptionSuccess || !user || subscriptionActivated) return;
@@ -87,15 +112,15 @@ function PaymentSuccessPageContent() {
     const activateSubscription = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/subscriptions/activate`, {
+        const response = await fetch(`${API_BASE}/payments/upgrade`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-user-id': user.id,
           },
           body: JSON.stringify({
-            plan,
-            cycle,
+            planType: plan?.toUpperCase(),
+            cycle: cycle,
           }),
         });
 
@@ -116,6 +141,70 @@ function PaymentSuccessPageContent() {
 
     activateSubscription();
   }, [isSubscriptionSuccess, user, subscriptionActivated, plan, cycle]);
+
+  useEffect(() => {
+    if (!isEventSuccess || !user || eventRegistered || hasRegistered || isFreeEvent) return;
+    setHasRegistered(true);
+
+    const fetchEventAndRegister = async () => {
+      setIsLoading(true);
+      setEventRegistrationError(null);
+
+      try {
+        // First fetch the event details
+        const eventResponse = await fetch(`${API_BASE}/events/${eventId}`);
+        if (!eventResponse.ok) {
+          setEventRegistrationError('Failed to load event details.');
+          return;
+        }
+        const eventData = await eventResponse.json();
+        setEvent(eventData);
+
+        // Then register for the event
+        const registerResponse = await fetch(`${API_BASE}/events/${eventId}/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id,
+          },
+        });
+
+        if (registerResponse.ok) {
+          const data = await registerResponse.json();
+          setEventRegistrationError(null);
+        } else {
+          console.warn('Event registration issue (non-blocking)');
+        }
+
+        setEventRegistered(true);
+      } catch (error) {
+        console.warn('Event registration issue (non-blocking):', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEventAndRegister();
+  }, [isEventSuccess, user, eventId, eventRegistered, isFreeEvent]);
+
+  // For free events, just fetch event details and mark as registered
+  useEffect(() => {
+    if (!isEventSuccess || !user || !isFreeEvent || event) return;
+
+    const fetchEventDetails = async () => {
+      try {
+        const eventResponse = await fetch(`${API_BASE}/events/${eventId}`);
+        if (!eventResponse.ok) return;
+        const eventData = await eventResponse.json();
+        setEvent(eventData);
+        setEventRegistered(true); // Free events are already registered
+      } catch (error) {
+        console.error('Failed loading event details:', error);
+      }
+    };
+
+    fetchEventDetails();
+  }, [isEventSuccess, user, eventId, isFreeEvent, event]);
 
   useEffect(() => {
     if (isSubscriptionSuccess || bookingId || !user || orderCompletionDone) return;
@@ -239,10 +328,16 @@ function PaymentSuccessPageContent() {
     });
   }, [booking]);
 
+  const getPrice = () => {
+    if (plan === 'VENDOR' || plan === 'vendor') {
+      return cycle === 'yearly' ? 15000 : 1500;
+    } else {
+      return cycle === 'yearly' ? 9000 : 900;
+    }
+  };
+
   const subscriptionPrice = isSubscriptionSuccess
-    ? (plan === 'vendor'
-      ? (cycle === 'yearly' ? 25000 : 2500)
-      : (cycle === 'yearly' ? 9000 : 900))
+    ? getPrice()
     : 0;
   const subscriptionPlanLabel = plan === 'vendor' ? 'Vendor Pro' : 'User Pro';
   const subscriptionCycleLabel = cycle === 'yearly' ? 'Yearly' : 'Monthly';
@@ -271,9 +366,11 @@ function PaymentSuccessPageContent() {
             Payment Successful
           </h1>
           <p className="text-sm text-gray-600 text-center mb-6">
-            {bookingId
-              ? 'Your booking request has been sent to the vendor. You can track its status in Pending Bookings.'
-              : 'Your order has been completed.'}
+            {isEventSuccess
+              ? 'You have successfully registered for this event.'
+              : bookingId
+                ? 'Your booking request has been sent to the vendor. You can track its status in Pending Bookings.'
+                : 'Your order has been completed.'}
           </p>
 
           {isLoading ? (
@@ -283,7 +380,7 @@ function PaymentSuccessPageContent() {
           ) : (
             <div className="bg-white rounded-xl border border-gray-100 shadow-md p-6 mt-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4">
-                {booking ? 'Booking Details' : 'Order Summary'}
+                {isEventSuccess ? 'Event Details' : booking ? 'Booking Details' : 'Order Summary'}
               </h2>
               {isSubscriptionSuccess ? (
                 <div className="space-y-0">
@@ -297,6 +394,27 @@ function PaymentSuccessPageContent() {
                   <div className="py-4 flex items-center justify-between">
                     <span className="text-sm text-gray-600">Total Paid</span>
                     <span className="text-xl font-bold text-[#21a17a]">LKR {subscriptionPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+              ) : isEventSuccess ? (
+                <div className="space-y-0">
+                  <div className="py-4 border-b border-gray-100">
+                    <p className="text-sm font-semibold text-gray-900">{event?.title ?? 'Event'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Organizer: {event?.vendor?.businessName ?? 'TBA'}</p>
+                  </div>
+                  <div className="py-4 border-b border-gray-100">
+                    <p className="text-sm text-gray-600">Date: {event ? new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Time: {event?.time ?? 'TBA'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Location: {event?.location ?? 'TBA'}</p>
+                  </div>
+                  <div className="py-4 border-b border-gray-100">
+                    <p className="text-sm text-gray-600">Status: {eventRegistrationError ?? (eventRegistered ? 'Successfully registered' : 'Registration pending')}</p>
+                  </div>
+                  <div className="py-4 flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Total Paid</span>
+                    <span className="text-xl font-bold text-[#21a17a]">
+                      {event?.isFree ? 'Free' : `LKR ${event?.price?.toLocaleString() ?? '0'}`}
+                    </span>
                   </div>
                 </div>
               ) : booking ? (
@@ -346,7 +464,20 @@ function PaymentSuccessPageContent() {
           )}
 
           <div className="mt-6 grid gap-3">
-            {bookingId ? (
+            {isEventSuccess ? (
+              <>
+                <Link href="/dashboard/events">
+                  <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                    View My Events
+                  </button>
+                </Link>
+                <Link href="/events">
+                  <button className="w-full rounded-xl border border-[#0d9488] px-5 py-2.5 text-sm font-semibold text-[#0d9488] shadow-sm transition-all hover:bg-[#0d9488]/5 active:scale-[0.98]">
+                    Back to Events
+                  </button>
+                </Link>
+              </>
+            ) : bookingId ? (
               <>
                 <Link href="/dashboard/bookings">
                   <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
@@ -360,11 +491,32 @@ function PaymentSuccessPageContent() {
                 </Link>
               </>
             ) : isSubscriptionSuccess ? (
-              <Link href="/marketplace">
-                <button className="w-full rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                  Back to Marketplace
-                </button>
-              </Link>
+              <div className="flex gap-3 justify-center mt-6">
+                {role === 'vendor' ? (
+                  <button
+                    onClick={() => router.push('/pro')}
+                    className="px-6 py-2 bg-[#0d9488] text-white rounded-lg"
+                  >
+                    Go to Pro
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => router.push('/dashboard/orders')}
+                      className="px-6 py-2 bg-[#0d9488] text-white rounded-lg"
+                    >
+                      View Orders
+                    </button>
+
+                    <button
+                      onClick={() => router.push('/pro')}
+                      className="px-6 py-2 border border-gray-300 rounded-lg"
+                    >
+                      Go to Pro
+                    </button>
+                  </>
+                )}
+              </div>
             ) : (
               <>
                 <Link href="/dashboard/orders">
@@ -393,3 +545,4 @@ export default function Page() {
     </Suspense>
   );
 }
+
