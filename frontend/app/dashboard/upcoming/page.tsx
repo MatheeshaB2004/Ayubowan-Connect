@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
@@ -28,6 +28,7 @@ type Booking = {
 
 export default function UpcomingExperiencesPage() {
   const { isSignedIn, user, isLoaded } = useUser();
+  const { userId } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,17 +41,24 @@ export default function UpcomingExperiencesPage() {
     }
 
     const fetchBookings = async () => {
+      if (!userId) return;
+      
       try {
         const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': user.id },
+          headers: {
+            'x-user-id': userId || '',
+          },
         });
 
         if (response.ok) {
           const data: Booking[] = await response.json();
+          console.log('Bookings response:', data);
           setBookings(data ?? []);
         } else {
-          console.error('Failed to fetch bookings');
+          const errorText = await response.text();
+          console.error('Bookings API error:', errorText);
           setBookings([]);
+          return;
         }
       } catch (error) {
         console.error('Error fetching bookings:', error);
@@ -60,16 +68,18 @@ export default function UpcomingExperiencesPage() {
       }
     };
 
+    if (!userId) return;
     fetchBookings();
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, userId]);
 
   const upcomingBookings = useMemo(
     () =>
       bookings.filter((b) => {
         const slotStart = b.slot?.startTime ? new Date(b.slot.startTime) : null;
         const isExperience = b.listing?.listingType === 'EXPERIENCE';
-        const isFutureOrToday = !!slotStart && !Number.isNaN(slotStart.getTime()) && slotStart >= new Date();
-        const isRelevantStatus = b.status === 'COMPLETED';
+        const isFutureOrToday = !!slotStart && !Number.isNaN(slotStart.getTime()) && slotStart.getTime() >= Date.now();
+        const isRelevantStatus =
+          b.status === 'CONFIRMED' || b.status === 'PENDING';
 
         return isExperience && isFutureOrToday && isRelevantStatus;
       }).sort((a, b) => {
@@ -77,7 +87,7 @@ export default function UpcomingExperiencesPage() {
         const startB = b.slot?.startTime ? new Date(b.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;
         return startA - startB;
       }),
-    [bookings],
+    [bookings]
   );
 
   const vendorName = (b: Booking) =>
