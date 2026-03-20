@@ -351,8 +351,8 @@ export default function Dashboard() {
         if (!userId) return;
 
         const interval = setInterval(() => {
-            refreshDashboard();
-        }, 10000); // every 10 seconds
+            fetchBookings();
+        }, 15000); // every 10 seconds
 
         return () => clearInterval(interval);
     }, [userId]);

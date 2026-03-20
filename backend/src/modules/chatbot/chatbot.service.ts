@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 
 interface ChatResponse {
     fulfillmentText: string;
@@ -11,11 +12,9 @@ interface ChatResponse {
 
 @Injectable()
 export class ChatbotService {
-    private prisma: PrismaClient;
     private groqApiKey: string;
 
-    constructor() {
-        this.prisma = new PrismaClient();
+    constructor(private prisma: PrismaService) {
         this.groqApiKey = process.env.GROQ_API_KEY || '';
 
         if (this.groqApiKey) {

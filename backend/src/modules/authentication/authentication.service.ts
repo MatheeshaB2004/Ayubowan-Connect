@@ -6,6 +6,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { LocalUserType } from '@prisma/client';
 
 @Injectable()
 export class AuthenticationService {
@@ -13,7 +14,7 @@ export class AuthenticationService {
     private prisma: PrismaService,
     private jwt: JwtService,
     private config: ConfigService,
-  ) {}
+  ) { }
 
   async register(dto: RegisterDto) {
     // Check if user exists
@@ -33,6 +34,20 @@ export class AuthenticationService {
         email: dto.email,
         passwordHash: hash,
         role: 'USER',
+      },
+    });
+
+    await this.prisma.localTourist.create({
+      data: {
+        userId: user.id,
+        fullName: dto.fullName,
+        userType:
+          dto.userType === 'LOCAL'
+            ? LocalUserType.LOCAL
+            : LocalUserType.TOURIST,
+        nationality: dto.nationality || null,
+        dateOfBirth: dto.dateOfBirth ? new Date(dto.dateOfBirth) : null,
+        preferredLanguage: dto.preferredLanguage || 'en',
       },
     });
 
@@ -56,6 +71,7 @@ export class AuthenticationService {
     // RefreshToken model was removed from DB schema
     return { message: 'Logged out successfully' };
   }
+
 
   async refreshTokens(userId: number, rt: string) {
     try {

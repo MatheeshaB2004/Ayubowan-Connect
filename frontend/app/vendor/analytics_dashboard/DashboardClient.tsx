@@ -243,9 +243,9 @@ export default function DashboardClient({
       setLiveGoal(goalData.goal);
     };
 
-    const interval = setInterval(refreshDashboard, 5000);
+    //const interval = setInterval(refreshDashboard, 5000);
 
-    return () => clearInterval(interval);
+    //return () => clearInterval(interval);
   }, [user?.id, selectedPeriod]);
 
   const scrollTo = (id: string) =>
