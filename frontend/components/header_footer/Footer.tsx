@@ -258,7 +258,7 @@ const Footer: React.FC = () => {
               </button>
             </form>
             {message && (
-              <p style={{ marginTop: '8px', fontSize: '0.875rem', color: message.type === 'success' ? '#10b981' : '#ef4444' }}>
+              <p style={{ marginTop: '8px', fontSize: '0.95rem', fontWeight: '500', color: message.type === 'success' ? '#fff' : '#ffcdd2' }}>
                 {message.text}
               </p>
             )}
