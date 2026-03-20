@@ -351,8 +351,8 @@ export default function Dashboard() {
         if (!userId) return;
 
         const interval = setInterval(() => {
-            refreshDashboard();
-        }, 10000); // every 10 seconds
+            fetchBookings();
+        }, 15000); // every 15 seconds
 
         return () => clearInterval(interval);
     }, [userId]);
@@ -692,7 +692,7 @@ export default function Dashboard() {
                                             </div>
                                         </div>
                                         <div className="request-actions">
-                                            <div className="request-price">${b.price}</div>
+                                            <div className="request-price">LKR {b.price}</div>
                                             <div className="action-buttons">
                                                 {b.status === "incoming" && (
                                                     <>

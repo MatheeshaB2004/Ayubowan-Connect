@@ -59,11 +59,11 @@ export class OrdersService {
     }
 
     // Step 4 — Ensure LocalTourist record exists
-    const tourist = await this.prisma.localTourist.findUnique({
+    let tourist = await this.prisma.localTourist.findUnique({
       where: { userId },
     });
     if (!tourist) {
-      await this.prisma.localTourist.create({
+      tourist = await this.prisma.localTourist.create({
         data: {
           userId,
           fullName: 'Clerk User',
@@ -85,30 +85,132 @@ export class OrdersService {
    * the shape the frontend expects.
    */
   async getUserOrders(rawUserId: string) {
-    const userId = await this.resolveUserId(rawUserId);
+    // Initialize bookingOrders for fallback
+    let bookingOrders: any[] = [];
 
-    const bookings = await this.prisma.booking.findMany({
-      where: {
-        localTouristId: userId,
-        status: { in: ['COMPLETED', 'CONFIRMED'] },
-      },
-      include: {
-        listing: true,
-        vendor: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    try {
+      const userId = await this.resolveUserId(rawUserId);
 
-    return bookings.map((b) => ({
-      id: b.id,
-      itemName: b.listing?.title ?? 'Unknown Item',
-      vendorName: b.vendor?.businessName ?? 'Unknown Vendor',
-      orderDate: b.bookingDate,
-      amount: b.totalPrice,
-      status: b.status === 'COMPLETED' ? 'COMPLETED' : 'PAID',
-    }));
+      // Fetch bookings
+      const bookings = await this.prisma.booking.findMany({
+        where: {
+          localTouristId: userId,
+          status: { in: ['COMPLETED', 'CONFIRMED'] },
+        },
+        include: {
+          listing: true,
+          vendor: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      // Create booking orders mapping (keep original)
+      bookingOrders = bookings.map((b) => ({
+        id: b.id,
+        itemName: b.listing?.title ?? 'Unknown Item',
+        vendorName: b.vendor?.businessName ?? 'Unknown Vendor',
+        orderDate: b.bookingDate,
+        amount: b.totalPrice,
+        status: b.status === 'COMPLETED' ? 'COMPLETED' : 'PAID',
+      }));
+
+      // Fetch subscription data
+      let subscriptionData: {
+        isProUser: boolean;
+        proSubscriptionExpiry: Date | null;
+        updatedAt: Date;
+      } | null = null;
+      
+      // Check if user is a vendor
+      const vendor = await this.prisma.vendor.findFirst({
+        where: { userId },
+        select: {
+          isProUser: true,
+          proSubscriptionExpiry: true,
+          updatedAt: true,
+        },
+      });
+
+      if (vendor && vendor.isProUser) {
+        subscriptionData = vendor;
+      } else {
+        // Check if user is a local tourist
+        const localTourist = await this.prisma.localTourist.findFirst({
+          where: { userId },
+          select: {
+            isProUser: true,
+            proSubscriptionExpiry: true,
+            updatedAt: true,
+          },
+        });
+
+        if (localTourist && localTourist.isProUser) {
+          subscriptionData = localTourist;
+        }
+      }
+
+      // Create virtual subscription order if user has valid Pro subscription
+      if (
+        subscriptionData &&
+        subscriptionData.isProUser &&
+        subscriptionData.proSubscriptionExpiry &&
+        subscriptionData.updatedAt
+      ) {
+        const expiry = subscriptionData.proSubscriptionExpiry;
+        if (!expiry || Number.isNaN(expiry.getTime())) {
+          return bookingOrders;
+        }
+
+        const now = new Date();
+        const daysDiff = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+        const billingCycle = daysDiff > 60 ? 'yearly' : 'monthly';
+
+        // Calculate start date from expiry date
+        const startDate = new Date(
+          expiry.getTime() - (billingCycle === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000
+        );
+
+        const subscriptionOrder = {
+          id: -1, // Use number to match booking IDs
+          itemName: 'Pro Subscription',
+          vendorName: 'Ayubowan Connect',
+          orderDate: startDate,
+          amount: 0,
+          status: 'COMPLETED',
+          billingCycle,
+          expiryDate: subscriptionData.proSubscriptionExpiry,
+        };
+
+        const allOrders = [subscriptionOrder, ...bookingOrders];
+        return allOrders;
+      }
+
+      // Final fallback
+      return bookingOrders;
+    } catch (error) {
+      console.error('OrdersService error:', error);
+      // Return bookingOrders as safe fallback
+      return bookingOrders;
+    }
+  }
+
+  private determineBillingCycle(expiryDate: Date | null): 'monthly' | 'yearly' | null {
+    if (!expiryDate) return null;
+
+    const now = new Date();
+    const daysDiff = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    // If expired → no active plan
+    if (daysDiff <= 0) return null;
+
+    // If more than 60 days remaining → yearly
+    if (daysDiff > 60) return 'yearly';
+
+    // Otherwise treat as monthly
+    return 'monthly';
   }
 
   async completeOrder(

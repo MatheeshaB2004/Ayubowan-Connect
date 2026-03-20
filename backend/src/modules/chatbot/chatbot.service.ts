@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 
 interface ChatResponse {
     fulfillmentText: string;
@@ -11,11 +11,9 @@ interface ChatResponse {
 
 @Injectable()
 export class ChatbotService {
-    private prisma: PrismaClient;
     private groqApiKey: string;
 
-    constructor() {
-        this.prisma = new PrismaClient();
+    constructor(private prisma: PrismaService) {
         this.groqApiKey = process.env.GROQ_API_KEY || '';
 
         if (this.groqApiKey) {
@@ -150,8 +148,8 @@ User: "Can you bring me to the name edit page?"
 AI: "Sure! I am taking you to your User Profile Manager where you can update your name and settings now. [NAVIGATE:/User_profile_manager]"
 
 PRO PLANS:
-1. Vendor Pro: LKR 2,500/month or LKR 25,000/year. Benefits: Analytics Dashboard, Native Dual Language Translator (Sinhala/Tamil/English), Priority Listing Placement.
-2. User Pro: LKR 900/month (AI planner, translator).
+1. Vendor Pro: LKR 2,500/month or LKR 25,000/year. Benefits: Analytics Dashboard, Priority Listing Placement.
+2. User Pro: LKR 900/month (AI planner).
 
 PERSONALITY:
 - Warm, polite, and strictly professional about support. Use "Ayubowan" naturally. 

@@ -460,8 +460,6 @@ export default function ExperienceDetailPage() {
                 <span className="price-unit">/person</span>
               </div>
               <div className="duration-badge">
-                <Calendar size={16} />
-                <span>3 Hours</span>
               </div>
             </div>
           </div>
