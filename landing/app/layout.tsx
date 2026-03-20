@@ -15,6 +15,9 @@ const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
 export const metadata: Metadata = {
   title: "Ayubowan Connect",
   description: "A cultural connection platform for Sri Lanka connecting travelers, vendors, and authentic experiences.",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({

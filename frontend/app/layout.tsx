@@ -31,6 +31,9 @@ const arima = Arima({
 export const metadata: Metadata = {
   title: "Ayubowan Connect",
   description: "Connect with authentic Sri Lankan experiences",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
