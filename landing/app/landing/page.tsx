@@ -6,7 +6,7 @@ import {
   ChevronRight, Linkedin, Twitter, Globe, 
   Calendar, Map, ShoppingBag, MessageCircle, 
   Search, FileText, Phone, CalendarCheck,
-  Star, Bot
+  Star, Bot, Code, Database, Server, Component
 } from 'lucide-react';
 import '../../styles/pages/Landing.css';
 
@@ -24,28 +24,7 @@ const heroImages = [
 
 const LandingPage: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [activeProTab, setActiveProTab] = useState<'planning' | 'insights'>('planning');
-
-  const proFeatures = {
-    planning: {
-      tag: 'Plan',
-      title: 'AI itinerary planner builds your journey',
-      desc: 'Tell the system your interests and days available. Get a personalized itinerary that flows like a story, not a checklist.',
-      image: '/assets/pro/planner.jpg',
-      ctaPrimary: 'Start',
-      ctaSecondary: 'Explore'
-    },
-    insights: {
-      tag: 'Grow',
-      title: 'Insights that power your business',
-      desc: 'For vendors: track views, understand traveler trends, and optimize your listings to reach the right audience.',
-      image: '/assets/photos/B6.jpg',
-      ctaPrimary: 'Dashboard',
-      ctaSecondary: 'View demo'
-    }
-  };
-
-
+  const [hoveredTech, setHoveredTech] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -85,17 +64,101 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* TECH STACK SECTION */}
+      <section className="steps-section" style={{ backgroundColor: '#f9fafb' }}>
+        <div className="section-intro">
+          <span className="section-tag tag-waikawa">Technology</span>
+          <h2 className="section-title">Our Tech Stack</h2>
+          <p className="intro-text">Built with modern, scalable, and robust technologies</p>
+        </div>
+
+        <div className="steps-grid" style={{ paddingBottom: '5rem' }}>
+          {[
+            {
+              id: 'frontend',
+              icon: <Component className="step-icon" size={32} />,
+              title: 'Frontend',
+              desc: 'Next.js, React, and Tailwind CSS for a highly responsive and modern user interface.',
+              tools: ['Next.js App Router', 'React 18', 'Tailwind CSS', 'Lucide Icons']
+            },
+            {
+              id: 'backend',
+              icon: <Server className="step-icon" size={32} />,
+              title: 'Backend',
+              desc: 'NestJS and Node.js powering a secure, modular, and high-performance API.',
+              tools: ['NestJS', 'Node.js', 'RESTful APIs', 'JWT Auth']
+            },
+            {
+              id: 'database',
+              icon: <Database className="step-icon" size={32} />,
+              title: 'Database',
+              desc: 'PostgreSQL and Prisma ORM ensure robust data modeling and reliable transactions.',
+              tools: ['PostgreSQL', 'Prisma ORM', 'Supabase', 'Redis Caching']
+            },
+            {
+              id: 'tooling',
+              icon: <Code className="step-icon" size={32} />,
+              title: 'Language & Tooling',
+              desc: 'TypeScript across the entire stack for type safety, plus Cloudinary for media management.',
+              tools: ['TypeScript', 'Cloudinary', 'Docker', 'Vercel']
+            }
+          ].map((tech) => (
+            <div 
+              key={tech.id} 
+              className="step-card"
+              onMouseEnter={() => setHoveredTech(tech.id)}
+              onMouseLeave={() => setHoveredTech(null)}
+              style={{
+                transform: hoveredTech === tech.id ? 'translateY(-8px)' : 'translateY(0)',
+                transition: 'all 0.3s ease',
+                boxShadow: hoveredTech === tech.id ? '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' : '',
+                borderColor: hoveredTech === tech.id ? '#1e293b' : ''
+              }}
+            >
+              <div>
+                {tech.icon}
+                <h3 className="step-title">{tech.title}</h3>
+                <p className="step-desc">{tech.desc}</p>
+                
+                <div 
+                  style={{
+                    marginTop: '1.5rem',
+                    opacity: hoveredTech === tech.id ? 1 : 0,
+                    height: hoveredTech === tech.id ? 'auto' : 0,
+                    overflow: 'hidden',
+                    transition: 'opacity 0.3s ease'
+                  }}
+                >
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {tech.tools.map((tool, idx) => (
+                      <span key={idx} style={{
+                        fontSize: '0.75rem',
+                        padding: '0.25rem 0.75rem',
+                        backgroundColor: '#e2e8f0',
+                        color: '#1e293b',
+                        borderRadius: '9999px',
+                        fontWeight: '600'
+                      }}>
+                        {tool}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* WHAT WE OFFER SECTION */}
-      <section className="offer-section" id="offer">
+      <section className="offer-section" id="offer" style={{ backgroundColor: 'white' }}>
         <div className="section-intro">
           <span className="section-tag tag-lochinvar">Explore</span>
           <h2 className="section-title">What we offer</h2>
           <p className="intro-text">Browse curated experiences and marketplace items</p>
         </div>
 
-        <div className="offer-grid">
-          {/* Left Column - 2x2 Grid */}
-          <div className="offer-grid-left">
+        <div className="steps-grid" style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 1rem' }}>
             {/* Card 1 */}
             <div className="offer-card" id="events">
               <div className="offer-icon-wrapper">
@@ -147,86 +210,6 @@ const LandingPage: React.FC = () => {
                 Chat now <ChevronRight size={14} className="ml-1" />
               </a>
             </div>
-          </div>
-
-          {/* Right Column - Large Card */}
-          <div className="offer-card-large">
-            <div className="offer-large-img">
-              <img src="/assets/pro/pro.jpg" alt="Pro Features" />
-            </div>
-            <div className="text-left">
-              <span className="section-tag tag-lochinvar">Pro</span>
-              <h3 className="section-title" style={{fontSize: '1.75rem', marginBottom: '1rem'}}>Unlock premium features for deeper discovery</h3>
-              <p className="intro-text" style={{marginBottom: '2rem', textAlign: 'left'}}>Upgrade your journey with AI planning.</p>
-              <div className="flex gap-4">
-                <Link href="/pro" className="btn-hero-primary no-underline flex items-center justify-center">
-                  Upgrade
-                </Link>
-                <button className="mission-btn-learn">
-                  Learn <ChevronRight size={14} className="ml-1" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-
-      {/* GO DEEPER WITH PRO SECTION */}
-      <section className="pro-section" id="pro">
-        <div className="pro-container">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="section-tag tag-trendy">Premium</span>
-            <h2 className="section-title">Go deeper with Pro</h2>
-            <p className="intro-text mb-8">
-              Unlock tools built for serious travelers and vendors. Plan smarter and track what matters.
-            </p>
-            <div className="flex justify-center items-center gap-4">
-              <Link href="/pro" className="btn-hero-primary no-underline flex items-center justify-center">
-                Upgrade
-              </Link>
-              <button className="mission-btn-learn">
-                Learn <ChevronRight size={14} className="ml-1" />
-              </button>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="pro-tabs">
-            <button 
-              className={`pro-tab-btn ${activeProTab === 'planning' ? 'active' : ''}`}
-              onClick={() => setActiveProTab('planning')}
-            >
-              AI planning
-            </button>
-            <button 
-              className={`pro-tab-btn ${activeProTab === 'insights' ? 'active' : ''}`}
-              onClick={() => setActiveProTab('insights')}
-            >
-              Vendor insights
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          <div className="pro-content-box">
-            <div className="pro-image-wrapper">
-              <img src={proFeatures[activeProTab].image} alt={proFeatures[activeProTab].title} />
-            </div>
-            <div className="pro-text-content">
-              <span className="section-tag tag-lochinvar">{proFeatures[activeProTab].tag}</span>
-              <h3 className="section-title" style={{fontSize: '2rem', marginBottom: '1rem'}}>{proFeatures[activeProTab].title}</h3>
-              <p className="intro-text" style={{textAlign: 'left', marginBottom: '2rem'}}>
-                {proFeatures[activeProTab].desc}
-              </p>
-              <div className="flex gap-4">
-                <button className="btn-hero-primary">{proFeatures[activeProTab].ctaPrimary}</button>
-                <button className="mission-btn-learn">
-                  {proFeatures[activeProTab].ctaSecondary} <ChevronRight size={14} className="ml-1" />
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
