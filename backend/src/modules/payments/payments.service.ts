@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class PaymentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private async resolveUserId(rawUserId: string): Promise<number> {
     const parsed = Number(rawUserId);
@@ -52,10 +52,16 @@ export class PaymentsService {
       });
 
       if (vendor) {
+        const billingCycle = this.determineBillingCycle(vendor.proSubscriptionExpiry);
+        const isExpired = vendor.proSubscriptionExpiry
+          ? vendor.proSubscriptionExpiry < new Date()
+          : true;
+
         return {
           userId,
-          isProUser: vendor.isProUser,
+          isProUser: vendor.isProUser && !isExpired,
           proSubscriptionExpiry: vendor.proSubscriptionExpiry?.toISOString() ?? null,
+          billingCycle,
         };
       }
 
@@ -69,10 +75,16 @@ export class PaymentsService {
       });
 
       if (localTourist) {
+        const billingCycle = this.determineBillingCycle(localTourist.proSubscriptionExpiry);
+        const isExpired = localTourist.proSubscriptionExpiry
+          ? localTourist.proSubscriptionExpiry < new Date()
+          : true;
+
         return {
           userId,
-          isProUser: localTourist.isProUser,
+          isProUser: localTourist.isProUser && !isExpired,
           proSubscriptionExpiry: localTourist.proSubscriptionExpiry?.toISOString() ?? null,
+          billingCycle,
         };
       }
 
@@ -81,6 +93,7 @@ export class PaymentsService {
         userId,
         isProUser: false,
         proSubscriptionExpiry: null,
+        billingCycle: null,
       };
     } catch (error) {
       console.error('Error fetching subscription status:', error);
@@ -88,11 +101,28 @@ export class PaymentsService {
         userId,
         isProUser: false,
         proSubscriptionExpiry: null,
+        billingCycle: null,
       };
     }
   }
 
-  async upgradeToPro(rawUserId: string, planType: 'USER' | 'VENDOR') {
+  private determineBillingCycle(expiryDate: Date | null): 'monthly' | 'yearly' | null {
+    if (!expiryDate) return null;
+
+    const now = new Date();
+    const daysDiff = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    // If expired → no active plan
+    if (daysDiff <= 0) return null;
+
+    // If more than 60 days remaining → yearly
+    if (daysDiff > 60) return 'yearly';
+
+    // Otherwise treat as monthly
+    return 'monthly';
+  }
+
+  async upgradeToPro(rawUserId: string, planType: 'USER' | 'VENDOR', cycle: 'monthly' | 'yearly') {
     if (!rawUserId) {
       throw new BadRequestException('Invalid user');
     }
@@ -100,7 +130,11 @@ export class PaymentsService {
     const userId = await this.resolveUserId(rawUserId);
 
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 30); // 30 days from now
+    if (cycle === 'yearly') {
+      expiryDate.setDate(expiryDate.getDate() + 365); // 365 days from now
+    } else {
+      expiryDate.setDate(expiryDate.getDate() + 30); // 30 days from now
+    }
 
     if (planType === 'USER') {
       // Update LocalTourist
@@ -126,6 +160,7 @@ export class PaymentsService {
       message: 'Subscription upgraded successfully',
       userId,
       planType,
+      cycle,
       isProUser: true,
       proSubscriptionExpiry: expiryDate.toISOString(),
     };
