@@ -2,7 +2,7 @@
   display: flex;
   width: 100%;
   height: calc(100vh - 5rem);
-  background-color: #f9fafb;
+  background-color: var(--ay-bg-soft);
   overflow: hidden;
 }
 
@@ -10,7 +10,7 @@
   width: 25%;
   min-width: 280px;
   background-color: white;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--ay-border);
   height: 100%;
   overflow-y: auto;
 }
@@ -44,9 +44,9 @@
 .pagination-btn {
   padding: 10px 24px;
   background-color: white;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--ay-border);
   border-radius: 8px;
-  color: #374151;
+  color: var(--ay-text-main);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -54,15 +54,15 @@
 }
 
 .pagination-btn:hover:not(:disabled) {
-  background-color: #0d9488;
+  background-color: var(--ay-brand);
   color: white;
-  border-color: #0d9488;
+  border-color: var(--ay-brand);
 }
 
 .pagination-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background-color: #f3f4f6;
+  background-color: var(--ay-bg-muted);
 }
 
 .pagination-numbers {
@@ -74,9 +74,9 @@
 .pagination-number {
   padding: 8px 14px;
   background-color: white;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--ay-border);
   border-radius: 6px;
-  color: #374151;
+  color: var(--ay-text-main);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -84,14 +84,14 @@
 }
 
 .pagination-number:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+  background-color: var(--ay-bg-muted);
+  border-color: var(--ay-text-subtle);
 }
 
 .pagination-number.active {
-  background-color: #0d9488;
+  background-color: var(--ay-brand);
   color: white;
-  border-color: #0d9488;
+  border-color: var(--ay-brand);
 }
 
 .no-results {
@@ -99,7 +99,7 @@
   justify-content: center;
   align-items: center;
   padding: 48px;
-  color: #6b7280;
+  color: var(--ay-text-muted);
   font-size: 1.125rem;
 }
 
@@ -113,17 +113,17 @@
 .see-more-btn {
   padding: 10px 24px;
   background-color: white;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--ay-border);
   border-radius: 9999px;
-  color: #374151;
+  color: var(--ay-text-main);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .see-more-btn:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+  background-color: var(--ay-bg-muted);
+  border-color: var(--ay-text-subtle);
 }
 
 @media (max-width: 768px) {
@@ -136,7 +136,7 @@
   .sidebar-section {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--ay-border);
     height: auto;
     overflow-y: visible;
   }

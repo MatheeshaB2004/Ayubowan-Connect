@@ -25,7 +25,7 @@
   top: 0;
   height: 100vh;
   width: 5rem;
-  background: linear-gradient(to bottom right, #1a3a35, #2d6b5e, #379683);
+  background: linear-gradient(to bottom right, var(--ay-brand-darker), var(--ay-brand-dark), var(--ay-brand));
   display: flex;
   flex-direction: column;
   align-items: center;

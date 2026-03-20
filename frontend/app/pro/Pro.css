@@ -19,7 +19,7 @@
 .pro-hero-title {
   font-size: 2.25rem;
   line-height: 2.5rem;
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   color: #111827;
   margin-bottom: 1.5rem;
 }
@@ -68,7 +68,7 @@
 .pro-section-title {
   font-size: 1.875rem;
   line-height: 2.25rem;
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   color: #111827;
   margin-top: 0.5rem;
   margin-bottom: 1rem;
@@ -131,7 +131,7 @@
 .pro-card-title {
   font-size: 1.5rem;
   line-height: 2rem;
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   color: #111827;
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
@@ -160,7 +160,7 @@
 }
 
 .pro-card-btn:hover {
-  background-color: var(--lochinvar, #379683);
+  background-color: var(--ay-brand);
   color: white;
 }
 
@@ -201,7 +201,7 @@
 .pro-feature-title {
   font-size: 1.875rem;
   line-height: 2.25rem;
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   color: #111827;
   margin-top: 0.5rem;
   margin-bottom: 2rem;
@@ -232,7 +232,7 @@
 }
 
 .pro-feature-btn:hover {
-  background-color: var(--lochinvar, #379683);
+  background-color: var(--ay-brand);
   color: white;
 }
 
@@ -367,7 +367,7 @@
 .pro-pricing-price {
   font-size: 3rem;
   line-height: 1;
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   color: #111827;
 }
 

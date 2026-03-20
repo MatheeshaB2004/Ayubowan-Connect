@@ -20,9 +20,6 @@ const Footer: React.FC = () => {
                 <span className="brand-connect">Connect</span>
               </div>
             </Link>
-             <p className="footer-copyright">
-              © 2025 Ayubowan Connect. All rights reserved.
-            </p>
             <div className="footer-socials">
                 <a href="#"><Instagram size={18} /></a>
                 <a href="#"><Twitter size={18} /></a>
@@ -66,33 +63,16 @@ const Footer: React.FC = () => {
               <li><a href="#" onClick={(e) => e.preventDefault()}>Contact</a></li>
             </ul>
           </div>
-
-          {/* Newsletter Column */}
-          <div className="footer-newsletter">
-            <h3 className="footer-heading">Subscribe</h3>
-            <p className="newsletter-text">
-              Get the latest Sri Lankan cultural experiences delivered to your inbox.
-            </p>
-            <form className="newsletter-form">
-              <input 
-                type="email" 
-                placeholder="Email address here" 
-                className="newsletter-input"
-              />
-              <button type="submit" className="newsletter-btn">
-                Submit
-              </button>
-            </form>
-            <p className="newsletter-disclaimer">
-              By subscribing, you agree to our privacy policy and cultural sharing guidelines.
-            </p>
-          </div>
-
         </div>
         <div className="footer-bottom">
-             <a href="#" onClick={(e) => e.preventDefault()}>Privacy policy</a>
-             <a href="#" onClick={(e) => e.preventDefault()}>Terms of service</a>
-             <a href="#" onClick={(e) => e.preventDefault()}>Cookie settings</a>
+             <p className="footer-copyright">
+              © 2026 Ayubowan Connect. All rights reserved.
+             </p>
+             <div className="footer-bottom-links">
+               <a href="#" onClick={(e) => e.preventDefault()}>Privacy policy</a>
+               <a href="#" onClick={(e) => e.preventDefault()}>Terms of service</a>
+               <a href="#" onClick={(e) => e.preventDefault()}>Cookie settings</a>
+             </div>
         </div>
       </div>
     </footer>

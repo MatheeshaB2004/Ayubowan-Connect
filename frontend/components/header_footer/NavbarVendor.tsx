@@ -22,7 +22,7 @@ const NavbarVendor: React.FC<NavbarVendorProps> = ({ textColorClass = '' }) => {
   return (
     <div className="vendor-nav flex items-center gap-5">
       <Link href="/" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/') ? 'active' : ''}`}>Home</Link>
-      <Link href="/vendor/freeDashboad" className={`nav-link ${textColorClass} ${hoverColorClass} ${isActive('/vendor/dashboard') ? 'active' : ''}`}>Dashboard</Link>
+      <Link href="/vendor/freeDashboad" className={`nav-link ${textColorClass} ${hoverColorClass} ${isActive('/vendor/freeDashboad') ? 'active' : ''}`}>Dashboard</Link>
       <Link href="/events" className={`nav-link ${textColorClass} ${hoverColorClass} ${isActive('/events') ? 'active' : ''}`}>Events</Link>
       <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/pro') ? 'active' : ''}`}>Pro</Link>
       <Link href="/faq" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/faq') ? 'active' : ''}`}>FAQs</Link>

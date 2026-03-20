@@ -532,6 +532,12 @@
   gap: 0.5rem;
 }
 
+.mobile-auth-btn {
+  display: block;
+  text-align: center;
+  width: 100%;
+}
+
 /* Traveller / Vendor Nav */
 .traveller-nav, .vendor-nav {
   display: flex;
