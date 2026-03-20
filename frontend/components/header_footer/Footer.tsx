@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { getApiUrl } from "@/lib/api"; // Added getApiUrl
+import "./Footer.css";
 
 const Footer: React.FC = () => {
   const [email, setEmail] = useState("");
