@@ -15,6 +15,7 @@ import { BookingModule } from './modules/booking/booking.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { NewsletterModule } from './modules/newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     OrdersModule,
     VendorManagementModule,
     PaymentsModule,
+    NewsletterModule,
   ],
 })
 export class AppModule {}

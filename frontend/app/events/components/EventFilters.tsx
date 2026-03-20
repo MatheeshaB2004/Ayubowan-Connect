@@ -27,6 +27,7 @@ export function EventFilters({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
             type="text"
+            suppressHydrationWarning
             placeholder="Search events or vendors..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}

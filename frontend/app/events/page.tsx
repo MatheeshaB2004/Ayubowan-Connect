@@ -13,9 +13,10 @@ import {
 } from "./lib/api/events";
 import { Event } from "./types/events";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function EventsPage() {
+function EventsPageContent() {
   const searchParams = useSearchParams();
   const [search, setSearch]     = useState(searchParams.get("search") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "all");
@@ -47,7 +48,7 @@ export default function EventsPage() {
       });
       setAllEvents(data);
     } catch (err) {
-      console.error("Failed to load events:", err);
+      console.warn("Failed to load events:", err);
       setAllEvents([]);
     }
   }, [search, category, location]);
@@ -58,7 +59,7 @@ export default function EventsPage() {
       const data = await fetchVendorEvents(getToken(), user?.id);
       setVendorEvents(data);
     } catch (err) {
-      console.error("Failed to load vendor events:", err);
+      console.warn("Failed to load vendor events:", err);
       setVendorEvents([]);
     }
   }, [isVendor, user?.id]);
@@ -69,24 +70,27 @@ export default function EventsPage() {
       const data = await fetchUserRegisteredEvents(getToken(), user?.id);
       setUserEvents(data);
     } catch (err) {
-      console.error("Failed to load user events:", err);
+      console.warn("Failed to load user events:", err);
       setUserEvents([]);
     }
   }, [isUser, user?.id]);
 
-  // Initial load
+  // Initial load for vendor and user events
   useEffect(() => {
     (async () => {
-      setLoading(true);
-      await Promise.all([loadAllEvents(), loadVendorEvents(), loadUserEvents()]);
-      setLoading(false);
+      await Promise.all([loadVendorEvents(), loadUserEvents()]);
+      // Note: loadAllEvents is handled by the filter useEffect
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Debounced filter re-fetch
+  // Debounced filter re-fetch handles both initial loadAllEvents and subsequent filter changes
   useEffect(() => {
-    const t = setTimeout(loadAllEvents, search ? 300 : 0);
+    setLoading(true);
+    const t = setTimeout(async () => {
+      await loadAllEvents();
+      setLoading(false);
+    }, search ? 300 : 0);
     return () => clearTimeout(t);
   }, [search, category, location, loadAllEvents]);
 
@@ -141,6 +145,14 @@ export default function EventsPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function EventsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">Loading events...</div>}>
+      <EventsPageContent />
+    </Suspense>
   );
 }
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 
 interface ChatResponse {
     fulfillmentText: string;
@@ -11,11 +11,9 @@ interface ChatResponse {
 
 @Injectable()
 export class ChatbotService {
-    private prisma: PrismaClient;
     private groqApiKey: string;
 
-    constructor() {
-        this.prisma = new PrismaClient();
+    constructor(private prisma: PrismaService) {
         this.groqApiKey = process.env.GROQ_API_KEY || '';
 
         if (this.groqApiKey) {
@@ -37,7 +35,7 @@ export class ChatbotService {
         }
 
         // check for specific AI Itinerary Planner redirect
-        if (/\b(plan|trip|itinerary|planner|journey|travel|schedule)\b/i.test(queryText)) {
+        if (/\b(plan|trip|itinerary|planner|journey|travel|schedule)\b/i.test(queryText) && /\b(take|go|bring|show)\b/i.test(queryText)) {
             return {
                 fulfillmentText: 'For trip planning, please use our dedicated AI Itinerary Planner feature! 🗺️',
                 payload: { navigation: '/ai' },
@@ -132,7 +130,9 @@ PLATFORM RULES & POLICIES (FAQ):
 - Profile Management: Tell users they can change their name, profile picture, or settings from their Account Settings or User Profile Manager dashboard.
 
 ROUTING & NAVIGATION (IMPORTANT):
-If the user explicitly asks to be taken, redirected, or navigated to a specific page or dashboard, you must append a secret navigation tag at the very end of your response in the exact format: [NAVIGATE:/path]
+Under NO circumstances should you output a [NAVIGATE:/path] tag unless the user explicitly types words demanding to be relocated, such as "take me to", "bring me to", "go to", "open", "redirect me to", or "show me the page".
+If the user asks "How do I...", "Where can I...", or "What is...", NEVER output the [NAVIGATE:/path] tag! Instead, just explain what to do in text (e.g. "To pay, go to the cart page and click checkout.").
+ONLY if the user strictly commands you to take them somewhere, append the exact tag at the absolute end of the message: [NAVIGATE:/path]
 Use these EXACT paths:
 - User Profile / Name Edit / Account Settings: [NAVIGATE:/User_profile_manager]
 - Marketplace / Search: [NAVIGATE:/marketplace]
@@ -148,8 +148,8 @@ User: "Can you bring me to the name edit page?"
 AI: "Sure! I am taking you to your User Profile Manager where you can update your name and settings now. [NAVIGATE:/User_profile_manager]"
 
 PRO PLANS:
-1. Vendor Pro: LKR 2,500/month or LKR 25,000/year. Benefits: Analytics Dashboard, Native Dual Language Translator (Sinhala/Tamil/English), Priority Listing Placement.
-2. User Pro: LKR 900/month (AI planner, translator).
+1. Vendor Pro: LKR 2,500/month or LKR 25,000/year. Benefits: Analytics Dashboard, Priority Listing Placement.
+2. User Pro: LKR 900/month (AI planner).
 
 PERSONALITY:
 - Warm, polite, and strictly professional about support. Use "Ayubowan" naturally. 

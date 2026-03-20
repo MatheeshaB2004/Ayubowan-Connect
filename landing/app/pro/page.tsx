@@ -62,7 +62,7 @@ export default function ProPage() {
             <div className="pro-card-content">
               <span className="pro-card-tag">Explorers</span>
               <h3 className="pro-card-title">User Pro for travelers</h3>
-              <p className="pro-card-desc">Plan trips with AI and translate on the go</p>
+              <p className="pro-card-desc">Plan trips with AI on the go</p>
               <button className="pro-card-btn" onClick={scrollToPricing}>
                 Choose <ArrowRight size={16} className="ml-2" />
               </button>
@@ -107,16 +107,6 @@ export default function ProPage() {
           <div className="pro-feature-list-col">
             <div className="pro-feature-item">
               <div className="pro-feature-icon">
-                <Languages size={24} />
-              </div>
-              <div>
-                <h3 className="pro-feature-item-title">Translate with locals</h3>
-                <p className="pro-feature-item-desc">Speak Sinhala, Tamil or English instantly while exploring.</p>
-              </div>
-            </div>
-
-            <div className="pro-feature-item">
-              <div className="pro-feature-icon">
                 <Zap size={24} />
               </div>
               <div>
@@ -159,16 +149,6 @@ export default function ProPage() {
               <div>
                 <h3 className="pro-feature-item-title">Analytics dashboard for your listings</h3>
                 <p className="pro-feature-item-desc">Watch views, inquiries and bookings in real time</p>
-              </div>
-            </div>
-
-            <div className="pro-feature-item">
-              <div className="pro-feature-icon">
-                <Languages size={24} />
-              </div>
-              <div>
-                <h3 className="pro-feature-item-title">Reach guests across three languages</h3>
-                <p className="pro-feature-item-desc">Translate listings into Sinhala, Tamil or English instantly</p>
               </div>
             </div>
 
@@ -230,10 +210,6 @@ export default function ProPage() {
                 <Check size={18} className="pro-pricing-check-icon" />
                 <span>AI itinerary planner</span>
               </li>
-              <li className="pro-pricing-feature-item">
-                <Check size={18} className="pro-pricing-check-icon" />
-                <span>Dual language translator</span>
-              </li>
             </ul>
           </div>
 
@@ -257,10 +233,6 @@ export default function ProPage() {
               <li className="pro-pricing-feature-item">
                 <Check size={18} className="pro-pricing-check-icon" />
                 <span>Vendor analytics dashboard</span>
-              </li>
-              <li className="pro-pricing-feature-item">
-                <Check size={18} className="pro-pricing-check-icon" />
-                <span>Dual language translator</span>
               </li>
               <li className="pro-pricing-feature-item">
                 <Check size={18} className="pro-pricing-check-icon" />

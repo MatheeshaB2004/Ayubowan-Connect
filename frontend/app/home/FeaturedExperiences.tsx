@@ -96,7 +96,7 @@ export default async function FeaturedExperiences() {
               return (
                 <article
                   key={experience.id}
-                  className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
                 >
                   <Link href={detailHref} className="block">
                     <div className="relative h-44 overflow-hidden">
@@ -113,12 +113,8 @@ export default async function FeaturedExperiences() {
                     </div>
                   </Link>
 
-                  <div className="p-3">
-                    <p className="line-clamp-2 min-h-[2.5rem] text-xs text-gray-500">
-                      {experience.shortDescription}
-                    </p>
-
-                    <Link href={detailHref} className="mt-2 block">
+                  <div className="flex flex-1 flex-col p-3">
+                    <Link href={detailHref} className="block">
                       <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-[#1a1a2e] transition-colors group-hover:text-[#0d9488]">
                         {experience.title}
                       </h3>
@@ -141,7 +137,7 @@ export default async function FeaturedExperiences() {
 
                     <Link
                       href={detailHref}
-                      className="mt-3 block w-full rounded-lg bg-[#0d9488] py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-[#0b7a6e]"
+                      className="mt-auto block w-full rounded-lg bg-[#0d9488] py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-[#0b7a6e]"
                     >
                       Book Now
                     </Link>
