@@ -377,7 +377,7 @@ export default function ProPage() {
               </button>
               {isActive && subscriptionStatus?.billingCycle === 'yearly' && subscriptionStatus?.proSubscriptionExpiry && (
                 <p className="text-xs text-gray-500 mt-2">
-                  Renews until {new Date(subscriptionStatus.proSubscriptionExpiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  Expires on {new Date(subscriptionStatus.proSubscriptionExpiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
               )}
             </div>

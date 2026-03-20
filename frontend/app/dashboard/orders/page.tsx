@@ -62,7 +62,7 @@ export default function OrdersPage() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     isProUser: boolean;
     proSubscriptionExpiry: string | null;
-    startDate: string | null;
+    billingCycle: 'monthly' | 'yearly' | null;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const hasFetched = useRef(false);
@@ -113,7 +113,7 @@ export default function OrdersPage() {
         setSubscriptionStatus({
           isProUser: Boolean(subscriptionData?.isProUser),
           proSubscriptionExpiry: subscriptionData?.proSubscriptionExpiry ?? null,
-          startDate: subscriptionData?.startDate ?? null,
+          billingCycle: subscriptionData?.billingCycle ?? null,
         });
       }
     } catch (error) {
@@ -475,7 +475,7 @@ export default function OrdersPage() {
                       {role === 'vendor' ? 'Vendor Pro' : 'User Pro'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
-                      Monthly
+                      {subscriptionStatus.billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">
                       {subscriptionStatus.proSubscriptionExpiry

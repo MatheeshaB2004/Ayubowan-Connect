@@ -59,7 +59,7 @@ function PaymentSuccessPageContent() {
   const isFreeEvent = searchParams.get('free') === 'true';
   const isSubscriptionSuccess =
     type === 'subscription' &&
-    (plan === 'user' || plan === 'vendor') &&
+    (plan === 'user' || plan === 'vendor' || plan === 'USER' || plan === 'VENDOR') &&
     (cycle === 'monthly' || cycle === 'yearly');
   const isEventSuccess = type === 'event' && eventId && !Number.isNaN(eventId);
   const [booking, setBooking] = useState<Booking | null>(null);

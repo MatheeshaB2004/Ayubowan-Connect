@@ -47,9 +47,10 @@ function CheckoutPageContent() {
   const type = searchParams.get('type');
   const plan = searchParams.get('plan');
   const cycle = searchParams.get('cycle');
+  const normalizedPlan = plan?.toLowerCase();
   const isSubscriptionCheckout =
     type === 'subscription' &&
-    (plan === 'user' || plan === 'vendor') &&
+    (normalizedPlan === 'user' || normalizedPlan === 'vendor') &&
     (cycle === 'monthly' || cycle === 'yearly');
   const isEventCheckout = type === 'event' && eventId && !Number.isNaN(eventId);
 
@@ -270,7 +271,7 @@ function CheckoutPageContent() {
     'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#0d9488] focus:outline-none focus:ring-2 focus:ring-[#0d9488]/30';
   const subscriptionPrice =
     isSubscriptionCheckout
-      ? (plan === 'vendor'
+      ? (normalizedPlan === 'vendor'
         ? (cycle === 'yearly' ? 25000 : 2500)
         : (cycle === 'yearly' ? 9000 : 900))
       : 0;
@@ -281,7 +282,7 @@ function CheckoutPageContent() {
       : (directBooking
         ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
         : totalAmount));
-  const subscriptionPlanLabel = plan === 'vendor' ? 'Vendor Pro' : 'User Pro';
+  const subscriptionPlanLabel = normalizedPlan === 'vendor' ? 'Vendor Pro' : 'User Pro';
   const subscriptionCycleLabel = cycle === 'yearly' ? 'Yearly' : 'Monthly';
 
   return (
@@ -389,7 +390,7 @@ function CheckoutPageContent() {
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Cardholder Name</label>
               <input
                 className={`${inputBase} ${errors.cardName ? 'border-red-400' : ''}`}
-                placeholder="John Doe"
+                placeholder="Enter your Name"
                 value={cardName}
                 onChange={(e) => {
                   setCardName(e.target.value);
