@@ -234,6 +234,7 @@ export class EventsService {
 
     return registrations.map((r) => ({
       ...r.event,
+      registrationDate: r.createdAt,  // ✅ ADD THIS
       participantCount: r.event.registrations.length,
     }));
   }

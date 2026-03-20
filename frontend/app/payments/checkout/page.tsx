@@ -22,6 +22,19 @@ type DirectBooking = {
   } | null;
 };
 
+type Event = {
+  id: number;
+  title: string;
+  startDate: string;
+  time: string;
+  location: string;
+  price?: number;
+  isFree: boolean;
+  vendor?: {
+    businessName?: string;
+  };
+};
+
 function CheckoutPageContent() {
   const { items, totalAmount, clearCart } = useCart();
   const router = useRouter();
@@ -29,19 +42,25 @@ function CheckoutPageContent() {
   const { user } = useUser();
   const bookingIdParam = searchParams.get('bookingId');
   const directBookingId = bookingIdParam ? Number(bookingIdParam) : null;
+  const eventIdParam = searchParams.get('eventId');
+  const eventId = eventIdParam ? Number(eventIdParam) : null;
   const type = searchParams.get('type');
   const plan = searchParams.get('plan');
   const cycle = searchParams.get('cycle');
+  const normalizedPlan = plan?.toLowerCase();
   const isSubscriptionCheckout =
     type === 'subscription' &&
-    (plan === 'user' || plan === 'vendor') &&
+    (normalizedPlan === 'user' || normalizedPlan === 'vendor') &&
     (cycle === 'monthly' || cycle === 'yearly');
+  const isEventCheckout = type === 'event' && eventId && !Number.isNaN(eventId);
 
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiry, setExpiry] = useState('');
   const [cvv, setCvv] = useState('');
   const [directBooking, setDirectBooking] = useState<DirectBooking | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [isAlreadyRegistered, setIsAlreadyRegistered] = useState(false);
   const [errors, setErrors] = useState<{
     cardName?: string;
     cardNumber?: string;
@@ -69,6 +88,34 @@ function CheckoutPageContent() {
     fetchDirectBooking();
   }, [user, directBookingId]);
 
+  useEffect(() => {
+    if (!user || !eventId || Number.isNaN(eventId)) return;
+
+    const fetchEvent = async () => {
+      try {
+        // First fetch the event details
+        const eventResponse = await fetch(`${API_BASE}/events/${eventId}`);
+        if (!eventResponse.ok) return;
+        const eventData = await eventResponse.json();
+        setEvent(eventData);
+
+        // Then check if user is already registered
+        const registeredResponse = await fetch(`${API_BASE}/events/user/registered`, {
+          headers: { 'x-user-id': user.id },
+        });
+        if (registeredResponse.ok) {
+          const registeredEvents = await registeredResponse.json();
+          const alreadyRegistered = registeredEvents.some((e: { id: number }) => e.id === eventId);
+          setIsAlreadyRegistered(alreadyRegistered);
+        }
+      } catch (error) {
+        console.error('Failed loading event for checkout:', error);
+      }
+    };
+
+    fetchEvent();
+  }, [user, eventId]);
+
   const formatTime = (dateString?: string) => {
     if (!dateString) return null;
     const date = new Date(dateString);
@@ -86,19 +133,37 @@ function CheckoutPageContent() {
     return `${start} – ${end}`;
   };
 
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^\d/]/g, '');
-    const parts = value.split('/');
-    if (parts.length > 2) value = parts[0] + '/' + parts.slice(1).join('');
+  const handleExpiryChange = (value: string) => {
     if (value.length === 2 && !value.includes('/') && expiry.length < 2) value += '/';
     setExpiry(value.slice(0, 5));
   };
+
+  const isValidName = (name: string) => /^[A-Za-z\s]+$/.test(name);
+  const isValidCardNumber = (num: string) => /^\d{16}$/.test(num);
+  const isValidExpiry = (exp: string) => /^(0[1-9]|1[0-2])\/\d{2}$/.test(exp);
+  const isValidCVV = (cvv: string) => /^\d{3}$/.test(cvv);
 
   const handlePay = async () => {
     const newErrors: typeof errors = {};
 
     if (!cardName) newErrors.cardName = 'Cardholder name is required';
-    if (cardNumber.length < 16) newErrors.cardNumber = 'Card number must be 16 digits';
+    if (!isValidName(cardName)) {
+      toast.error('Please enter a valid name (letters only)');
+      return;
+    }
+    if (!isValidCardNumber(cardNumber)) {
+      toast.error('Invalid card number');
+      return;
+    }
+    if (!isValidExpiry(expiry)) {
+      toast.error('Invalid expiry date (MM/YY)');
+      return;
+    }
+    if (!isValidCVV(cvv)) {
+      toast.error('Invalid CVV');
+      return;
+    }
+
     if (!expiry.match(/^\d{2}\/\d{2}$/)) {
       newErrors.expiry = 'Expiry must be in MM/YY format';
     } else {
@@ -114,7 +179,6 @@ function CheckoutPageContent() {
         newErrors.expiry = 'Card has expired';
       }
     }
-    if (cvv.length !== 3) newErrors.cvv = 'CVV must be exactly 3 digits';
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
@@ -127,6 +191,11 @@ function CheckoutPageContent() {
 
     if (isSubscriptionCheckout) {
       router.push(`/payments/success?type=subscription&plan=${plan}&cycle=${cycle}`);
+      return;
+    }
+
+    if (isEventCheckout) {
+      router.push(`/payments/success?type=event&eventId=${eventId}`);
       return;
     }
 
@@ -219,16 +288,27 @@ function CheckoutPageContent() {
     'w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 shadow-sm transition-colors focus:border-[#0d9488] focus:outline-none focus:ring-2 focus:ring-[#0d9488]/30';
   const subscriptionPrice =
     isSubscriptionCheckout
-      ? (plan === 'vendor'
+      ? (normalizedPlan === 'vendor'
         ? (cycle === 'yearly' ? 25000 : 2500)
+        : (cycle === 'yearly' ? 9000 : 900))
+      : 0;
+  const displaySubscriptionPrice =
+    isSubscriptionCheckout
+      ? (normalizedPlan === 'vendor'
+        ? (cycle === 'yearly' ? 15000 : 1500)
         : (cycle === 'yearly' ? 9000 : 900))
       : 0;
   const payableAmount = isSubscriptionCheckout
     ? subscriptionPrice
-    : (directBooking
-      ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
-      : totalAmount);
-  const subscriptionPlanLabel = plan === 'vendor' ? 'Vendor Pro' : 'User Pro';
+    : (isEventCheckout
+      ? (event?.isFree ? 0 : event?.price ?? 0)
+      : (directBooking
+        ? (directBooking.listing?.priceMin ?? 0) * (directBooking.guests ?? 1)
+        : totalAmount));
+  const displayPayableAmount = isSubscriptionCheckout
+    ? displaySubscriptionPrice
+    : payableAmount;
+  const subscriptionPlanLabel = normalizedPlan === 'vendor' ? 'Vendor Pro' : 'User Pro';
   const subscriptionCycleLabel = cycle === 'yearly' ? 'Yearly' : 'Monthly';
 
   return (
@@ -236,13 +316,25 @@ function CheckoutPageContent() {
       <div className="max-w-3xl mx-auto">
         {!directBookingId && (
           <Link
-            href="/marketplace"
+            href={
+              isSubscriptionCheckout
+                ? "/pro"
+                : isEventCheckout
+                  ? "/events"
+                  : "/marketplace"
+            }
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-green-700 mb-6"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
             </svg>
-            Back to Marketplace
+            Back to {
+              isSubscriptionCheckout
+                ? "Pro Page"
+                : isEventCheckout
+                  ? "Events"
+                  : "Marketplace"
+            }
           </Link>
         )}
 
@@ -258,12 +350,25 @@ function CheckoutPageContent() {
               </div>
               <div className="py-4 flex items-center justify-between">
                 <span className="text-sm text-gray-600">Price</span>
-                <span className="text-sm font-semibold text-[#21a17a]">LKR {subscriptionPrice.toLocaleString()}</span>
+                <span className="text-sm font-semibold text-[#21a17a]">LKR {displaySubscriptionPrice.toLocaleString()}</span>
               </div>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {directBooking ? (
+              {isEventCheckout ? (
+                <div className="flex justify-between items-center py-4">
+                  <div>
+                    <p className="font-medium text-gray-900">{event?.title ?? 'Event'}</p>
+                    <p className="text-sm text-gray-600 mt-1">{event?.vendor?.businessName ?? 'Organizer'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Date: {event ? new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'TBA'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Time: {event?.time ?? 'TBA'}</p>
+                    <p className="text-sm text-gray-600 mt-1">Location: {event?.location ?? 'TBA'}</p>
+                  </div>
+                  <p className="text-sm font-semibold text-[#21a17a]">
+                    {event?.isFree ? 'Free' : `LKR ${event?.price?.toLocaleString() ?? '0'}`}
+                  </p>
+                </div>
+              ) : directBooking ? (
                 <div className="flex justify-between items-center py-4">
                   <div>
                     <p className="font-medium text-gray-900">{directBooking.listing?.title ?? 'Experience'}</p>
@@ -310,13 +415,12 @@ function CheckoutPageContent() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Cardholder Name</label>
               <input
-                className={`${inputBase} ${errors.cardName ? 'border-red-400' : ''}`}
-                placeholder="John Doe"
+                type="text"
                 value={cardName}
-                onChange={(e) => {
-                  setCardName(e.target.value);
-                  if (errors.cardName) setErrors((prev) => ({ ...prev, cardName: undefined }));
-                }}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCardName(e.target.value)}
+                placeholder="Enter your name"
+                required
+                className={`${inputBase} ${errors.cardName ? 'border-red-400' : ''}`}
               />
               {errors.cardName && <p className="mt-1 text-sm text-red-600">{errors.cardName}</p>}
             </div>
@@ -327,7 +431,7 @@ function CheckoutPageContent() {
                 className={`${inputBase} ${errors.cardNumber ? 'border-red-400' : ''}`}
                 placeholder="1234567890123456"
                 value={cardNumber}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16));
                   if (errors.cardNumber) setErrors((prev) => ({ ...prev, cardNumber: undefined }));
                 }}
@@ -342,8 +446,8 @@ function CheckoutPageContent() {
                   className={`${inputBase} ${errors.expiry ? 'border-red-400' : ''}`}
                   placeholder="MM/YY"
                   value={expiry}
-                  onChange={(e) => {
-                    handleExpiryChange(e);
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    handleExpiryChange(e.target.value);
                     if (errors.expiry) setErrors((prev) => ({ ...prev, expiry: undefined }));
                   }}
                 />
@@ -356,7 +460,7 @@ function CheckoutPageContent() {
                   className={`${inputBase} ${errors.cvv ? 'border-red-400' : ''}`}
                   placeholder="123"
                   value={cvv}
-                  onChange={(e) => {
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setCvv(e.target.value.replace(/\D/g, '').slice(0, 3));
                     if (errors.cvv) setErrors((prev) => ({ ...prev, cvv: undefined }));
                   }}
@@ -371,14 +475,27 @@ function CheckoutPageContent() {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Total Amount</h2>
           <div className="flex justify-between items-center py-4 border-y border-gray-100 mb-4">
             <span className="text-sm text-gray-600">Amount to pay</span>
-            <span className="text-xl font-bold text-[#21a17a]">LKR {payableAmount.toLocaleString()}</span>
+            <span className="text-xl font-bold text-[#21a17a]">LKR {displayPayableAmount.toLocaleString()}</span>
           </div>
-          <button
-            onClick={handlePay}
-            className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
-          >
-            Pay LKR {payableAmount.toLocaleString()}
-          </button>
+          {isEventCheckout && isAlreadyRegistered ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-red-600 font-medium mb-3">
+                You are already registered for this event.
+              </p>
+              <Link href="/events">
+                <button className="w-full rounded-xl border border-gray-300 bg-gray-100 px-5 py-3 text-sm font-semibold text-gray-600 shadow-sm">
+                  Back to Events
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <button
+              onClick={handlePay}
+              className="w-full rounded-xl bg-[#0d9488] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]"
+            >
+              Pay LKR {displayPayableAmount.toLocaleString()}
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -392,3 +509,4 @@ export default function Page() {
     </Suspense>
   );
 }
+
