@@ -31,7 +31,16 @@ export class PaymentsService {
 
     if (user) return user.id;
 
-    throw new Error('User not found for given Clerk ID');
+    // Auto-create user if not found
+    const newUser = await this.prisma.user.create({
+      data: {
+        email: placeholderEmail,
+        fullName: 'Clerk User',
+        passwordHash: 'clerk_auth',
+      },
+    });
+
+    return newUser.id;
   }
 
   async getSubscriptionStatus(rawUserId: string) {
@@ -123,47 +132,94 @@ export class PaymentsService {
   }
 
   async upgradeToPro(rawUserId: string, planType: 'USER' | 'VENDOR', cycle: 'monthly' | 'yearly') {
-    if (!rawUserId) {
-      throw new BadRequestException('Invalid user');
+    try {
+      if (!rawUserId) {
+        throw new BadRequestException('Invalid user');
+      }
+
+      const userId = await this.resolveUserId(rawUserId);
+
+      const expiryDate = new Date();
+      if (cycle === 'yearly') {
+        expiryDate.setDate(expiryDate.getDate() + 365); // 365 days from now
+      } else {
+        expiryDate.setDate(expiryDate.getDate() + 30); // 30 days from now
+      }
+
+      if (planType === 'USER') {
+        // Ensure LocalTourist exists first
+        let tourist = await this.prisma.localTourist.findUnique({
+          where: { userId },
+        });
+
+        if (!tourist) {
+          // Create minimal valid record FIRST
+          tourist = await this.prisma.localTourist.create({
+            data: {
+              user: {
+                connect: { id: userId },
+              },
+              fullName: 'Clerk User',
+              userType: 'TOURIST',
+              preferredLanguage: 'en',
+            },
+          });
+        }
+
+        // THEN update subscription
+        await this.prisma.localTourist.update({
+          where: { userId },
+          data: {
+            isProUser: true,
+            proSubscriptionExpiry: expiryDate,
+          },
+        });
+      } else if (planType === 'VENDOR') {
+        // Ensure Vendor exists first
+        let vendor = await this.prisma.vendor.findUnique({
+          where: { userId },
+        });
+
+        if (!vendor) {
+          vendor = await this.prisma.vendor.create({
+            data: {
+              user: {
+                connect: { id: userId },
+              },
+              businessName: 'Clerk Vendor',
+              verifiedStatus: 'PENDING',
+              profileComplete: false,
+              isActive: true,
+              quantity: 0,
+            },
+          });
+        }
+
+        // THEN update subscription
+        await this.prisma.vendor.update({
+          where: { userId },
+          data: {
+            isProUser: true,
+            proSubscriptionExpiry: expiryDate,
+          },
+        });
+      }
+
+      return {
+        message: 'Subscription upgraded successfully',
+        userId,
+        planType,
+        cycle,
+        isProUser: true,
+        proSubscriptionExpiry: expiryDate.toISOString(),
+      };
+    } catch (error: any) {
+      console.error('UPGRADE ERROR FULL:', error);
+
+      throw new BadRequestException(
+        error?.message || 'Upgrade failed'
+      );
     }
-
-    const userId = await this.resolveUserId(rawUserId);
-
-    const expiryDate = new Date();
-    if (cycle === 'yearly') {
-      expiryDate.setDate(expiryDate.getDate() + 365); // 365 days from now
-    } else {
-      expiryDate.setDate(expiryDate.getDate() + 30); // 30 days from now
-    }
-
-    if (planType === 'USER') {
-      // Update LocalTourist
-      await this.prisma.localTourist.update({
-        where: { userId },
-        data: {
-          isProUser: true,
-          proSubscriptionExpiry: expiryDate,
-        },
-      });
-    } else if (planType === 'VENDOR') {
-      // Update Vendor
-      await this.prisma.vendor.update({
-        where: { userId },
-        data: {
-          isProUser: true,
-          proSubscriptionExpiry: expiryDate,
-        },
-      });
-    }
-
-    return {
-      message: 'Subscription upgraded successfully',
-      userId,
-      planType,
-      cycle,
-      isProUser: true,
-      proSubscriptionExpiry: expiryDate.toISOString(),
-    };
   }
 
   checkout(amount: number, method: 'CARD' | 'CASH') {
