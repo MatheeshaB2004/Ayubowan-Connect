@@ -12,7 +12,7 @@ const navItems = [
   { href: '/landing#team', label: 'Team' },
 ];
 
-const appHomeHref = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'http://localhost:3000/';
+const appHomeHref = process.env.NEXT_PUBLIC_MAIN_APP_URL || 'https://app.ayubowanconnect.com/';
 
 const GlobalHeader: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
