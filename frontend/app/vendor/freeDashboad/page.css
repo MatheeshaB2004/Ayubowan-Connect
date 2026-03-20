@@ -1,20 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
 :root {
-  --bg-color: #f9fafb;
-  --card-bg: #ffffff;
+  --bg-color: var(--ay-bg-soft);
+  --card-bg: var(--ay-bg);
 
-  --primary-green: #0f766e;
-  --primary-hover: #0d5f59;
-  --primary-light: #ccfbf1;
+  --primary-green: var(--ay-brand);
+  --primary-hover: var(--ay-brand-hover);
+  --primary-light: var(--ay-brand-light);
 
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
+  --text-main: var(--ay-text-dark);
+  --text-muted: var(--ay-text-muted);
+  --border-color: var(--ay-border);
 
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --success: var(--ay-success);
+  --warning: var(--ay-warning);
+  --danger: var(--ay-danger);
 }
 
 html {
@@ -25,7 +23,7 @@ html {
   display: flex;
   min-height: 100vh;
   margin-top: 0px;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--ay-font-body);
   background-color: var(--bg-color);
   color: var(--text-main);
 }

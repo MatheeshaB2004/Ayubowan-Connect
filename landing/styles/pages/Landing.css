@@ -42,7 +42,7 @@
 }
 
 .hero-title {
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-size: 3rem;
   line-height: 1.2;
   margin-bottom: 1.5rem;
@@ -146,7 +146,7 @@
 .tag-waikawa { color: var(--waikawa); }
 
 .section-title {
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-size: 2.25rem;
   color: #111827;
   margin-bottom: 2rem;
@@ -325,7 +325,7 @@
 }
 
 .card-title {
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-size: 1.75rem;
   margin-bottom: 1rem;
   line-height: 1.2;
@@ -441,7 +441,7 @@
 }
 
 .large-image-text h3 {
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-size: 2.5rem;
   color: white;
   margin-bottom: 0.75rem;
@@ -519,7 +519,7 @@
 }
 
 .benefit-box h3 {
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-size: 1.875rem;
   margin-bottom: 1rem;
   position: relative;
@@ -627,7 +627,7 @@
 }
 
 .team-name {
-    font-family: var(--font-serif);
+    font-family: var(--ay-font-heading);
     font-size: 1.25rem;
     font-weight: 500;
     margin-bottom: 0;
@@ -668,7 +668,7 @@
 }
 
 .team-footer h3 {
-    font-family: var(--font-serif);
+    font-family: var(--ay-font-heading);
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
     color: white;
@@ -740,7 +740,7 @@
 }
 
 .story-header {
-    font-family: var(--font-serif);
+    font-family: var(--ay-font-heading);
     font-size: 1.25rem;
     margin-bottom: 0.5rem;
 }
@@ -1001,7 +1001,7 @@
 }
 
 .offer-card-title {
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-size: 1.25rem;
   font-weight: 500;
   margin-bottom: 0.5rem;
@@ -1099,10 +1099,10 @@
   margin-bottom: 1.5rem;
 }
 
-.offer-card-light-events .offer-icon-wrapper-light { background: rgba(55,150,131,0.1); color: #379683; }
+.offer-card-light-events .offer-icon-wrapper-light { background: rgba(55,150,131,0.1); color: var(--ay-brand); }
 .offer-card-light-experiences .offer-icon-wrapper-light { background: rgba(87,115,153,0.1); color: #577399; }
 .offer-card-light-marketplace .offer-icon-wrapper-light { background: rgba(141,90,151,0.1); color: #8D5A97; }
-.offer-card-light-assistant .offer-icon-wrapper-light { background: rgba(45,122,106,0.1); color: #2d7a6a; }
+.offer-card-light-assistant .offer-icon-wrapper-light { background: rgba(45,122,106,0.1); color: var(--ay-brand-hover); }
 
 .offer-card-light .offer-card-title {
   color: #111827;
@@ -1126,10 +1126,10 @@
   text-decoration: none;
 }
 
-.offer-card-light-events .offer-link-light { color: #379683; }
+.offer-card-light-events .offer-link-light { color: var(--ay-brand); }
 .offer-card-light-experiences .offer-link-light { color: #577399; }
 .offer-card-light-marketplace .offer-link-light { color: #8D5A97; }
-.offer-card-light-assistant .offer-link-light { color: #2d7a6a; }
+.offer-card-light-assistant .offer-link-light { color: var(--ay-brand-hover); }
 
 .offer-link-light:hover {
   gap: 0.5rem;
@@ -1243,28 +1243,28 @@
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: #379683;
+  background-color: var(--ay-brand);
   transform: scaleX(0);
   transition: transform 0.3s ease, background-color 0.3s ease;
   transform-origin: left;
 }
 
 .pro-tab-btn:hover {
-  color: #379683;
+  color: var(--ay-brand);
 }
 
 .pro-tab-btn:not(.active):hover::after {
   transform: scaleX(1);
-  background-color: #379683;
+  background-color: var(--ay-brand);
 }
 
 .pro-tab-btn.active {
-  color: #379683;
+  color: var(--ay-brand);
 }
 
 .pro-tab-btn.active::after {
   transform: scaleX(1);
-  background-color: #379683;
+  background-color: var(--ay-brand);
 }
 
 .pro-content-box {
@@ -1406,7 +1406,7 @@
   position: absolute;
   top: 1rem;
   right: 1.25rem;
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   letter-spacing: -0.05em;
   opacity: 0.05;
   color: #111827;
@@ -1426,8 +1426,8 @@
 }
 
 /* Icon box colors — brand palette */
-.hiw-card-1 .hiw-icon-wrap { background: rgba(55,150,131,0.1); color: #379683; }
-.hiw-card-2 .hiw-icon-wrap { background: rgba(45,122,106,0.1); color: #2d7a6a; }
+.hiw-card-1 .hiw-icon-wrap { background: rgba(55,150,131,0.1); color: var(--ay-brand); }
+.hiw-card-2 .hiw-icon-wrap { background: rgba(45,122,106,0.1); color: var(--ay-brand-hover); }
 .hiw-card-3 .hiw-icon-wrap { background: rgba(87,115,153,0.1); color: #577399; }
 .hiw-card-4 .hiw-icon-wrap { background: rgba(141,90,151,0.1); color: #8D5A97; }
 
@@ -1457,8 +1457,8 @@
 }
 
 /* Link colors — brand palette */
-.hiw-card-1 .hiw-link { color: #379683; }
-.hiw-card-2 .hiw-link { color: #2d7a6a; }
+.hiw-card-1 .hiw-link { color: var(--ay-brand); }
+.hiw-card-2 .hiw-link { color: var(--ay-brand-hover); }
 .hiw-card-3 .hiw-link { color: #577399; }
 .hiw-card-4 .hiw-link { color: #8D5A97; }
 
@@ -1527,8 +1527,8 @@
 }
 
 /* Top bar — all brand palette */
-.tech-card-frontend::before { background: linear-gradient(90deg, #379683, #4db8a0); }
-.tech-card-backend::before  { background: linear-gradient(90deg, #2d7a6a, #379683); }
+.tech-card-frontend::before { background: linear-gradient(90deg, var(--ay-brand), var(--ay-brand-light)); }
+.tech-card-backend::before  { background: linear-gradient(90deg, var(--ay-brand-hover), var(--ay-brand)); }
 .tech-card-database::before { background: linear-gradient(90deg, #577399, #3d6fa0); }
 .tech-card-tooling::before  { background: linear-gradient(90deg, #8D5A97, #577399); }
 
@@ -1551,8 +1551,8 @@
 }
 
 /* Icon boxes — brand palette */
-.tech-card-frontend .tech-icon-box { background: rgba(55,150,131,0.1); color: #379683; }
-.tech-card-backend .tech-icon-box  { background: rgba(45,122,106,0.1); color: #2d7a6a; }
+.tech-card-frontend .tech-icon-box { background: rgba(55,150,131,0.1); color: var(--ay-brand); }
+.tech-card-backend .tech-icon-box  { background: rgba(45,122,106,0.1); color: var(--ay-brand-hover); }
 .tech-card-database .tech-icon-box { background: rgba(87,115,153,0.1); color: #577399; }
 .tech-card-tooling .tech-icon-box  { background: rgba(141,90,151,0.1); color: #8D5A97; }
 
@@ -1586,8 +1586,8 @@
 }
 
 /* Tool pills — brand palette */
-.tech-card-frontend .tech-tool-pill { background: rgba(55,150,131,0.1); color: #379683; }
-.tech-card-backend .tech-tool-pill  { background: rgba(45,122,106,0.1); color: #2d7a6a; }
+.tech-card-frontend .tech-tool-pill { background: rgba(55,150,131,0.1); color: var(--ay-brand); }
+.tech-card-backend .tech-tool-pill  { background: rgba(45,122,106,0.1); color: var(--ay-brand-hover); }
 .tech-card-database .tech-tool-pill { background: rgba(87,115,153,0.1); color: #577399; }
 .tech-card-tooling .tech-tool-pill  { background: rgba(141,90,151,0.1); color: #8D5A97; }
 
@@ -1747,7 +1747,7 @@
 }
 
 .ready-title {
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-size: 2.5rem;
   font-weight: 500;
   margin-bottom: 1rem;
@@ -1879,7 +1879,7 @@
   font-weight: 700;
   color: white;
   line-height: 1;
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
 }
 
 .hero-stat-label {
@@ -1981,7 +1981,7 @@
   font-size: 2.5rem;
   font-weight: 800;
   color: rgba(255, 255, 255, 0.12);
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   line-height: 1;
   position: absolute;
   top: 1.25rem;

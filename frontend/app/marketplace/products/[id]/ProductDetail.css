@@ -108,7 +108,7 @@
 
 .product-title {
   font-size: 2.25rem;
-  font-family: serif;
+  font-family: var(--ay-font-heading);
   color: #111827;
   margin-bottom: 1rem;
 }
@@ -248,7 +248,7 @@
 .price-value {
   font-size: 1.875rem;
   /* 3xl */
-  font-family: serif;
+  font-family: var(--ay-font-heading);
   color: #111827;
 }
 
@@ -523,7 +523,7 @@
   font-weight: 700;
   margin-bottom: 2rem;
   color: #111827;
-  font-family: serif;
+  font-family: var(--ay-font-heading);
 }
 
 .specs-grid {

@@ -55,7 +55,7 @@
 
 /* Logo */
 .brand-logo {
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-size: 1.5rem;
   font-weight: 700;
   font-style: italic;
@@ -117,7 +117,7 @@
 
 /* Brand Text Spans */
 .brand-ayubowan, .brand-connect {
-  font-family: var(--font-arima), serif;
+  font-family: var(--ay-font-heading);
   font-weight: 700;
   transition: all 0.5s ease;
 }
@@ -426,7 +426,7 @@
 
 .traveller-name, .vendor-name {
   font-size: 0.875rem;
-  font-family: var(--font-serif);
+  font-family: var(--ay-font-heading);
   font-style: italic;
 }
 
