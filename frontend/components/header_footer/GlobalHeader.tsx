@@ -93,14 +93,16 @@ const GlobalHeader: React.FC = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          {activeRole === 'vendor' ? (
-            <NavbarVendor textColorClass={textColorClass} />
-          ) : isSignedIn ? (
-            <NavbarTraveller textColorClass={textColorClass} />
-          ) : (
-            <NavbarGuest textColorClass={textColorClass} />
-          )}
+          {/* Desktop Navigation - hidden on mobile */}
+          <div className="hidden md:flex flex-1 items-center justify-end h-full">
+            {activeRole === 'vendor' ? (
+              <NavbarVendor textColorClass={textColorClass} />
+            ) : isSignedIn ? (
+              <NavbarTraveller textColorClass={textColorClass} />
+            ) : (
+              <NavbarGuest textColorClass={textColorClass} />
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden z-10">
