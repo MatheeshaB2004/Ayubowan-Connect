@@ -164,9 +164,9 @@ export function CreateEventDialog({ open, token, userId, onClose, onCreated }: P
     if (!form.district)      { setError("Please select a district."); return; }
     if (!form.startDate)     { setError("Start date is required."); return; }
     if (!form.endDate)       { setError("End date is required."); return; }
-    if (form.startDate < todayDateString) { setError("Start date cannot be before today."); return; }
-    if (form.endDate < todayDateString) { setError("End date cannot be before today."); return; }
-    if (form.endDate < form.startDate) { setError("End date cannot be earlier than start date."); return; }
+    if (form.startDate < todayDateString) { setError("Events cannot be scheduled in the past. Enter a date from today onwards."); return; }
+    if (form.endDate < todayDateString) { setError("End date must be today or in the future."); return; }
+    if (form.endDate < form.startDate) { setError("Ohh! End date cannot be before start date."); return; }
     if (!form.time.trim())   { setError("Time is required."); return; }
     if (!form.description.trim()) { setError("Description is required."); return; }
     if (!form.isFree && !form.price.trim()) { setError("Price is required unless the event is marked free."); return; }
