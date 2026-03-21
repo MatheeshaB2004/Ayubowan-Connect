@@ -10,45 +10,43 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class BookingService {
   private readonly logger = new Logger(BookingService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
    * Resolve a Clerk user ID to a numeric database userId.
    * Only works with existing User records - does NOT create placeholder users.
    */
-  private async resolveUserId(clerkUserId: string): Promise<number> {
-    if (!clerkUserId) {
-      throw new Error('Missing Clerk user ID');
+  private async resolveUserId(rawUserId: string): Promise<number> {
+    if (!rawUserId) {
+      throw new Error('Missing user ID');
     }
-
-    let user = await this.prisma.user.findFirst({
+    this.logger.log(`RAW USER ID: ${rawUserId}`);
+    const user = await this.prisma.user.findFirst({
       where: {
-        email: {
-          contains: clerkUserId,
-        },
+        OR: [
+          // case 1: normal email users
+          { email: rawUserId },
+
+          // case 2: users stored as clerk placeholder email
+          { email: `${rawUserId}@placeholder.local` },
+
+          // placeholder email WITH clerk_user prefix
+          { email: `clerk_${rawUserId}@placeholder.local` },
+        ],
       },
       include: {
         localTourist: true,
       },
     });
+    this.logger.log(`FOUND USER: ${user?.id} - ${user?.email}`);
 
     if (!user) {
-      user = await this.prisma.user.findFirst({
-        where: {
-          localTourist: {
-            isNot: null,
-          },
-        },
-        include: {
-          localTourist: true,
-        },
-      });
+      throw new Error(`User not found for: ${rawUserId}`);
     }
 
-    if (!user || !user.localTourist) {
-      throw new Error('User profile not found.');
+    if (!user.localTourist) {
+      return -1;
     }
-
     return user.localTourist.userId;
   }
 
@@ -136,6 +134,10 @@ export class BookingService {
   ) {
     // --- resolve identifiers ------------------------------------------------
     const userId = await this.resolveUserId(rawUserId);
+
+    if (userId === -1) {
+      throw new BadRequestException('User is not a local tourist');
+    }
     const listingId = Number(data.listingId);
     const guests = Number(data.participants) || 1;
     const slotId = data.slotId ? Number(data.slotId) : null;
@@ -235,6 +237,10 @@ export class BookingService {
     try {
       const userId = await this.resolveUserId(rawUserId);
 
+      if (!userId) {
+        return [];
+      }
+
       const bookings = await this.prisma.booking.findMany({
         where: {
           localTouristId: userId,
@@ -258,8 +264,8 @@ export class BookingService {
       const slots =
         slotIds.length > 0
           ? await this.prisma.availabilitySlot.findMany({
-              where: { id: { in: slotIds } },
-            })
+            where: { id: { in: slotIds } },
+          })
           : [];
 
       const slotMap = new Map(slots.map((s) => [s.id, s]));
@@ -304,8 +310,8 @@ export class BookingService {
     const slots =
       slotIds.length > 0
         ? await this.prisma.availabilitySlot.findMany({
-            where: { id: { in: slotIds } },
-          })
+          where: { id: { in: slotIds } },
+        })
         : [];
 
     const slotMap = new Map(slots.map((s) => [s.id, s]));

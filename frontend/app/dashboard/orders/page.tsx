@@ -66,16 +66,15 @@ export default function OrdersPage() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const hasFetched = useRef(false);
+  
 
   const fetchOrders = useCallback(async (userId: string) => {
-    if (!userId) return;
-
+     if (!isSignedIn || !user) return;
+    const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
     try {
       // Fetch bookings
       const response = await fetch(`${API_BASE}/bookings`, {
-        headers: {
-          'x-user-id': userId || '',
-        },
+        headers: { 'x-user-id': userIdentifier },
       });
 
       if (response.ok) {
@@ -510,5 +509,3 @@ export default function OrdersPage() {
     </div>
   );
 }
-
-

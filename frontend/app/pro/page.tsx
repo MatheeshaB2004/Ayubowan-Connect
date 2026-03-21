@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from "@/context/AuthContext";
+import { useUser } from '@clerk/nextjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,6 +25,7 @@ const API_BASE = API_BASE_URL;
 
 export default function ProPage() {
   const { user, role } = useAuth();
+  const { user: clerkUser } = useUser();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     isProUser: boolean;
@@ -52,16 +54,18 @@ export default function ProPage() {
       ? 'Renew Subscription'
       : 'Upgrade to Pro';
 
-  useEffect(() => {
+    useEffect(() => {
     if (!user?.id) {
       setSubscriptionStatus(null);
       return;
     }
 
+    const userIdentifier = clerkUser?.primaryEmailAddress?.emailAddress || user.id;
+
     const fetchStatus = async () => {
       try {
-        const response = await fetch(`${API_BASE}/payments/status`, {
-          headers: { 'x-user-id': user.id },
+        const response = await fetch(`${API_BASE}/subscriptions/status`, {
+          headers: { 'x-user-id': userIdentifier },
         });
         if (!response.ok) return;
         const data = await response.json();
@@ -76,19 +80,8 @@ export default function ProPage() {
     };
 
     fetchStatus();
+  }, [user?.id, clerkUser]);
 
-    // Refresh status when page becomes visible (e.g., after returning from payment)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchStatus();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [user?.id]);
 
   const formattedExpiry = useMemo(() => {
     const expiry = subscriptionStatus?.proSubscriptionExpiry;
