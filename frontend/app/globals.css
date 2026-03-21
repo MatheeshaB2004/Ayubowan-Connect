@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "../styles/design-tokens.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -80,7 +78,11 @@ html {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: Inter, Arial, Helvetica, sans-serif;
+  font-family: var(--ay-font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--ay-font-heading);
 }
 
 /* Animation for Logo */

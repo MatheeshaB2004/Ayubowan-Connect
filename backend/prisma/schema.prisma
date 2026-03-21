@@ -4,27 +4,25 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL") 
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id           Int           @id @default(autoincrement()) @map("user_id")
-  fullName     String        @map("full_name")
-  email        String        @unique
-  passwordHash String        @map("password_hash")
-  role         UserRole      @default(USER)
-  lastLoginAt  DateTime?     @map("last_login_at")
-  isActive     Boolean       @default(true) @map("is_active")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  localTourist LocalTourist?
-  reviews      Review[]
-  profileViews ProfileView[]
-  listingViews ListingView[]
-  vendor       Vendor?
-
+  id                 Int                 @id @default(autoincrement()) @map("user_id")
+  fullName           String              @map("full_name")
+  email              String              @unique
+  passwordHash       String              @map("password_hash")
+  role               UserRole            @default(USER)
+  lastLoginAt        DateTime?           @map("last_login_at")
+  isActive           Boolean             @default(true) @map("is_active")
+  createdAt          DateTime            @default(now()) @map("created_at")
   cart               Cart?
   eventRegistrations EventRegistration[]
+  listingViews       ListingView[]
+  localTourist       LocalTourist?
+  profileViews       ProfileView[]
+  reviews            Review[]
+  vendor             Vendor?
 
   @@map("users")
 }
@@ -41,8 +39,8 @@ model LocalTourist {
   proSubscriptionExpiry DateTime?     @map("pro_subscription_expiry")
   createdAt             DateTime      @default(now()) @map("created_at")
   updatedAt             DateTime      @updatedAt @map("updated_at")
-  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   Booking               Booking[]
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("local_tourist")
 }
@@ -50,29 +48,29 @@ model LocalTourist {
 model Vendor {
   id                    Int                  @id @default(autoincrement()) @map("vendor_id")
   userId                Int                  @unique @map("user_id")
-  clerkUserId           String?              @unique @map("clerk_user_id")
   businessName          String               @map("business_name")
   shortTagline          String?              @map("short_tagline")
-  contactPhone          String?              @map("contact_phone")
   establishedYear       Int?                 @map("established_year")
   ratingAverage         Float                @default(0) @map("rating_average")
   ratingCount           Int                  @default(0) @map("rating_count")
   verifiedStatus        VerifiedStatus       @default(PENDING) @map("verified_status")
-  isProUser             Boolean              @default(false) @map("is_pro_user")
-  proSubscriptionExpiry DateTime?            @map("pro_subscription_expiry")
   profileComplete       Boolean              @default(false) @map("profile_complete")
   isActive              Boolean              @default(true) @map("is_active")
   createdAt             DateTime             @default(now()) @map("created_at")
   updatedAt             DateTime             @updatedAt @map("updated_at")
+  contactPhone          String?              @map("contact_phone")
+  isProUser             Boolean              @default(false) @map("is_pro_user")
+  proSubscriptionExpiry DateTime?            @map("pro_subscription_expiry")
   quantity              Int                  @default(0)
-  listings              Listing[]
-  locations             VendorLocation[]
-  goals                 Goal[]
-  profileViews          ProfileView[]
-  events                Event[]
-  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clerkUserId           String?              @unique @map("clerk_user_id")
   VendorAvailability    VendorAvailability[]
   Booking               Booking[]
+  events                Event[]
+  goals                 Goal[]
+  listings              Listing[]
+  profileViews          ProfileView[]
+  locations             VendorLocation[]
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("vendors")
 }
@@ -109,18 +107,16 @@ model ListingCategory {
 }
 
 model Listing {
-  id          Int         @id @default(autoincrement()) @map("listing_id")
-  vendorId    Int         @map("vendor_id")
-  categoryId  Int         @map("category_id")
-  addressId   Int         @map("address_id")
-  listingType ListingType @default(EXPERIENCE) @map("listing_type")
-
+  id               Int                 @id @default(autoincrement()) @map("listing_id")
+  vendorId         Int                 @map("vendor_id")
+  categoryId       Int                 @map("category_id")
+  addressId        Int                 @map("address_id")
+  listingType      ListingType         @default(EXPERIENCE) @map("listing_type")
   title            String
   shortDescription String              @map("short_description")
   longDescription  String?             @map("long_description")
   priceMin         Float               @map("price_min")
   priceMax         Float?              @map("price_max")
-  stock            Int?                @map("stock")
   priceNote        String?             @map("price_note")
   duration         String?
   capacity         Int?
@@ -136,16 +132,17 @@ model Listing {
   displayPriority  Int                 @default(0) @map("display_priority")
   createdAt        DateTime            @default(now()) @map("created_at")
   updatedAt        DateTime            @updatedAt @map("updated_at")
+  stock            Int?                @map("stock")
+  AvailabilitySlot AvailabilitySlot[]
+  bookings         Booking[]
+  cartItems        CartItem[]
   media            ListingMedia[]
   search           ListingSearchIndex?
+  listingViews     ListingView[]
   location         VendorLocation      @relation(fields: [addressId], references: [id])
   category         ListingCategory     @relation(fields: [categoryId], references: [id])
   vendor           Vendor              @relation(fields: [vendorId], references: [id], onDelete: Cascade)
   reviews          Review[]
-  bookings         Booking[]
-  cartItems        CartItem[]
-  listingViews     ListingView[]
-  AvailabilitySlot AvailabilitySlot[]
 
   @@index([vendorId])
   @@index([categoryId])
@@ -194,9 +191,9 @@ model Review {
   userId    Int           @map("user_id")
   rating    Int
   comment   String
-  reply     String?
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")
+  reply     String?
   media     ReviewMedia[]
   listing   Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -208,33 +205,26 @@ model Review {
 }
 
 model VendorAvailability {
-  id       Int      @id @default(autoincrement())
-  vendorId Int
-  date     DateTime
-
-  vendor Vendor @relation(fields: [vendorId], references: [id])
-
-  slots AvailabilitySlot[]
-
-  createdAt DateTime @default(now())
+  id        Int                @id @default(autoincrement())
+  vendorId  Int
+  date      DateTime
+  createdAt DateTime           @default(now())
+  slots     AvailabilitySlot[]
+  vendor    Vendor             @relation(fields: [vendorId], references: [id])
 
   @@unique([vendorId, date])
 }
 
 model AvailabilitySlot {
-  id Int @id @default(autoincrement())
-
+  id             Int                @id @default(autoincrement())
   availabilityId Int
+  startTime      DateTime
+  endTime        DateTime
+  bookedGuests   Int                @default(0)
+  maxGuests      Int                @default(35)
   listingId      Int
-
-  startTime DateTime
-  endTime   DateTime
-
-  maxGuests    Int @default(35)
-  bookedGuests Int @default(0)
-
-  availability VendorAvailability @relation(fields: [availabilityId], references: [id])
-  listing      Listing            @relation(fields: [listingId], references: [id])
+  availability   VendorAvailability @relation(fields: [availabilityId], references: [id])
+  listing        Listing            @relation(fields: [listingId], references: [id])
 
   @@index([listingId])
 }
@@ -257,9 +247,8 @@ model ProfileView {
   vendorId  Int      @map("vendor_id")
   userId    Int      @map("user_id")
   createdAt DateTime @default(now()) @map("created_at")
-
-  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@unique([vendorId, userId])
   @@index([vendorId])
@@ -269,24 +258,22 @@ model ProfileView {
 
 model Booking {
   id             Int           @id @default(autoincrement()) @map("booking_id")
-  vendorId       Int           @map("vendor_id")
-  localTouristId Int           @map("local_tourist_id")
   listingId      Int           @map("listing_id")
-  slotId         Int?
   bookingDate    DateTime      @map("booking_date")
   status         BookingStatus @default(PENDING)
-
-  guests     Int       @default(1)
-  totalPrice Float     @default(0) @map("total_price")
-  notes      String?
-  approvedAt DateTime?
-  rejectedAt DateTime?
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
-
-  vendor       Vendor       @relation(fields: [vendorId], references: [id])
-  localTourist LocalTourist @relation(fields: [localTouristId], references: [userId])
-  listing      Listing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  guests         Int           @default(1)
+  totalPrice     Float         @default(0) @map("total_price")
+  notes          String?
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  localTouristId Int           @map("local_tourist_id")
+  vendorId       Int           @map("vendor_id")
+  approvedAt     DateTime?
+  rejectedAt     DateTime?
+  slotId         Int?
+  listing        Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  localTourist   LocalTourist  @relation(fields: [localTouristId], references: [userId])
+  vendor         Vendor        @relation(fields: [vendorId], references: [id])
 
   @@index([listingId])
   @@map("bookings")
@@ -298,10 +285,9 @@ model Goal {
   target           Int      @map("target")
   baselineBookings Int      @map("baseline_bookings")
   createdAt        DateTime @default(now()) @map("created_at")
-  expiresAt        DateTime
   isActive         Boolean  @default(true) @map("is_active")
-
-  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  expiresAt        DateTime
+  vendor           Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@unique([vendorId, isActive])
   @@index([vendorId])
@@ -313,9 +299,8 @@ model ListingView {
   listingId Int
   userId    Int?
   createdAt DateTime @default(now())
-
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  user    User?   @relation(fields: [userId], references: [id])
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([listingId])
   @@index([createdAt])
@@ -323,68 +308,60 @@ model ListingView {
 }
 
 model Cart {
-  id        Int      @id @default(autoincrement()) @map("cart_id")
-  userId    Int?     @unique @map("user_id")
-  sessionId String?  @unique @map("session_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  items CartItem[]
-  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int        @id @default(autoincrement()) @map("cart_id")
+  userId    Int?       @unique @map("user_id")
+  sessionId String?    @unique @map("session_id")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  items     CartItem[]
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("carts")
 }
 
 model CartItem {
-  id        Int  @id @default(autoincrement()) @map("cart_item_id")
-  cartId    Int  @map("cart_id")
-  listingId Int? @map("listing_id")
-  bookingId Int? @map("booking_id")
-
-  quantity Int      @default(1)
-  addedAt  DateTime @default(now()) @map("added_at")
-
-  cart    Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  listing Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement()) @map("cart_item_id")
+  cartId    Int      @map("cart_id")
+  listingId Int?     @map("listing_id")
+  quantity  Int      @default(1)
+  addedAt   DateTime @default(now()) @map("added_at")
+  bookingId Int?     @map("booking_id")
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   @@unique([cartId, listingId])
   @@map("cart_items")
 }
 
 model Event {
-  id              Int       @id @default(autoincrement())
-  title           String
-  description     String?
-  startDate       DateTime  @map("start_date")
-  endDate         DateTime? @map("end_date")
-  time            String? // "09:00 AM - 12:00 PM"
-  location        String // display name e.g. "Colombo"
-  contactPhone    String?   @map("contact_phone")
-  contactEmail    String?   @map("contact_email")
-  contactWebsite  String?   @map("contact_website")
-  city            String
-  district        String
-  province        String
-  imageUrl        String?   @map("image_url") // Cloudinary URL
-  category        String? // "Cooking", "Cultural", etc.
-  price           Float? // null = free
-  isFree          Boolean   @default(false) @map("is_free")
-  maxParticipants Int?      @map("max_participants")
-
-  whatYouWillLearn String[] @default([]) @map("what_you_will_learn")
-  importantInfo    String[] @default([]) @map("important_info")
-
-  vendorId Int?
-  vendor   Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-
-  status      EventStatus @default(PUBLISHED)
-  isPublished Boolean     @default(true) @map("is_published")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  registrations    EventRegistration[]
+  id               Int                 @id @default(autoincrement())
+  title            String
+  description      String?
+  location         String
+  city             String
+  district         String
+  province         String
+  status           EventStatus         @default(PUBLISHED)
+  vendorId         Int?
+  category         String?
+  createdAt        DateTime            @default(now()) @map("created_at")
+  endDate          DateTime?           @map("end_date")
+  imageUrl         String?             @map("image_url")
+  isFree           Boolean             @default(false) @map("is_free")
+  isPublished      Boolean             @default(true) @map("is_published")
+  maxParticipants  Int?                @map("max_participants")
+  price            Float?
+  startDate        DateTime            @map("start_date")
+  time             String?
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+  importantInfo    String[]            @default([]) @map("important_info")
+  whatYouWillLearn String[]            @default([]) @map("what_you_will_learn")
+  contactEmail     String?             @map("contact_email")
+  contactPhone     String?             @map("contact_phone")
+  contactWebsite   String?             @map("contact_website")
   galleryImages    EventGalleryImage[]
+  registrations    EventRegistration[]
+  vendor           Vendor?             @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@map("events")
 }
@@ -394,9 +371,8 @@ model EventRegistration {
   userId    Int      @map("user_id")
   eventId   Int      @map("event_id")
   createdAt DateTime @default(now()) @map("created_at")
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@index([userId])
@@ -410,8 +386,7 @@ model EventGalleryImage {
   imageUrl     String   @map("image_url")
   displayOrder Int      @default(0) @map("display_order")
   uploadedAt   DateTime @default(now()) @map("uploaded_at")
-
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@index([eventId])
   @@map("event_gallery_images")

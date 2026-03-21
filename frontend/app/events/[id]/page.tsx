@@ -14,6 +14,7 @@ import { fetchEventById, registerForEvent, fetchUserRegisteredEvents, deleteEven
 import { EventGallery } from "../components/EventGallery";
 import { Event, EventGalleryImage } from "../types/events";
 import { formatFullDate, formatPrice } from "../lib/utils";
+import { API_BASE_URL } from "@/lib/api";
 
 // Fallback data shown when vendor hasn't provided content
 const FALLBACK_LEARN = [
@@ -231,7 +232,7 @@ export default function EventDetailPage() {
   if (loading) return (
     <div className="min-h-screen bg-[#f9fafb] flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-[#0d9488] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-lochinvar border-t-transparent rounded-full animate-spin" />
         <p className="text-sm text-gray-500">Loading event...</p>
       </div>
     </div>
@@ -242,7 +243,7 @@ export default function EventDetailPage() {
       <div className="text-center">
         <p className="text-5xl font-bold text-gray-200 mb-3">404</p>
         <p className="text-gray-500 mb-5">Event not found</p>
-        <button onClick={() => router.push("/events")} className="text-sm text-[#0d9488] underline">
+        <button onClick={() => router.push("/events")} className="text-sm text-lochinvar underline">
           ← Back to Events
         </button>
       </div>
@@ -337,10 +338,10 @@ export default function EventDetailPage() {
               <div className="relative rounded-2xl overflow-hidden mb-6">
                 {event.imageUrl
                   ? <Image src={event.imageUrl} alt={event.title} className="w-full h-64 sm:h-80 object-cover" width={1200} height={320} priority />
-                  : <div className="w-full h-64 bg-[#e8f5f2] flex items-center justify-center"><Calendar className="w-16 h-16 text-[#0d9488]/30" /></div>
+                  : <div className="w-full h-64 bg-[#e8f5f2] flex items-center justify-center"><Calendar className="w-16 h-16 text-lochinvar/30" /></div>
                 }
                 <div className="absolute top-4 right-4">
-                  <span className={`text-sm font-semibold px-3 py-1.5 rounded-lg shadow-md ${isFree ? "bg-[#0d9488] text-white" : "bg-[#f59e0b] text-white"}`}>
+                  <span className={`text-sm font-semibold px-3 py-1.5 rounded-lg shadow-md ${isFree ? "bg-lochinvar text-white" : "bg-[#f59e0b] text-white"}`}>
                     {formatPrice(event.price, event.isFree)}
                   </span>
                 </div>
@@ -355,7 +356,7 @@ export default function EventDetailPage() {
 
               {/* Category + Title + Vendor */}
               {event.category && (
-                <span className="inline-block text-xs font-medium text-[#0d9488] border border-[#0d9488]/40 rounded-full px-3 py-1 bg-white mb-3">
+                <span className="inline-block text-xs font-medium text-lochinvar border border-lochinvar/40 rounded-full px-3 py-1 bg-white mb-3">
                   {event.category}
                 </span>
               )}
@@ -364,10 +365,10 @@ export default function EventDetailPage() {
 
               {/* 4-tile meta */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-                <MetaTile icon={<Calendar className="w-5 h-5 text-[#0d9488]" />} label="Date">{formatFullDate(event.startDate)}</MetaTile>
-                <MetaTile icon={<Clock className="w-5 h-5 text-[#0d9488]" />}    label="Time">{event.time ?? "TBA"}</MetaTile>
-                <MetaTile icon={<MapPin className="w-5 h-5 text-[#0d9488]" />}   label="Location">{event.location}</MetaTile>
-                <MetaTile icon={<Users className="w-5 h-5 text-[#0d9488]" />}    label="Participants">{event.participantCount}/{event.maxParticipants ?? "∞"}</MetaTile>
+                <MetaTile icon={<Calendar className="w-5 h-5 text-lochinvar" />} label="Date">{formatFullDate(event.startDate)}</MetaTile>
+                <MetaTile icon={<Clock className="w-5 h-5 text-lochinvar" />}    label="Time">{event.time ?? "TBA"}</MetaTile>
+                <MetaTile icon={<MapPin className="w-5 h-5 text-lochinvar" />}   label="Location">{event.location}</MetaTile>
+                <MetaTile icon={<Users className="w-5 h-5 text-lochinvar" />}    label="Participants">{event.participantCount}/{event.maxParticipants ?? "∞"}</MetaTile>
               </div>
 
               {/* About */}
@@ -383,7 +384,7 @@ export default function EventDetailPage() {
                 <ul className="space-y-2.5">
                   {learnItems.map((item, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700">
-                      <CheckCircle2 className="w-4 h-4 text-[#0d9488] mt-0.5 flex-shrink-0" />{item}
+                      <CheckCircle2 className="w-4 h-4 text-lochinvar mt-0.5 flex-shrink-0" />{item}
                     </li>
                   ))}
                 </ul>
@@ -415,7 +416,7 @@ export default function EventDetailPage() {
                 <div className="space-y-5">
                   {MOCK_REVIEWS.map(r => (
                     <div key={r.id} className="flex gap-3">
-                      <div className="w-9 h-9 rounded-full bg-[#0d9488] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{r.initials}</div>
+                      <div className="w-9 h-9 rounded-full bg-lochinvar text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{r.initials}</div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-0.5">
                           <p className="text-sm font-semibold text-gray-900">{r.name}</p>
@@ -434,7 +435,7 @@ export default function EventDetailPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {MOCK_ATTENDEES.map((a, i) => (
                     <div key={i} className="flex items-center gap-2.5 bg-[#f9fafb] rounded-xl p-3 border border-gray-100">
-                      <div className="w-9 h-9 rounded-full bg-[#0d9488] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{a.initials}</div>
+                      <div className="w-9 h-9 rounded-full bg-lochinvar text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{a.initials}</div>
                       <div><p className="text-sm font-medium text-gray-800">{a.name}</p><p className="text-[11px] text-gray-400">{a.country}</p></div>
                     </div>
                   ))}
@@ -444,12 +445,12 @@ export default function EventDetailPage() {
               {/* Location */}
               <Section title="Location">
                 <div className="rounded-xl overflow-hidden border border-gray-200 mb-4 h-40 bg-[#e8f5f2] flex flex-col items-center justify-center gap-2">
-                  <MapPin className="w-8 h-8 text-[#0d9488]" />
+                  <MapPin className="w-8 h-8 text-lochinvar" />
                   <p className="text-sm font-medium text-gray-700">{event.location}</p>
                   <p className="text-xs text-gray-400">Map integration coming soon</p>
                 </div>
                 <div className="flex items-start gap-2.5">
-                  <div className="w-5 h-5 rounded-full bg-[#e8f5f2] flex items-center justify-center flex-shrink-0 mt-0.5"><MapPin className="w-3 h-3 text-[#0d9488]" /></div>
+                  <div className="w-5 h-5 rounded-full bg-[#e8f5f2] flex items-center justify-center flex-shrink-0 mt-0.5"><MapPin className="w-3 h-3 text-lochinvar" /></div>
                   <div>
                     <p className="text-sm font-semibold text-gray-800 mb-0.5">Getting There</p>
                     <p className="text-sm text-gray-500 leading-relaxed">Please contact the vendor for more details regarding transportation options.</p>
@@ -465,7 +466,7 @@ export default function EventDetailPage() {
                 {/* Booking card */}
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
                   <div className="mb-1">
-                    <span className={`text-2xl font-bold ${isFree ? "text-[#0d9488]" : "text-gray-900"}`}>
+                    <span className={`text-2xl font-bold ${isFree ? "text-lochinvar" : "text-gray-900"}`}>
                       {isFree ? "Free" : formatPrice(event.price, false)}
                     </span>
                     <span className="text-sm text-gray-500 ml-1">per person</span>
@@ -476,18 +477,18 @@ export default function EventDetailPage() {
                     </p>
                   )}
                   <div className="space-y-3 mb-5">
-                    <BookingMeta icon={<Calendar className="w-4 h-4 text-[#0d9488]" />} label="Date">{formatFullDate(event.startDate)}</BookingMeta>
-                    {event.time && <BookingMeta icon={<Clock className="w-4 h-4 text-[#0d9488]" />} label="Time">{event.time}</BookingMeta>}
-                    {event.maxParticipants && <BookingMeta icon={<Users className="w-4 h-4 text-[#0d9488]" />} label="Group Size">Max {event.maxParticipants} participants</BookingMeta>}
+                    <BookingMeta icon={<Calendar className="w-4 h-4 text-lochinvar" />} label="Date">{formatFullDate(event.startDate)}</BookingMeta>
+                    {event.time && <BookingMeta icon={<Clock className="w-4 h-4 text-lochinvar" />} label="Time">{event.time}</BookingMeta>}
+                    {event.maxParticipants && <BookingMeta icon={<Users className="w-4 h-4 text-lochinvar" />} label="Group Size">Max {event.maxParticipants} participants</BookingMeta>}
                   </div>
 
                   {isTraveller && (
                     isRegistered ? (
                       <div>
                         <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-400 font-medium text-sm flex items-center justify-center cursor-not-allowed">
-                          Register Now
+                          Registered
                         </div>
-                        <p className="text-sm text-[#0d9488] font-medium text-center mt-3 flex items-center justify-center gap-1.5">
+                        <p className="text-sm text-lochinvar font-medium text-center mt-3 flex items-center justify-center gap-1.5">
                           <CheckCircle2 className="w-4 h-4" />
                           You have already registered in this event
                         </p>
@@ -498,8 +499,33 @@ export default function EventDetailPage() {
                       </div>
                     ) : (
                       <button
-                        onClick={() => setShowReg(true)}
-                        className="w-full h-11 rounded-xl bg-[#0d9488] hover:bg-[#0b7a70] text-white font-semibold text-sm transition-colors active:scale-[0.98]"
+                        onClick={async () => {
+                          if (event.isFree || event.price === 0) {
+                            // Free event - register directly
+                            try {
+                              const response = await fetch(`${API_BASE_URL}/events/${event.id}/register`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'x-user-id': user.id
+                                }
+                              });
+
+                              if (response.ok) {
+                                setIsRegistered(true);
+                                router.push('/dashboard/events');
+                              } else {
+                                console.error('Registration failed');
+                              }
+                            } catch (error) {
+                              console.error('Registration error:', error);
+                            }
+                          } else {
+                            // Paid event - redirect to checkout
+                            router.push(`/payments/checkout?type=event&eventId=${event.id}`);
+                          }
+                        }}
+                        className="w-full h-11 rounded-xl bg-lochinvar hover:opacity-90 text-white font-semibold text-sm transition-colors active:scale-[0.98]"
                       >
                         Register Now
                       </button>
@@ -523,19 +549,19 @@ export default function EventDetailPage() {
                       <div className="space-y-3 mb-4">
                         {organiserPhone && (
                           <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                            <Phone className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <Phone className="w-4 h-4 text-lochinvar flex-shrink-0" />
                             <span>{organiserPhone}</span>
                           </div>
                         )}
                         {organiserEmail && (
                           <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                            <Mail className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <Mail className="w-4 h-4 text-lochinvar flex-shrink-0" />
                             <span>{organiserEmail}</span>
                           </div>
                         )}
                         {organiserWebsite && (
                           <div className="flex items-center gap-2.5 text-sm text-gray-600">
-                            <Globe className="w-4 h-4 text-[#0d9488] flex-shrink-0" />
+                            <Globe className="w-4 h-4 text-lochinvar flex-shrink-0" />
                             <span>{organiserWebsite}</span>
                           </div>
                         )}
@@ -550,7 +576,7 @@ export default function EventDetailPage() {
                   <ul className="space-y-2">
                     {infoItems.map((item, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#0d9488] flex-shrink-0 mt-0.5" />{item}
+                        <CheckCircle2 className="w-3.5 h-3.5 text-lochinvar flex-shrink-0 mt-0.5" />{item}
                       </li>
                     ))}
                   </ul>
@@ -605,10 +631,10 @@ function RegisterModal({ event, loading, success, error, onConfirm, onClose }: {
         <div className="px-6 py-5">
           {success ? (
             <div className="flex flex-col items-center py-8 text-center">
-              <div className="w-14 h-14 rounded-full bg-[#e8f5f2] flex items-center justify-center mb-3"><CheckCircle2 className="w-8 h-8 text-[#0d9488]" /></div>
+              <div className="w-14 h-14 rounded-full bg-[#e8f5f2] flex items-center justify-center mb-3"><CheckCircle2 className="w-8 h-8 text-lochinvar" /></div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">You&apos;re registered!</h3>
               <p className="text-sm text-gray-500 mb-5">See you at <strong>{event.title}</strong>.</p>
-              <button onClick={onClose} className="px-6 h-9 rounded-lg bg-[#0d9488] text-white text-sm font-semibold hover:bg-[#0b7a70] transition-colors">Done</button>
+              <button onClick={onClose} className="px-6 h-9 rounded-lg bg-lochinvar text-white text-sm font-semibold hover:opacity-90 transition-colors">Done</button>
             </div>
           ) : (
             <>
@@ -626,14 +652,14 @@ function RegisterModal({ event, loading, success, error, onConfirm, onClose }: {
                 {event.vendor && <p className="text-xs text-[#21a17a] font-medium mb-2">{event.vendor.businessName}</p>}
                 <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-200">
                   <span>{event.location}</span>
-                  <span className={`font-semibold px-2 py-0.5 rounded ${isFree ? "bg-[#0d9488] text-white" : "bg-[#f59e0b] text-white"}`}>{formatPrice(event.price, event.isFree)}</span>
+                  <span className={`font-semibold px-2 py-0.5 rounded ${isFree ? "bg-lochinvar text-white" : "bg-[#f59e0b] text-white"}`}>{formatPrice(event.price, event.isFree)}</span>
                 </div>
               </div>
               {error && <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">{error}</p>}
               <p className="text-xs text-gray-400 mb-4">Free cancellation up to 24 hours before the event.</p>
               <div className="flex gap-3">
                 <button onClick={onClose} className="flex-1 h-10 rounded-lg border border-gray-200 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors">Cancel</button>
-                <button onClick={onConfirm} disabled={loading} className="flex-1 h-10 rounded-lg bg-[#0d9488] hover:bg-[#0b7a70] text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                <button onClick={onConfirm} disabled={loading} className="flex-1 h-10 rounded-lg bg-lochinvar hover:opacity-90 text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
                   {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Registering...</> : "Confirm Registration"}
                 </button>
               </div>

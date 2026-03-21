@@ -234,45 +234,50 @@ export class BookingService {
   }
 
   async getUserBookings(rawUserId: string) {
-    const userId = await this.resolveUserId(rawUserId);
+    try {
+      const userId = await this.resolveUserId(rawUserId);
 
-    if (!userId) {
+      if (!userId) {
+        return [];
+      }
+
+      const bookings = await this.prisma.booking.findMany({
+        where: {
+          localTouristId: userId,
+        },
+        include: {
+          listing: {
+            include: {
+              vendor: true,
+            },
+          },
+          vendor: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      const slotIds = bookings
+        .map((b) => b.slotId)
+        .filter((id) => id !== null) as number[];
+      const slots =
+        slotIds.length > 0
+          ? await this.prisma.availabilitySlot.findMany({
+            where: { id: { in: slotIds } },
+          })
+          : [];
+
+      const slotMap = new Map(slots.map((s) => [s.id, s]));
+
+      return bookings.map((b) => ({
+        ...b,
+        slot: b.slotId ? slotMap.get(b.slotId) : null,
+      }));
+    } catch (error) {
+      console.error('BookingsService error:', error);
       return [];
     }
-
-    const bookings = await this.prisma.booking.findMany({
-      where: {
-        localTouristId: userId,
-      },
-      include: {
-        listing: {
-          include: {
-            vendor: true,
-          },
-        },
-        vendor: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    const slotIds = bookings
-      .map((b) => b.slotId)
-      .filter((id) => id !== null) as number[];
-    const slots =
-      slotIds.length > 0
-        ? await this.prisma.availabilitySlot.findMany({
-          where: { id: { in: slotIds } },
-        })
-        : [];
-
-    const slotMap = new Map(slots.map((s) => [s.id, s]));
-
-    return bookings.map((b) => ({
-      ...b,
-      slot: b.slotId ? slotMap.get(b.slotId) : null,
-    }));
   }
 
   async getVendorBookings(vendorId: number) {

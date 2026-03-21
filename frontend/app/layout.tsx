@@ -2,7 +2,7 @@ import './globals.css';
 import { ReactNode } from 'react';
 import { Toaster } from "react-hot-toast";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Arima } from "next/font/google";
+import { Arima, Nunito } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import GlobalHeader from "@/components/header_footer/GlobalHeader";
 import Footer from "@/components/header_footer/Footer";
@@ -10,16 +10,10 @@ import ScrollToTopButton from "@/components/common/ScrollToTopButton";
 import ChatWidget from "@/components/common/ChatWidget";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
-import "../styles/Header.css";
-import "../styles/Footer.css";
+import "../styles/design-tokens.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
 });
 
@@ -31,6 +25,9 @@ const arima = Arima({
 export const metadata: Metadata = {
   title: "Ayubowan Connect",
   description: "Connect with authentic Sri Lankan experiences",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -46,7 +43,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </head>
         <body
           suppressHydrationWarning
-          className={`${geistSans.variable} ${geistMono.variable} ${arima.variable} antialiased flex flex-col min-h-screen`}
+          className={`${nunito.variable} ${arima.variable} font-sans antialiased flex flex-col min-h-screen`}
         >
           <AuthProvider>
             <CartProvider>

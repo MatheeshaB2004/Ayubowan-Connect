@@ -1,17 +1,27 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Headers, BadRequestException } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly paymentsService: PaymentsService) {}
+  constructor(private readonly paymentsService: PaymentsService) { }
 
   @Get('status')
-  getStatus() {
-    return this.paymentsService.getSubscriptionStatus(1);
+  getStatus(@Headers('x-user-id') userId: string) {
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+    return this.paymentsService.getSubscriptionStatus(userId);
   }
 
   @Post('upgrade')
-  upgrade(@Body('planType') planType: 'USER' | 'VENDOR') {
-    return this.paymentsService.upgradeToPro(1, planType);
+  upgrade(
+    @Body('planType') planType: 'USER' | 'VENDOR',
+    @Body('cycle') cycle: 'monthly' | 'yearly',
+    @Headers('x-user-id') userId: string
+  ) {
+    if (!userId) {
+      throw new BadRequestException('User ID is required');
+    }
+    return this.paymentsService.upgradeToPro(userId, planType, cycle);
   }
 }

@@ -4,13 +4,13 @@
    ================================ */
 
 :root {
-  --primary: #0d9488;
-  --primary-dark: #0f766e;
-  --bg-soft: #f9fafb;
-  --bg-muted: #f3f4f6;
-  --text-main: #111827;
-  --text-muted: #6b7280;
-  --border-soft: #e5e7eb;
+  --primary: var(--ay-brand);
+  --primary-dark: var(--ay-brand-hover);
+  --bg-soft: var(--ay-bg-soft);
+  --bg-muted: var(--ay-bg-muted);
+  --text-main: var(--ay-text-dark);
+  --text-muted: var(--ay-text-muted);
+  --border-soft: var(--ay-border);
 }
 
 /* ---------- Page Wrapper ---------- */

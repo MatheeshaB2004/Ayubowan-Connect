@@ -4,9 +4,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
+  font-family: var(--ay-font-body);
 }
 
 /* Header Styles */
@@ -16,14 +14,14 @@
   align-items: center;
   padding: 1.5rem 4rem;
   background: white;
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--ay-border);
 }
 
 .logo {
   font-size: 1.5rem;
   font-weight: 600;
   font-style: italic;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
 }
 
 .nav-menu {
@@ -33,20 +31,20 @@
 }
 
 .nav-menu a {
-  color: #333;
+  color: var(--ay-text-body);
   text-decoration: none;
   font-size: 0.95rem;
   transition: color 0.3s;
 }
 
 .nav-menu a:hover {
-  color: #3d9b8f;
+  color: var(--ay-brand);
 }
 
 .more-dropdown {
   cursor: pointer;
   font-size: 0.95rem;
-  color: #333;
+  color: var(--ay-text-body);
 }
 
 .dropdown-arrow {
@@ -65,12 +63,12 @@
   font-size: 2.5rem;
   font-weight: 400;
   margin-bottom: 1rem;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
 }
 
 .hero-subtitle {
   font-size: 1rem;
-  color: #666;
+  color: var(--ay-text-muted);
   line-height: 1.6;
   margin-bottom: 2rem;
 }
@@ -93,12 +91,12 @@
 }
 
 .btn-vendor-primary {
-  background-color: #3d9b8f;
+  background-color: var(--ay-brand);
   color: white;
 }
 
 .btn-vendor-primary:hover {
-  background-color: #358276;
+  background-color: var(--ay-brand-dark);
 }
 
 .btn-vendor-secondary {
@@ -115,19 +113,19 @@
   background: white;
   padding: 3rem 2rem;
   text-align: center;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--ay-border);
 }
 
 .benefits-section h2 {
   font-size: 2rem;
   font-weight: 400;
   margin-bottom: 1rem;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
 }
 
 .section-subtitle {
   font-size: 1rem;
-  color: #666;
+  color: var(--ay-text-muted);
   line-height: 1.6;
   margin-bottom: 2rem;
 }
@@ -141,9 +139,9 @@
 .btn-outline {
   padding: 0.75rem 2rem;
   font-size: 0.95rem;
-  border: 1px solid #3d9b8f;
+  border: 1px solid var(--ay-brand);
   background: white;
-  color: #3d9b8f;
+  color: var(--ay-brand);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s;
@@ -151,7 +149,7 @@
 }
 
 .btn-outline:hover {
-  background-color: #3d9b8f;
+  background-color: var(--ay-brand);
   color: white;
 }
 
@@ -199,12 +197,12 @@
   font-size: 1.5rem;
   font-weight: 400;
   margin-bottom: 1rem;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
 }
 
 .info-content p {
   font-size: 0.95rem;
-  color: #666;
+  color: var(--ay-text-muted);
   line-height: 1.6;
 }
 
@@ -227,7 +225,7 @@
   font-weight: 600;
   font-style: italic;
   margin-bottom: 2rem;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
 }
 
 .clerk-form-wrapper {
@@ -253,12 +251,12 @@
   align-items: center;
   justify-content: center;
   font-weight: 500;
-  color: #666;
+  color: var(--ay-text-muted);
   transition: all 0.3s;
 }
 
 .dot.active {
-  background-color: #3d9b8f;
+  background-color: var(--ay-brand);
   color: white;
 }
 
@@ -273,13 +271,13 @@
   font-size: 2rem;
   font-weight: 400;
   margin-bottom: 0.5rem;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
   text-align: center;
 }
 
 .step-subtitle {
   font-size: 0.95rem;
-  color: #666;
+  color: var(--ay-text-muted);
   margin-bottom: 2rem;
   text-align: center;
 }
@@ -291,7 +289,7 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--ay-text-body);
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -316,7 +314,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #3d9b8f;
+  border-color: var(--ay-brand);
   background-color: white;
 }
 
@@ -338,13 +336,13 @@
 
 .checkbox-group label {
   font-size: 0.9rem;
-  color: #333;
+  color: var(--ay-text-body);
   cursor: pointer;
 }
 
 .info-note {
   font-size: 0.85rem;
-  color: #666;
+  color: var(--ay-text-muted);
   margin-top: 1rem;
   margin-bottom: 2rem;
 }
@@ -371,7 +369,7 @@
 
 .btn-back {
   background-color: #e0e0e0;
-  color: #333;
+  color: var(--ay-text-body);
 }
 
 .btn-back:hover {
@@ -380,13 +378,13 @@
 
 .btn-next,
 .btn-create-account {
-  background-color: #3d9b8f;
+  background-color: var(--ay-brand);
   color: white;
 }
 
 .btn-next:hover,
 .btn-create-account:hover {
-  background-color: #358276;
+  background-color: var(--ay-brand-dark);
 }
 
 .btn-back:disabled,
@@ -408,12 +406,12 @@
   font-size: 2rem;
   font-weight: 400;
   margin-bottom: 0.5rem;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
 }
 
 .faq-subtitle {
   font-size: 1rem;
-  color: #666;
+  color: var(--ay-text-muted);
   margin-bottom: 2rem;
 }
 
@@ -422,14 +420,14 @@
 }
 
 .faq-item {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--ay-border);
   padding: 1.25rem 0;
 }
 
 .faq-item summary {
   font-size: 1rem;
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
   cursor: pointer;
   list-style: none;
   display: flex;
@@ -439,12 +437,12 @@
 }
 
 .faq-item summary:hover {
-  color: #3d9b8f;
+  color: var(--ay-brand);
 }
 
 .faq-item summary .arrow {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--ay-text-muted);
   transition: transform 0.3s;
 }
 
@@ -455,7 +453,7 @@
 .faq-item p {
   margin-top: 1rem;
   font-size: 0.95rem;
-  color: #666;
+  color: var(--ay-text-muted);
   line-height: 1.6;
 }
 
@@ -470,18 +468,18 @@
   font-size: 1.5rem;
   font-weight: 400;
   margin-bottom: 0.5rem;
-  color: #1a1a1a;
+  color: var(--ay-text-dark);
 }
 
 .help-section p {
   font-size: 0.95rem;
-  color: #666;
+  color: var(--ay-text-muted);
   margin-bottom: 1.5rem;
 }
 
 .btn-contact {
   padding: 0.75rem 2rem;
-  background-color: #3d9b8f;
+  background-color: var(--ay-brand);
   color: white;
   border: none;
   border-radius: 4px;
@@ -492,7 +490,7 @@
 }
 
 .btn-contact:hover {
-  background-color: #358276;
+  background-color: var(--ay-brand-dark);
 }
 
 /* Already Registered Section */
@@ -536,12 +534,12 @@
 }
 
 .btn-signin-vendor {
-  background-color: #3d9b8f;
+  background-color: var(--ay-brand);
   color: white;
 }
 
 .btn-signin-vendor:hover {
-  background-color: #358276;
+  background-color: var(--ay-brand-dark);
 }
 
 .btn-back-vendor {

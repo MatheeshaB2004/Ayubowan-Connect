@@ -4,13 +4,13 @@
 ================================ */
 
 :root {
-  --primary: #0d9488;
-  --primary-dark: #0f766e;
-  --bg-soft: #f0fdfa;
-  --bg-light: #f9fafb;
-  --border-light: #e5e7eb;
-  --text-dark: #111827;
-  --text-muted: #6b7280;
+  --primary: var(--ay-brand);
+  --primary-dark: var(--ay-brand-hover);
+  --bg-soft: var(--ay-brand-soft);
+  --bg-light: var(--ay-bg-soft);
+  --border-light: var(--ay-border);
+  --text-dark: var(--ay-text-dark);
+  --text-muted: var(--ay-text-muted);
 }
 
 /* ---------- Buttons ---------- */

@@ -2,8 +2,10 @@
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
+import DashboardTabs from '@/components/dashboard/DashboardTabs';
 
 const API_BASE = API_BASE_URL;
 
@@ -38,9 +40,30 @@ type Booking = {
   } | null;
 };
 
+type Event = {
+  id: number;
+  title: string;
+  startDate: string;
+  time: string;
+  location: string;
+  price?: number;
+  isFree: boolean;
+  registrationDate?: string;
+  vendor?: {
+    businessName?: string;
+  };
+};
+
 export default function OrdersPage() {
   const { isSignedIn, user, isLoaded } = useUser();
+  const { role } = useAuth();
   const [orders, setOrders] = useState<Booking[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<{
+    isProUser: boolean;
+    proSubscriptionExpiry: string | null;
+    billingCycle: 'monthly' | 'yearly' | null;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const hasFetched = useRef(false);
   
@@ -49,6 +72,7 @@ export default function OrdersPage() {
      if (!isSignedIn || !user) return;
     const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
     try {
+      // Fetch bookings
       const response = await fetch(`${API_BASE}/bookings`, {
         headers: { 'x-user-id': userIdentifier },
       });
@@ -67,8 +91,32 @@ export default function OrdersPage() {
       } else {
         console.error('Server error:', response.status, await response.text());
       }
+
+      // Fetch events
+      const eventsResponse = await fetch(`${API_BASE}/events/user/registered`, {
+        headers: { 'x-user-id': userId },
+      });
+
+      if (eventsResponse.ok) {
+        const eventsData = await eventsResponse.json();
+        setEvents(eventsData ?? []);
+      }
+
+      // Fetch subscription status
+      const subscriptionResponse = await fetch(`${API_BASE}/payments/status`, {
+        headers: { 'x-user-id': userId },
+      });
+
+      if (subscriptionResponse.ok) {
+        const subscriptionData = await subscriptionResponse.json();
+        setSubscriptionStatus({
+          isProUser: Boolean(subscriptionData?.isProUser),
+          proSubscriptionExpiry: subscriptionData?.proSubscriptionExpiry ?? null,
+          billingCycle: subscriptionData?.billingCycle ?? null,
+        });
+      }
     } catch (error) {
-      console.error('Network or fetch error:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +131,7 @@ export default function OrdersPage() {
     if (hasFetched.current) return;
     hasFetched.current = true;
 
+    if (!user.id) return;
     fetchOrders(user.id);
   }, [isLoaded, isSignedIn, user, fetchOrders]);
 
@@ -102,15 +151,18 @@ export default function OrdersPage() {
   const vendorName = (b: Booking) =>
     b.vendor?.businessName ?? getListing(b)?.vendor?.businessName ?? 'Unknown Vendor';
 
-  const formatDate = (value?: string) => {
+  const formatDate = (value?: string | Date | null) => {
     if (!value) return '-';
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return '-';
-    return new Intl.DateTimeFormat('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }).format(parsed);
+
+    const date = typeof value === 'string' ? new Date(value) : value;
+
+    if (!date || Number.isNaN(date.getTime())) return '-';
+
+    const year = date.getUTCFullYear();
+    const month = date.toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' });
+    const day = String(date.getUTCDate()).padStart(2, '0');
+
+    return `${day} ${month} ${year}`;
   };
 
   const formatTime = (dateString: string) => {
@@ -158,6 +210,29 @@ export default function OrdersPage() {
     return order.status.toUpperCase();
   };
 
+  const getStartDate = (expiry?: string | null) => {
+    if (!expiry) return null;
+
+    const expiryDate = new Date(expiry);
+    if (Number.isNaN(expiryDate.getTime())) return null;
+
+    const now = new Date();
+    const daysDiff = Math.ceil(
+      (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Detect plan type
+    const isYearly = daysDiff > 60;
+
+    const startDate = new Date(expiryDate);
+
+    startDate.setDate(
+      startDate.getDate() - (isYearly ? 365 : 30)
+    );
+
+    return startDate;
+  };
+
   /* ── Loading ── */
   if (!isLoaded || isLoading) {
     return (
@@ -183,32 +258,9 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f9fafb] py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">My Dashboard</h1>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Link
-              href="/dashboard/bookings"
-              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              Pending Bookings
-            </Link>
-            <Link
-              href="/dashboard/upcoming"
-              className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              Upcoming Experiences
-            </Link>
-            <Link
-              href="/dashboard/orders"
-              className="inline-flex items-center rounded-xl bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm"
-            >
-              Orders History
-            </Link>
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-[#f9fafb]">
+      <DashboardTabs />
+      <div className="max-w-6xl mx-auto py-12 px-4">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Orders</h2>
           <p className="text-gray-600 mt-2">
@@ -216,7 +268,7 @@ export default function OrdersPage() {
           </p>
         </div>
 
-        {orders.length === 0 ? (
+        {orders.length === 0 && events.length === 0 ? (
           /* ── Empty state ── */
           <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
@@ -224,13 +276,20 @@ export default function OrdersPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders yet.</h2>
-            <p className="text-gray-500 mb-6">Explore experiences or products to make your first booking or purchase.</p>
-            <Link href="/marketplace">
-              <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
-                Browse Marketplace
-              </button>
-            </Link>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No orders or events yet.</h2>
+            <p className="text-gray-500 mb-6">Explore experiences, products, or events to make your first booking, purchase, or registration.</p>
+            <div className="flex gap-3 justify-center">
+              <Link href="/marketplace">
+                <button className="inline-flex items-center rounded-xl bg-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78] active:scale-[0.98]">
+                  Browse Marketplace
+                </button>
+              </Link>
+              <Link href="/events">
+                <button className="inline-flex items-center rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 active:scale-[0.98]">
+                  Browse Events
+                </button>
+              </Link>
+            </div>
           </div>
         ) : (
           <div>
@@ -248,7 +307,7 @@ export default function OrdersPage() {
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Participants</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Date</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
-                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -279,7 +338,7 @@ export default function OrdersPage() {
                             </td>
                             <td className="px-4 py-3">
                               <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusBadge(getDisplayStatus(order))}`}>
-                                {getDisplayStatus(order)}
+                                {getDisplayStatus(order).toUpperCase()}
                               </span>
                             </td>
                           </tr>
@@ -303,7 +362,7 @@ export default function OrdersPage() {
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Quantity</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Date</th>
                         <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
-                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -329,7 +388,7 @@ export default function OrdersPage() {
                             </td>
                             <td className="px-4 py-3">
                               <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${statusBadge(getDisplayStatus(order))}`}>
-                                {getDisplayStatus(order)}
+                                {getDisplayStatus(order).toUpperCase()}
                               </span>
                             </td>
                           </tr>
@@ -340,9 +399,115 @@ export default function OrdersPage() {
                 </div>
               </div>
             )}
+
+            {/* Event Orders Section */}
+            {events.filter(event => event.price && event.price > 0).length > 0 && (
+              <div className="mt-8 bg-white rounded-xl border border-gray-200 shadow-md p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Event Orders</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="table-auto w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Event Name</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Time</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Location</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Date</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Price</th>
+                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {events.filter(event => event.price && event.price > 0).map((event) => (
+                        <tr key={event.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                            {event.title}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {new Date(event.startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {event.time}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {event.location}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {formatDate(event.registrationDate)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-[#21a17a] font-semibold">
+                            {event.price ? `LKR ${event.price.toLocaleString()}` : 'FREE'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                              COMPLETED
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Subscriptions Section */}
+        {subscriptionStatus?.isProUser && (
+          <div className="mt-8 bg-white rounded-xl border border-gray-200 shadow-md p-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Subscriptions</h2>
+            <div className="mt-4 overflow-x-auto">
+              <table className="table-auto w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Plan Type</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Billing Cycle</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Start Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Expiry Date</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Payment Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                      {role === 'vendor' ? 'Vendor Pro' : 'User Pro'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {subscriptionStatus.billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {subscriptionStatus.proSubscriptionExpiry
+                      ? formatDate(getStartDate(subscriptionStatus.proSubscriptionExpiry))
+                      : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {formatDate(subscriptionStatus.proSubscriptionExpiry) || '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        const isExpired = subscriptionStatus?.proSubscriptionExpiry &&
+                          new Date(subscriptionStatus.proSubscriptionExpiry) < new Date();
+
+                        return (
+                          <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${isExpired
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-green-100 text-green-700'
+                            }`}>
+                            {isExpired ? 'EXPIRED' : 'COMPLETED'}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
     </div>
   );
 }
+
+

@@ -93,14 +93,16 @@ const GlobalHeader: React.FC = () => {
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          {activeRole === 'vendor' ? (
-            <NavbarVendor textColorClass={textColorClass} />
-          ) : isSignedIn ? (
-            <NavbarTraveller textColorClass={textColorClass} />
-          ) : (
-            <NavbarGuest textColorClass={textColorClass} />
-          )}
+          {/* Desktop Navigation - hidden on mobile */}
+          <div className="hidden md:flex flex-1 items-center justify-end h-full">
+            {activeRole === 'vendor' ? (
+              <NavbarVendor textColorClass={textColorClass} />
+            ) : isSignedIn ? (
+              <NavbarTraveller textColorClass={textColorClass} />
+            ) : (
+              <NavbarGuest textColorClass={textColorClass} />
+            )}
+          </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden z-10">
@@ -124,40 +126,49 @@ const GlobalHeader: React.FC = () => {
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
         <div className="mobile-menu absolute top-full left-0 w-full z-50">
-          <span className="section-tag">Menu ({activeRole === 'user' ? 'traveller' : activeRole})</span>
 
-          {activeRole === 'guest' && (
+          {/* ── GUEST ── */}
+          {!isSignedIn && (
             <>
-              <Link href="/experiences" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Experiences</Link>
-              <Link href="/landing#offer" className="mobile-link" onClick={(e) => handleScroll(e, 'offer')}>Events</Link>
+              <Link href="/" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
               <Link href="/marketplace" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Marketplace</Link>
-              {isSignedIn ? (
-                <>
-                  <Link href="/User_profile_manager" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>My Profile</Link>
-                </>
-              ) : (
-                <div className="mobile-menu-divider">
-                  <Link href="/auth/login" className="btn-login" style={{ color: '#374151', borderColor: '#d1d5db', display: 'block', textAlign: 'center', marginBottom: '8px' }}>Log in</Link>
-                  <Link href="/auth/register" className="btn-signup" style={{ display: 'block', textAlign: 'center' }}>Sign up</Link>
-                </div>
-              )}
+              <Link href="/events" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+              <Link href="/pro" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Pro</Link>
+              <Link href="/faq" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>FAQs</Link>
+              <div className="mobile-menu-divider">
+                <Link href="/auth/login" className="btn-login mobile-auth-btn" onClick={() => setIsMobileMenuOpen(false)}>Log in</Link>
+                <Link href="/auth/register" className="btn-signup mobile-auth-btn" onClick={() => setIsMobileMenuOpen(false)}>Sign up</Link>
+              </div>
             </>
           )}
 
-          {(activeRole === 'traveller' || activeRole === 'user') && (
+          {/* ── TRAVELLER / USER ── */}
+          {isSignedIn && (activeRole === 'traveller' || activeRole === 'user') && (
             <>
-              <Link href="/trips" className="mobile-link">My Trips</Link>
+              <Link href="/" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
+              <Link href="/marketplace" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Marketplace</Link>
+              <Link href="/events" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+              <Link href="/dashboard/upcoming" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
+              <Link href="/pro" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Pro</Link>
+              <Link href="/faq" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>FAQs</Link>
               <Link href="/User_profile_manager" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>My Profile</Link>
-              <Link href="/saved" className="mobile-link">Saved</Link>
-              <Link href="/messages" className="mobile-link">Messages</Link>
+              <Link href="/payments/cart" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Cart</Link>
             </>
           )}
 
-          {activeRole === 'vendor' && (
+          {/* ── VENDOR ── */}
+          {isSignedIn && activeRole === 'vendor' && (
             <>
-              <Link href="/vendor/dashboard" className="mobile-link">Dashboard</Link>
-              <Link href="/listings" className="mobile-link">My Listings</Link>
-              <Link href="/orders" className="mobile-link">Orders</Link>
+              <Link href="/" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
+              <Link href="/vendor/freeDashboad" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
+              <Link href="/events" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
+              <Link href="/pro" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Pro</Link>
+              <Link href="/faq" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>FAQs</Link>
+              <Link href="/vendor/listings" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>My Listings</Link>
+              <Link href="/vendor/profile" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Business Profile</Link>
+              <div className="mobile-menu-divider">
+                <Link href="/vendor/listings#create-listing" className="btn-signup mobile-auth-btn" onClick={() => setIsMobileMenuOpen(false)}>Create Listing</Link>
+              </div>
             </>
           )}
         </div>

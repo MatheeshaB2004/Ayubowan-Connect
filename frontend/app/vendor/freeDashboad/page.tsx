@@ -352,7 +352,7 @@ export default function Dashboard() {
 
         const interval = setInterval(() => {
             fetchBookings();
-        }, 15000); // every 10 seconds
+        }, 15000); // every 15 seconds
 
         return () => clearInterval(interval);
     }, [userId]);

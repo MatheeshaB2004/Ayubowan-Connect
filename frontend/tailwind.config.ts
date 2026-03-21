@@ -21,6 +21,9 @@ const config: Config = {
   				DEFAULT: "hsl(var(--primary))",
   				foreground: "hsl(var(--primary-foreground))",
   			},
+  			lochinvar: "var(--ay-brand)",
+  			waikawa: "var(--ay-waikawa)",
+  			trendy: "var(--ay-trendy)",
   		},
   		borderRadius: {
   			lg: "var(--radius)",
