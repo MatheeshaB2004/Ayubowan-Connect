@@ -31,8 +31,9 @@ const Footer: React.FC = () => {
 
       setMessage({ type: "success", text: data.message || "Thank you for subscribing!" });
       setEmail("");
-    } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "An error occurred" });
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setMessage({ type: "error", text: errorMessage });
     } finally {
       setStatus("idle");
     }
@@ -59,7 +60,12 @@ const Footer: React.FC = () => {
               © 2025 Ayubowan Connect. All rights reserved.
             </p>
             <div className="footer-socials">
-              <a href="#">
+              <a
+                href="https://www.instagram.com/ayubowanconnect/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Ayubowan Connect on Instagram"
+              >
                 <svg
                   width="18"
                   height="18"
@@ -75,7 +81,12 @@ const Footer: React.FC = () => {
                   <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
                 </svg>
               </a>
-              <a href="#">
+              <a
+                href="https://facebook.com/people/AyubowanConnect/61583979804191/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Ayubowan Connect on Facebook"
+              >
                 <svg
                   width="18"
                   height="18"
@@ -86,10 +97,15 @@ const Footer: React.FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                 </svg>
               </a>
-              <a href="#">
+              <a
+                href="https://linkedin.com/company/ayubowanconnect"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Ayubowan Connect on LinkedIn"
+              >
                 <svg
                   width="18"
                   height="18"
@@ -105,7 +121,12 @@ const Footer: React.FC = () => {
                   <circle cx="4" cy="4" r="2"></circle>
                 </svg>
               </a>
-              <a href="#">
+              <a
+                href="https://www.youtube.com/@ayubowanconnect"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Ayubowan Connect on YouTube"
+              >
                 <svg
                   width="18"
                   height="18"
@@ -128,32 +149,22 @@ const Footer: React.FC = () => {
             <h3 className="footer-heading">EXPLORE</h3>
             <ul className="footer-links">
               <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
+                <a href="#">
                   About us
                 </a>
               </li>
               <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
+                <a href="/marketplace">
                   Experiences
                 </a>
               </li>
               <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  Destinations
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
+                <Link href="/events">
                   Events
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  Partners
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
+                <a href="/faq">
                   Support
                 </a>
               </li>
@@ -165,32 +176,20 @@ const Footer: React.FC = () => {
             <h3 className="footer-heading">CONNECT</h3>
             <ul className="footer-links">
               <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  Vendors
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  Community
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  Press Kit
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
-                  Partners
-                </a>
-              </li>
-              <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
+                <a href="/auth/register">
                   Join Us
                 </a>
               </li>
               <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
+                <a href="https://linktr.ee/ayubowanconnect" target="_blank" rel="noopener noreferrer">
+                  Follow Us
+                </a>
+              </li>
+              <li>
+                <a href="#" onClick={(e) => {
+                  e.preventDefault();
+                  window.dispatchEvent(new Event('openChatWidget'));
+                }}>
                   Help
                 </a>
               </li>
@@ -202,7 +201,7 @@ const Footer: React.FC = () => {
             <h3 className="footer-heading">LEGAL</h3>
             <ul className="footer-links">
               <li>
-                <a href="#" onClick={(e) => e.preventDefault()}>
+                <a href="/privacy">
                   Privacy
                 </a>
               </li>

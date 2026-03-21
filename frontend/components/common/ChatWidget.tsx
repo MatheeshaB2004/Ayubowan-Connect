@@ -31,6 +31,13 @@ export default function ChatWidget() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    // Listen for openChatWidget event from other components (e.g., Help link)
+    useEffect(() => {
+        const handleOpenChatWidget = () => setIsOpen(true);
+        window.addEventListener('openChatWidget', handleOpenChatWidget);
+        return () => window.removeEventListener('openChatWidget', handleOpenChatWidget);
+    }, []);
+
     const toggleListening = () => {
         if (isListening) {
             if (recognitionRef.current) recognitionRef.current.stop();
