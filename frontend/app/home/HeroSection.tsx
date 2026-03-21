@@ -58,7 +58,7 @@ export default function HeroSection() {
     const params = new URLSearchParams();
     if (query.trim()) params.set("search", query.trim());
     if (location && location !== "all" && location !== "All Locations") params.set("location", location);
-    router.push(`/events?${params.toString()}`);
+    router.push(`/marketplace?${params.toString()}`);
   };
 
   return (

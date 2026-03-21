@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronDown, MessageCircleQuestion, PhoneCall, Mail,
+  ChevronDown, MessageCircleQuestion, MessageCircle, Mail,
   Search, X, Globe, Ticket, ShoppingBag,
   CreditCard, User, MapPin, Wrench,
 } from "lucide-react";
@@ -561,20 +561,34 @@ function ContactBlock() {
       className="mt-10 md:mt-14 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-2xl p-8 text-center border border-gray-100"
     >
       <div className="flex justify-center gap-4 mb-5">
-        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-lochinvar border border-gray-100 hover:scale-105 transition-transform cursor-pointer hover:shadow-md">
-          <PhoneCall className="w-5 h-5" />
-        </div>
-        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-lochinvar border border-gray-100 hover:scale-105 transition-transform cursor-pointer hover:shadow-md">
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new Event("openChatWidget"))}
+          title="Open chatbot"
+          aria-label="Open chatbot"
+          className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-teal-600 border border-gray-100 hover:scale-105 transition-transform cursor-pointer hover:shadow-md"
+        >
+          <MessageCircle className="w-5 h-5" />
+        </button>
+        <a
+          href="mailto:ayubowanconnect@gmail.com"
+          title="Email support"
+          aria-label="Email Ayubowan Connect support"
+          className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-teal-600 border border-gray-100 hover:scale-105 transition-transform cursor-pointer hover:shadow-md"
+        >
           <Mail className="w-5 h-5" />
-        </div>
+        </a>
       </div>
       <h3 className="text-xl font-bold text-gray-900 mb-2">Still have questions?</h3>
       <p className="text-gray-500 mb-6 max-w-md mx-auto text-sm">
         Can&apos;t find the answer you&apos;re looking for? Our friendly support team is here to help.
       </p>
-      <button className="inline-flex items-center justify-center px-8 py-3 rounded-xl bg-lochinvar text-white font-semibold hover:opacity-90 transition-all shadow-sm hover:shadow-md hover:shadow-lochinvar/20 active:scale-95 text-sm">
+      <a
+        href="mailto:ayubowanconnect@gmail.com"
+        className="inline-flex items-center justify-center px-8 py-3 rounded-xl bg-teal-600 text-white font-semibold hover:bg-teal-700 transition-all shadow-sm hover:shadow-md hover:shadow-teal-600/20 active:scale-95 text-sm"
+      >
         Contact Support
-      </button>
+      </a>
     </motion.div>
   );
 }
