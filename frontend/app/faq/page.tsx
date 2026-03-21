@@ -261,12 +261,12 @@ export default function FAQPage() {
     <div className="min-h-screen bg-[#f9fafb] pb-24">
 
       {/* ── Hero ── */}
-      <div className="relative bg-teal-900 text-white py-24 overflow-hidden">
+      <div className="relative bg-[#239b7f] text-white py-24 overflow-hidden">
         {/* Decorative blobs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-teal-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-          <div className="absolute top-0 right-10 w-80 h-80 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: "2s" }} />
-          <div className="absolute -bottom-8 left-1/3 w-80 h-80 bg-teal-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: "4s" }} />
+          <div className="absolute top-10 left-10 w-72 h-72 bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-pulse" />
+          <div className="absolute top-0 right-10 w-80 h-80 bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-10 animate-pulse" style={{ animationDelay: "2s" }} />
+          <div className="absolute -bottom-8 left-1/3 w-80 h-80 bg-teal-200 rounded-full mix-blend-overlay filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: "4s" }} />
         </div>
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 z-10 text-center">
@@ -275,25 +275,25 @@ export default function FAQPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-800/60 text-teal-50 text-sm font-medium mb-6 backdrop-blur-md border border-teal-700/50 shadow-sm">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 text-white text-sm font-medium mb-6 backdrop-blur-md border border-white/20 shadow-sm">
               <MessageCircleQuestion className="w-4 h-4" />
               Help Centre
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-6 mt-2 text-white">
               Frequently Asked Questions
             </h1>
-            <p className="max-w-2xl mx-auto text-lg md:text-xl text-teal-100/90 leading-relaxed font-medium mb-10">
+            <p className="max-w-2xl mx-auto text-lg md:text-xl text-white/90 leading-relaxed font-medium mb-10">
               Everything you need to know about Ayubowan Connect. Browse by topic or search for a specific question.
             </p>
 
             {/* Stats row */}
             <div className="flex items-center justify-center gap-6 mb-10">
-              <div className="flex items-center gap-2 text-teal-200 text-sm">
+              <div className="flex items-center gap-2 text-white/80 text-sm">
                 <span className="font-bold text-white text-lg">{faqData.length}</span>
                 topics
               </div>
-              <div className="w-px h-4 bg-teal-700" />
-              <div className="flex items-center gap-2 text-teal-200 text-sm">
+              <div className="w-px h-4 bg-white/30" />
+              <div className="flex items-center gap-2 text-white/80 text-sm">
                 <span className="font-bold text-white text-lg">{totalQuestions}</span>
                 questions answered
               </div>
@@ -307,7 +307,7 @@ export default function FAQPage() {
                 placeholder="Search questions..."
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setOpenIndex(null); }}
-                className="w-full pl-11 pr-11 py-3.5 rounded-xl bg-white text-gray-800 text-sm placeholder-gray-400 shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-400/50 border border-white/20"
+                className="w-full pl-11 pr-11 py-3.5 rounded-xl bg-white text-gray-800 text-sm placeholder-gray-400 shadow-lg focus:outline-none focus:ring-2 focus:ring-lochinvar/50 border border-white/20"
               />
               {searchQuery && (
                 <button
@@ -324,7 +324,7 @@ export default function FAQPage() {
 
       {/* ── Main card ── */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 -mt-12 relative z-20">
-        <div className="bg-white rounded-2xl shadow-xl shadow-teal-900/5 border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-xl shadow-black/5 border border-gray-100 overflow-hidden">
 
           {/* Search results */}
           {searchResults !== null ? (
@@ -340,7 +340,7 @@ export default function FAQPage() {
                   <p className="text-gray-400 text-sm mt-3">Try a different keyword or browse the categories below.</p>
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="mt-5 text-sm text-teal-600 underline hover:text-teal-700"
+                    className="mt-5 text-sm text-lochinvar underline hover:opacity-80"
                   >
                     Clear search
                   </button>
@@ -370,18 +370,18 @@ export default function FAQPage() {
                     onClick={() => { setActiveCategory(cat.category); setOpenIndex(null); }}
                     className={`flex-shrink-0 flex items-center gap-2 py-3.5 px-4 text-sm font-semibold transition-all duration-200 relative whitespace-nowrap rounded-lg mx-0.5
                       ${activeCategory === cat.category
-                        ? "text-teal-700"
+                        ? "text-lochinvar"
                         : "text-gray-500 hover:text-gray-800 hover:bg-gray-50/80"
                       }`}
                   >
-                    <span className={`${activeCategory === cat.category ? "text-teal-600" : "text-gray-400"}`}>
+                    <span className={`${activeCategory === cat.category ? "text-lochinvar" : "text-gray-400"}`}>
                       {cat.icon}
                     </span>
                     {cat.category}
                     {activeCategory === cat.category && (
                       <motion.div
                         layoutId="activeTab"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-teal-600 rounded-full"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-lochinvar rounded-full"
                       />
                     )}
                   </button>
@@ -451,21 +451,21 @@ function AccordionItem({
       transition={{ delay: index * 0.05 }}
       className={`border rounded-xl overflow-hidden transition-all duration-200 bg-white
         ${isOpen
-          ? "border-teal-200 shadow-md shadow-teal-900/5"
-          : "border-gray-100 hover:border-teal-100 shadow-sm hover:shadow-md hover:shadow-teal-900/5"
+          ? "border-lochinvar/30 shadow-md shadow-black/5"
+          : "border-gray-100 hover:border-lochinvar/20 shadow-sm hover:shadow-md hover:shadow-black/5"
         }`}
     >
       <button
         onClick={() => onToggle(index)}
-        className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/20"
+        className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-lochinvar/20"
       >
-        <span className={`font-semibold text-[15px] leading-snug transition-colors ${isOpen ? "text-teal-900" : "text-gray-900 hover:text-teal-700"}`}>
+        <span className={`font-semibold text-[15px] leading-snug transition-colors ${isOpen ? "text-lochinvar" : "text-gray-900 hover:text-lochinvar"}`}>
           {item.question}
         </span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2, ease: "easeInOut" }}
-          className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full transition-colors ${isOpen ? "bg-teal-100 text-teal-700" : "bg-gray-50 text-gray-400"}`}
+          className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full transition-colors ${isOpen ? "bg-lochinvar/10 text-lochinvar" : "bg-gray-50 text-gray-400"}`}
         >
           <ChevronDown className="w-4 h-4" />
         </motion.div>
@@ -507,11 +507,11 @@ function SearchResultItem({
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
       className={`border rounded-xl overflow-hidden transition-all duration-200 bg-white
-        ${isOpen ? "border-teal-200 shadow-md shadow-teal-900/5" : "border-gray-100 hover:border-teal-100 shadow-sm"}`}
+        ${isOpen ? "border-lochinvar/30 shadow-md shadow-black/5" : "border-gray-100 hover:border-lochinvar/20 shadow-sm"}`}
     >
       {/* Category badge */}
       <div className="px-5 pt-3">
-        <span className="inline-block text-[10px] font-semibold uppercase tracking-widest text-teal-600 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full">
+        <span className="inline-block text-[10px] font-semibold uppercase tracking-widest text-lochinvar bg-lochinvar/5 border border-lochinvar/20 px-2 py-0.5 rounded-full">
           {item.category}
         </span>
       </div>
@@ -519,13 +519,13 @@ function SearchResultItem({
         onClick={() => onToggle(index)}
         className="w-full text-left px-5 py-3 flex items-center justify-between gap-4 focus:outline-none"
       >
-        <span className={`font-semibold text-[15px] leading-snug ${isOpen ? "text-teal-900" : "text-gray-900"}`}>
+        <span className={`font-semibold text-[15px] leading-snug ${isOpen ? "text-lochinvar" : "text-gray-900"}`}>
           {item.question}
         </span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full ${isOpen ? "bg-teal-100 text-teal-700" : "bg-gray-50 text-gray-400"}`}
+          className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full ${isOpen ? "bg-lochinvar/10 text-lochinvar" : "bg-gray-50 text-gray-400"}`}
         >
           <ChevronDown className="w-4 h-4" />
         </motion.div>
