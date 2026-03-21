@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { MessageCircle, X, Send, Loader2, Mic } from 'lucide-react';
 import { getApiUrl } from '@/lib/api';
 import './ChatWidget.css';
@@ -9,6 +10,7 @@ import './ChatWidget.css';
 interface Message {
     sender: 'user' | 'bot';
     text: string;
+    navigation?: string;
 }
 
 export default function ChatWidget() {
@@ -22,9 +24,44 @@ export default function ChatWidget() {
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isListening, setIsListening] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
     const router = useRouter();
+
+    // Initialize state from sessionStorage (but clear on hard refresh)
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const navEntries = performance.getEntriesByType?.('navigation') || [];
+            const isReload = navEntries.length > 0 && (navEntries[0] as PerformanceNavigationTiming).type === 'reload';
+
+            if (isReload) {
+                sessionStorage.removeItem('chatMessages');
+                sessionStorage.removeItem('chatIsOpen');
+            } else {
+                const savedMessages = sessionStorage.getItem('chatMessages');
+                if (savedMessages) {
+                    try { setMessages(JSON.parse(savedMessages)); } catch (e) {}
+                }
+                const savedIsOpen = sessionStorage.getItem('chatIsOpen');
+                if (savedIsOpen === 'true') setIsOpen(true);
+            }
+            setIsInitialized(true);
+        }
+    }, []);
+
+    // Persist to sessionStorage on change
+    useEffect(() => {
+        if (isInitialized) {
+            sessionStorage.setItem('chatMessages', JSON.stringify(messages));
+        }
+    }, [messages, isInitialized]);
+
+    useEffect(() => {
+        if (isInitialized) {
+            sessionStorage.setItem('chatIsOpen', isOpen.toString());
+        }
+    }, [isOpen, isInitialized]);
 
     // Auto-scroll to bottom when messages change
     useEffect(() => {
@@ -105,15 +142,8 @@ export default function ChatWidget() {
             // Add bot response
             setMessages((prev) => [
                 ...prev,
-                { sender: 'bot', text: data.fulfillmentText },
+                { sender: 'bot', text: data.fulfillmentText, navigation: data.payload?.navigation },
             ]);
-
-            // Handle navigation payload
-            if (data.payload?.navigation) {
-                setTimeout(() => {
-                    router.push(data.payload.navigation);
-                }, 1500); // Give user time to read the message
-            }
         } catch (error) {
             console.error('Error sending message:', error);
             setMessages((prev) => [
@@ -170,6 +200,26 @@ export default function ChatWidget() {
                         >
                             <div className={`chat-bubble ${message.sender}`}>
                                 {message.text}
+                                {message.navigation && (
+                                    <div style={{ marginTop: '8px' }}>
+                                        <a 
+                                            href={message.navigation}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setIsOpen(false);
+                                                router.push(message.navigation!);
+                                            }}
+                                            style={{ 
+                                                textDecoration: 'underline', 
+                                                color: 'inherit', 
+                                                fontWeight: 'bold',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Click here to view
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
