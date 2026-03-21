@@ -142,6 +142,8 @@ Use these EXACT paths:
 - FAQ / Help: [NAVIGATE:/faq]
 - Vendor Dashboard: [NAVIGATE:/vendor]
 - Pro Upgrade: [NAVIGATE:/pro]
+- Sign Up / Register: [NAVIGATE:/auth/register]
+- Login / Sign In: [NAVIGATE:/auth/login]
 
 Example behavior:
 User: "Can you bring me to the name edit page?"
