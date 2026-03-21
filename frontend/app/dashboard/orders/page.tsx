@@ -43,11 +43,14 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const hasFetched = useRef(false);
+  
 
   const fetchOrders = useCallback(async (userId: string) => {
+     if (!isSignedIn || !user) return;
+    const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
     try {
       const response = await fetch(`${API_BASE}/bookings`, {
-        headers: { 'x-user-id': userId },
+        headers: { 'x-user-id': userIdentifier },
       });
 
       if (response.ok) {

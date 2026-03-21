@@ -27,6 +27,7 @@ function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const userIdentifier = user?.primaryEmailAddress?.emailAddress || user?.id || '';
   const bookingIdParam = searchParams.get('bookingId');
   const directBookingId = bookingIdParam ? Number(bookingIdParam) : null;
   const type = searchParams.get('type');
@@ -55,7 +56,7 @@ function CheckoutPageContent() {
     const fetchDirectBooking = async () => {
       try {
         const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': user.id },
+          headers: { 'x-user-id': userIdentifier},
         });
         if (!response.ok) return;
         const data = await response.json();
@@ -136,7 +137,7 @@ function CheckoutPageContent() {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': user.id,
+            'x-user-id': userIdentifier,
           },
           body: JSON.stringify({ status: 'COMPLETED' }),
         });
@@ -162,7 +163,7 @@ function CheckoutPageContent() {
               method: 'PATCH',
               headers: {
                 'Content-Type': 'application/json',
-                'x-user-id': user.id,
+                'x-user-id': userIdentifier,
               },
               body: JSON.stringify({ status: 'COMPLETED' }),
             });
@@ -171,7 +172,7 @@ function CheckoutPageContent() {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'x-user-id': user.id,
+                'x-user-id': userIdentifier,
               },
               body: JSON.stringify({
                 listingId: item.listingId,
@@ -187,7 +188,7 @@ function CheckoutPageContent() {
                 method: 'PATCH',
                 headers: {
                   'Content-Type': 'application/json',
-                  'x-user-id': user.id,
+                  'x-user-id': userIdentifier,
                 },
                 body: JSON.stringify({ status: 'CONFIRMED' }),
               });

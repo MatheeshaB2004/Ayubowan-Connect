@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from "@/context/AuthContext";
+import { useUser } from '@clerk/nextjs';
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,6 +25,7 @@ const API_BASE = API_BASE_URL;
 
 export default function ProPage() {
   const { user, role } = useAuth();
+  const { user: clerkUser } = useUser();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     isProUser: boolean;
@@ -35,16 +37,18 @@ export default function ProPage() {
   const checkoutHref = `/payments/checkout?type=subscription&plan=${selectedPlan}&cycle=${billingCycle}`;
   const ctaLabel = subscriptionStatus?.isProUser ? 'Renew Subscription' : 'Upgrade now';
 
-  useEffect(() => {
+    useEffect(() => {
     if (!user?.id) {
       setSubscriptionStatus(null);
       return;
     }
 
+    const userIdentifier = clerkUser?.primaryEmailAddress?.emailAddress || user.id;
+
     const fetchStatus = async () => {
       try {
         const response = await fetch(`${API_BASE}/subscriptions/status`, {
-          headers: { 'x-user-id': user.id },
+          headers: { 'x-user-id': userIdentifier },
         });
         if (!response.ok) return;
         const data = await response.json();
@@ -58,7 +62,8 @@ export default function ProPage() {
     };
 
     fetchStatus();
-  }, [user?.id]);
+  }, [user?.id, clerkUser]);
+
 
   const formattedExpiry = useMemo(() => {
     const expiry = subscriptionStatus?.proSubscriptionExpiry;

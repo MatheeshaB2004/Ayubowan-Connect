@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useUser } from '@clerk/nextjs';
 import { Calendar, MapPin, Users, Clock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
@@ -22,7 +22,7 @@ interface Booking {
 const API_BASE = API_BASE_URL;
 
 export default function TripsPage() {
-    const { user } = useAuth();
+    const { user } = useUser();
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -34,7 +34,7 @@ export default function TripsPage() {
             try {
                 const response = await fetch(`${API_BASE}/bookings`, {
                     headers: {
-                        'x-user-id': user.id,
+                        'x-user-id': user.primaryEmailAddress?.emailAddress || user.id,
                     },
                 });
 
