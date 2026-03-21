@@ -37,10 +37,9 @@ export default function BookingsPage() {
 
   const fetchBookings = useCallback(async () => {
     if (!isSignedIn || !user) return;
-    const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
     try {
       const response = await fetch(`${API_BASE}/bookings`, {
-        headers: { 'x-user-id': userIdentifier },
+        headers: { 'x-user-id': user.id },
       });
       if (response.ok) {
         const data: Booking[] = await response.json();
@@ -82,15 +81,12 @@ export default function BookingsPage() {
 
   const handleCancelBooking = async (bookingId: number) => {
     if (!user) return;
-
-    const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
-
     try {
       const response = await fetch(`${API_BASE}/bookings/${bookingId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': userIdentifier,
+          'x-user-id': user.id,
         },
         body: JSON.stringify({ status: 'CANCELLED' }),
       });

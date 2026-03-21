@@ -41,10 +41,9 @@ export default function UpcomingExperiencesPage() {
     }
 
     const fetchBookings = async () => {
-      const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
       try {
         const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': userIdentifier },
+          headers: { 'x-user-id': user.id },
         });
 
         if (response.ok) {

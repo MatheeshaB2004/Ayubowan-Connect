@@ -108,7 +108,7 @@ export default function ExperienceDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    if (!idStr) return;
+     if (!idStr) return;
 
     viewLogged.current = true;
 
@@ -118,7 +118,7 @@ export default function ExperienceDetailPage() {
 
     fetch(url, { method: "POST" });
 
-  }, [idStr, user]);
+  }, [idStr,user]);
 
 
   useEffect(() => {
@@ -167,7 +167,7 @@ export default function ExperienceDetailPage() {
       .then((data: AvailabilityDate[]) => {
         if (!controller.signal.aborted) setListingAvailability(data ?? []);
       })
-      .catch(() => { });
+      .catch(() => {});
     return () => controller.abort();
   }, [listing]);
 
@@ -239,16 +239,12 @@ export default function ExperienceDetailPage() {
       return;
     }
 
-    // --- Add the userIdentifier exactly like we did in the dashboard ---
-    const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
-
     try {
       const response = await fetch(`${API_BASE}/bookings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // --- Send the new userIdentifier ---
-          'x-user-id': userIdentifier,
+          'x-user-id': user.id,
         },
         body: JSON.stringify({
           listingId: listing?.id,
@@ -271,6 +267,9 @@ export default function ExperienceDetailPage() {
       toast.error('An error occurred. Please try again.');
     }
   };
+
+
+
 
   if (isLoading) {
     return (
@@ -665,136 +664,136 @@ export default function ExperienceDetailPage() {
           <div className="booking-card">
             <h3 className="booking-title">Booking card</h3>
 
-            <div className="booking-form">
-              {/* Date picker — only show dates that have available slots */}
-              <div className="form-field">
-                <label className="field-label" htmlFor="booking-date">
-                  <Calendar size={16} />
-                  Date
-                </label>
-                {availableDates.length > 0 ? (
-                  <select
-                    id="booking-date"
-                    title="Booking Date"
-                    className="field-input"
-                    value={bookingForm.date}
-                    onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value, slotId: null, participants: 1 })}
-                  >
-                    <option value="">Select a date</option>
-                    {availableDates.map((d) => (
-                      <option key={d.date} value={d.date}>
-                        {new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="p-3 mt-1 bg-gray-50 border border-gray-200 rounded text-gray-500 italic text-sm">
-                    No availability set by vendor
+              <div className="booking-form">
+                {/* Date picker — only show dates that have available slots */}
+                <div className="form-field">
+                  <label className="field-label" htmlFor="booking-date">
+                    <Calendar size={16} />
+                    Date
+                  </label>
+                  {availableDates.length > 0 ? (
+                    <select
+                      id="booking-date"
+                      title="Booking Date"
+                      className="field-input"
+                      value={bookingForm.date}
+                      onChange={(e) => setBookingForm({ ...bookingForm, date: e.target.value, slotId: null, participants: 1 })}
+                    >
+                      <option value="">Select a date</option>
+                      {availableDates.map((d) => (
+                        <option key={d.date} value={d.date}>
+                          {new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="p-3 mt-1 bg-gray-50 border border-gray-200 rounded text-gray-500 italic text-sm">
+                      No availability set by vendor
+                    </div>
+                  )}
+                </div>
+
+                {/* Time slot — show slots for the selected date */}
+                {bookingForm.date && slotsForSelectedDate.length > 0 && (
+                  <div className="form-field">
+                    <label className="field-label" htmlFor="time-slot">Time Slot</label>
+                    <select
+                      id="time-slot"
+                      title="Time Slot"
+                      className="field-input"
+                      value={bookingForm.slotId ?? ''}
+                      onChange={(e) => setBookingForm({ ...bookingForm, slotId: Number(e.target.value) || null, participants: 1 })}
+                    >
+                      <option value="">Select a time slot</option>
+                      {slotsForSelectedDate.map((slot) => {
+                        const timeLabel = formatSlotRange(slot.startTime, slot.endTime);
+                        const remaining = slot.maxGuests - slot.bookedGuests;
+                        const isFull = remaining <= 0;
+                        const label = timeLabel === '-'
+                          ? '-'
+                          : `${timeLabel} (${remaining > 0 ? `${remaining} spots left` : 'Full'})`;
+                        return (
+                          <option key={slot.id} value={slot.id} disabled={isFull}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
                   </div>
                 )}
-              </div>
 
-              {/* Time slot — show slots for the selected date */}
-              {bookingForm.date && slotsForSelectedDate.length > 0 && (
+                {/* Participants with increment controls */}
                 <div className="form-field">
-                  <label className="field-label" htmlFor="time-slot">Time Slot</label>
-                  <select
-                    id="time-slot"
-                    title="Time Slot"
-                    className="field-input"
-                    value={bookingForm.slotId ?? ''}
-                    onChange={(e) => setBookingForm({ ...bookingForm, slotId: Number(e.target.value) || null, participants: 1 })}
-                  >
-                    <option value="">Select a time slot</option>
-                    {slotsForSelectedDate.map((slot) => {
-                      const timeLabel = formatSlotRange(slot.startTime, slot.endTime);
-                      const remaining = slot.maxGuests - slot.bookedGuests;
-                      const isFull = remaining <= 0;
-                      const label = timeLabel === '-'
-                        ? '-'
-                        : `${timeLabel} (${remaining > 0 ? `${remaining} spots left` : 'Full'})`;
-                      return (
-                        <option key={slot.id} value={slot.id} disabled={isFull}>
-                          {label}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-              )}
-
-              {/* Participants with increment controls */}
-              <div className="form-field">
-                <label className="field-label" htmlFor="booking-participants">
-                  <Users size={16} />
-                  Participants
-                </label>
-                <div className="flex items-center gap-4 mt-1">
-                  <button
-                    type="button"
-                    className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50"
-                    disabled={bookingForm.participants <= 1 || !bookingForm.slotId}
-                    onClick={() => setBookingForm((prev) => ({ ...prev, participants: prev.participants - 1 }))}
-                  >
-                    -
-                  </button>
-                  <span className="text-lg font-semibold w-8 text-center">{bookingForm.participants}</span>
-                  <button
-                    type="button"
-                    className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50"
-                    disabled={
-                      !bookingForm.slotId ||
-                      bookingForm.participants >= (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)?.maxGuests ?? 0) - (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)?.bookedGuests ?? 0)
-                    }
-                    onClick={() => setBookingForm((prev) => ({ ...prev, participants: prev.participants + 1 }))}
-                  >
-                    +
-                  </button>
-                </div>
-                {bookingForm.slotId && (() => {
-                  const sel = slotsForSelectedDate.find((s) => s.id === bookingForm.slotId);
-                  const rem = sel ? sel.maxGuests - sel.bookedGuests : 0;
-                  return (
-                    <p className="text-xs text-gray-500 mt-2">
-                      Max {rem} available
-                    </p>
-                  );
-                })()}
-              </div>
-
-              {isBookingSubmitted && (
-                <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ShieldCheck size={18} className="text-green-600 shrink-0" />
-                    <p className="text-sm font-semibold text-green-800">Booking request sent successfully.</p>
-                  </div>
-                  <p className="text-sm text-green-700 mb-3">
-                    Your booking request has been sent to the vendor. You can track its status in Pending Bookings.
-                  </p>
-                  <Link href="/dashboard/bookings">
-                    <button className="w-full rounded-lg bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78]">
-                      View Pending Bookings
+                  <label className="field-label" htmlFor="booking-participants">
+                    <Users size={16} />
+                    Participants
+                  </label>
+                  <div className="flex items-center gap-4 mt-1">
+                    <button
+                      type="button"
+                      className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50"
+                      disabled={bookingForm.participants <= 1 || !bookingForm.slotId}
+                      onClick={() => setBookingForm((prev) => ({ ...prev, participants: prev.participants - 1 }))}
+                    >
+                      -
                     </button>
-                  </Link>
+                    <span className="text-lg font-semibold w-8 text-center">{bookingForm.participants}</span>
+                    <button
+                      type="button"
+                      className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50"
+                      disabled={
+                        !bookingForm.slotId ||
+                        bookingForm.participants >= (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)?.maxGuests ?? 0) - (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)?.bookedGuests ?? 0)
+                      }
+                      onClick={() => setBookingForm((prev) => ({ ...prev, participants: prev.participants + 1 }))}
+                    >
+                      +
+                    </button>
+                  </div>
+                  {bookingForm.slotId && (() => {
+                    const sel = slotsForSelectedDate.find((s) => s.id === bookingForm.slotId);
+                    const rem = sel ? sel.maxGuests - sel.bookedGuests : 0;
+                    return (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Max {rem} available
+                      </p>
+                    );
+                  })()}
                 </div>
-              )}
 
-              <button
-                className="btn-book-now mt-4"
-                disabled={
-                  !bookingForm.date ||
-                  !bookingForm.slotId ||
-                  bookingForm.participants < 1 ||
-                  (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)
-                    ? bookingForm.participants > (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)!.maxGuests - slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)!.bookedGuests)
-                    : false)
-                }
-                onClick={handleBookingSubmit}
-              >
-                Book Experience
-              </button>
+                {isBookingSubmitted && (
+                  <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <ShieldCheck size={18} className="text-green-600 shrink-0" />
+                      <p className="text-sm font-semibold text-green-800">Booking request sent successfully.</p>
+                    </div>
+                    <p className="text-sm text-green-700 mb-3">
+                      Your booking request has been sent to the vendor. You can track its status in Pending Bookings.
+                    </p>
+                    <Link href="/dashboard/bookings">
+                      <button className="w-full rounded-lg bg-[#0d9488] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#0b7f78]">
+                        View Pending Bookings
+                      </button>
+                    </Link>
+                  </div>
+                )}
 
-            </div>
+                <button
+                  className="btn-book-now mt-4"
+                  disabled={
+                    !bookingForm.date ||
+                    !bookingForm.slotId ||
+                    bookingForm.participants < 1 ||
+                    (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)
+                      ? bookingForm.participants > (slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)!.maxGuests - slotsForSelectedDate.find((s) => s.id === bookingForm.slotId)!.bookedGuests)
+                      : false)
+                  }
+                  onClick={handleBookingSubmit}
+                >
+                  Book Experience
+                </button>
+
+              </div>
           </div>
         </aside>
       </div>

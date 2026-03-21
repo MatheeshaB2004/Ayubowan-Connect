@@ -83,11 +83,10 @@ function PaymentSuccessPageContent() {
     if (isSubscriptionSuccess || !user || !bookingId || Number.isNaN(bookingId)) return;
 
     const fetchBooking = async () => {
-      const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
       setIsLoading(true);
       try {
         const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': userIdentifier},
+          headers: { 'x-user-id': user.id },
         });
         if (!response.ok) {
           setBooking(null);
@@ -111,14 +110,13 @@ function PaymentSuccessPageContent() {
     if (!isSubscriptionSuccess || !user || subscriptionActivated) return;
 
     const activateSubscription = async () => {
-      const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
       setIsLoading(true);
       try {
         const response = await fetch(`${API_BASE}/payments/upgrade`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': userIdentifier,
+            'x-user-id': user.id,
           },
           body: JSON.stringify({
             planType: plan?.toUpperCase(),
@@ -270,7 +268,7 @@ function PaymentSuccessPageContent() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-             'x-user-id': user.primaryEmailAddress?.emailAddress || user.id,
+            'x-user-id': user.id,
           },
           body: JSON.stringify({
             cartItems: payload,
