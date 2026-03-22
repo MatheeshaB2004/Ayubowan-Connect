@@ -14,6 +14,13 @@ const isPublicRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  const pathname = req.nextUrl.pathname;
+
+  // Keep FAQ visible to guests, travellers, and vendors.
+  if (pathname === "/faq" || pathname.startsWith("/faq/")) {
+    return;
+  }
+
   if (!isPublicRoute(req)) {
     await auth.protect();
   }
