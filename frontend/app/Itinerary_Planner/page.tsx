@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Calendar, DollarSign, MapPin, Heart } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, Calendar, DollarSign, MapPin, Heart, Lock } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { API_BASE_URL } from "@/lib/api";
+import Link from "next/link";
 import "./planner.css";
 
 interface Itinerary {
@@ -21,6 +24,46 @@ interface Itinerary {
 export default function ItineraryPlanner() {
     const { isSignedIn } = useUser();
     const router = useRouter();
+    const { user, role, authReady } = useAuth();
+    
+    const [isPro, setIsPro] = useState<boolean | null>(null);
+    const [checkingPro, setCheckingPro] = useState(true);
+
+    useEffect(() => {
+        if (!authReady) return;
+        if (!user?.id || role !== "traveller") {
+            setCheckingPro(false);
+            setIsPro(false);
+            return;
+        }
+
+        const fetchStatus = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/payments/status`, {
+                    headers: { 'x-user-id': user.id },
+                });
+                if (!response.ok) {
+                    setIsPro(false);
+                    setCheckingPro(false);
+                    return;
+                }
+                const data = await response.json();
+                
+                const isProUser = Boolean(data?.isProUser);
+                const expiry = data?.proSubscriptionExpiry;
+                const isExpired = expiry && new Date(expiry) < new Date();
+                
+                setIsPro(isProUser && !isExpired);
+            } catch (error) {
+                console.error('Failed to load subscription status:', error);
+                setIsPro(false);
+            } finally {
+                setCheckingPro(false);
+            }
+        };
+
+        fetchStatus();
+    }, [user?.id, role, authReady]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -87,6 +130,66 @@ export default function ItineraryPlanner() {
             setLoading(false);
         }
     };
+
+    if (checkingPro || !authReady) {
+        return (
+            <div className="planner-container flex items-center justify-center min-h-[60vh]">
+                <Loader2 className="w-10 h-10 animate-spin text-emerald-600" />
+            </div>
+        );
+    }
+
+    if (!isSignedIn) {
+        return (
+            <div className="planner-container">
+                <div className="planner-content text-center py-20">
+                    <div className="flex flex-col items-center justify-center gap-6 max-w-lg mx-auto bg-white p-10 rounded-2xl shadow-lg border border-gray-100">
+                        <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-2">
+                            <Lock className="w-10 h-10 text-emerald-600" />
+                        </div>
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                            Pro Feature
+                        </h1>
+                        <p className="text-gray-600 text-lg">
+                            The AI Travel Planner is a premium feature. Please log in as a Traveller and upgrade to Pro to unlock smart, AI-driven itinerary planning.
+                        </p>
+                        <Link 
+                            href="/auth/login" 
+                            className="mt-4 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-1"
+                        >
+                            Log In
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (role !== 'traveller' || isPro === false) {
+        return (
+            <div className="planner-container">
+                <div className="planner-content text-center py-20">
+                    <div className="flex flex-col items-center justify-center gap-6 max-w-lg mx-auto bg-white p-10 rounded-2xl shadow-lg border border-gray-100">
+                        <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-2">
+                            <Lock className="w-10 h-10 text-emerald-600" />
+                        </div>
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
+                            Pro Feature
+                        </h1>
+                        <p className="text-gray-600 text-lg">
+                            The AI Travel Planner is exclusively available for Pro Travellers. Upgrade your subscription to unlock smart, AI-driven itinerary planning.
+                        </p>
+                        <Link 
+                            href="/pro" 
+                            className="mt-4 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-full transition-all shadow-md hover:shadow-lg transform hover:-translate-y-1"
+                        >
+                            Upgrade to Pro
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="planner-container">

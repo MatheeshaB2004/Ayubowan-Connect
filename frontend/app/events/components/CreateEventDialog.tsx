@@ -33,6 +33,14 @@ const PROVINCE_DISTRICT_MAP: Record<string, string[]> = {
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_MB = 5;
 
+function getTodayDateString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 // Types
 
 interface Props {
@@ -84,6 +92,7 @@ export function CreateEventDialog({ open, token, userId, onClose, onCreated }: P
   const [loading, setLoading]     = useState(false);
   const [error, setError]         = useState<string | null>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  const todayDateString = getTodayDateString();
 
   // processImageFile must be declared before early return (Rules of Hooks)
   const processImageFile = useCallback((file: File) => {
@@ -147,6 +156,7 @@ export function CreateEventDialog({ open, token, userId, onClose, onCreated }: P
 
   // Submit
   const handleSubmit = async () => {
+    if (!imageFile && !imageUploadedUrl) { setError("Event image is required."); return; }
     if (!form.title.trim())  { setError("Event title is required."); return; }
     if (!form.category || form.category === "all") { setError("Category is required."); return; }
     if (!form.location.trim()) { setError("Exact event location is required."); return; }
@@ -154,6 +164,9 @@ export function CreateEventDialog({ open, token, userId, onClose, onCreated }: P
     if (!form.district)      { setError("Please select a district."); return; }
     if (!form.startDate)     { setError("Start date is required."); return; }
     if (!form.endDate)       { setError("End date is required."); return; }
+    if (form.startDate < todayDateString) { setError("Events cannot be scheduled in the past. Enter a date from today onwards."); return; }
+    if (form.endDate < todayDateString) { setError("End date must be today or in the future."); return; }
+    if (form.endDate < form.startDate) { setError("Ohh! End date cannot be before start date."); return; }
     if (!form.time.trim())   { setError("Time is required."); return; }
     if (!form.description.trim()) { setError("Description is required."); return; }
     if (!form.isFree && !form.price.trim()) { setError("Price is required unless the event is marked free."); return; }
@@ -249,7 +262,7 @@ export function CreateEventDialog({ open, token, userId, onClose, onCreated }: P
 
           {/* ── 1. Image Upload ── */}
           <div>
-            <label className="block text-[13px] font-medium text-gray-700 mb-2">Event Image</label>
+            <label className="block text-[13px] font-medium text-gray-700 mb-2">Event Image<span className="text-red-500 ml-0.5">*</span></label>
             <input ref={fileInputRef} type="file" accept={ACCEPTED_TYPES.join(",")} onChange={handleFileInput} className="hidden" />
 
             {imagePreview ? (
@@ -391,10 +404,10 @@ export function CreateEventDialog({ open, token, userId, onClose, onCreated }: P
           {/* ── 7. Dates ── */}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Start Date" required>
-              <input type="date" value={form.startDate} onChange={e => set("startDate", e.target.value)} className={inp} />
+              <input type="date" min={todayDateString} value={form.startDate} onChange={e => set("startDate", e.target.value)} className={inp} />
             </Field>
             <Field label="End Date" required>
-              <input type="date" value={form.endDate} onChange={e => set("endDate", e.target.value)} className={inp} />
+              <input type="date" min={form.startDate || todayDateString} value={form.endDate} onChange={e => set("endDate", e.target.value)} className={inp} />
             </Field>
           </div>
 

@@ -30,12 +30,12 @@ export function EventBar({ event, isGuest, innerRef }: EventBarProps) {
     <div
       ref={innerRef}
       onClick={handleClick}
-      className="bg-white rounded-xl border border-gray-200 hover:border-[#0d9488]/40 hover:shadow-md transition-all duration-200 cursor-pointer p-4 mb-3"
+      className="bg-white rounded-xl border border-gray-200 hover:border-[#0d9488]/40 hover:shadow-md transition-all duration-200 cursor-pointer p-5 mb-3.5"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-5 min-h-[100px]">
 
         {/* Thumbnail */}
-        <div className="relative w-[110px] h-[78px] flex-shrink-0 rounded-lg overflow-hidden bg-[#e8f5f2]">
+        <div className="relative w-[155px] h-[100px] flex-shrink-0 rounded-lg overflow-hidden bg-[#e8f5f2]">
           {event.imageUrl ? (
             <Image
               src={event.imageUrl}
@@ -60,7 +60,7 @@ export function EventBar({ event, isGuest, innerRef }: EventBarProps) {
 
         {/* Main content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start gap-3 mb-1">
+          <div className="flex items-start gap-3 mb-1.5">
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-gray-900 text-[15px] leading-tight truncate">
                 {event.title}
@@ -78,7 +78,7 @@ export function EventBar({ event, isGuest, innerRef }: EventBarProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-3 gap-y-0.5 mt-2 text-[12px] text-gray-500">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1 mt-2.5 text-[12px] text-gray-500">
             <span className="flex items-center gap-1.5 truncate">
               <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
               {formatDateRange(event.startDate, event.endDate)}
@@ -103,7 +103,7 @@ export function EventBar({ event, isGuest, innerRef }: EventBarProps) {
         </div>
 
         {/* Price + CTA */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0 ml-2">
+        <div className="flex flex-col items-end gap-2.5 flex-shrink-0 ml-3">
           <span className={`text-[12px] font-semibold px-3 py-1 rounded-md ${isFree ? "bg-[#0d9488] text-white" : "bg-[#f59e0b] text-white"}`}>
             {formatPrice(event.price, event.isFree)}
           </span>
