@@ -30,6 +30,7 @@ const NavbarTraveller: React.FC<NavbarTravellerProps> = ({ textColorClass = '' }
       <Link href="/marketplace" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/marketplace') ? 'active' : ''}`}>Marketplace</Link>
       <Link href="/events" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/events') ? 'active' : ''}`}>Events</Link>
       <Link href="/dashboard/orders" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/dashboard') ? 'active' : ''}`}>Dashboard</Link>
+      <Link href="/Itinerary_Planner" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/Itinerary_Planner') ? 'active' : ''}`}>Itinerary Planner</Link>
       <Link href="/pro" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/pro') ? 'active' : ''}`}>Pro</Link>
       <Link href="/faq" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/faq') ? 'active' : ''}`}>FAQs</Link>
       <Link href="/User_profile_manager" className={`nav-link text-sm font-medium ${textColorClass} ${hoverColorClass} ${isActive('/User_profile_manager') ? 'active' : ''}`}>My Profile</Link>

@@ -13,7 +13,7 @@ import {
 import { fetchEventById, registerForEvent, fetchUserRegisteredEvents, deleteEvent } from "../lib/api/events";
 import { EventGallery } from "../components/EventGallery";
 import { Event, EventGalleryImage } from "../types/events";
-import { formatFullDate, formatPrice } from "../lib/utils";
+import { formatDateRange, formatPrice } from "../lib/utils";
 import { API_BASE_URL } from "@/lib/api";
 
 // Fallback data shown when vendor hasn't provided content
@@ -46,38 +46,69 @@ const MOCK_ATTENDEES = [
   { initials: "SR", name: "Shaun R.",  country: "Gampaha, Sri Lanka"   },
 ];
 
+function parseTimeFromRange(rawTime: string, useLastMatch: boolean): { hour: number; minute: number } | null {
+  const twelveHourMatches = [...rawTime.matchAll(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi)];
+  if (twelveHourMatches.length > 0) {
+    const match = useLastMatch ? twelveHourMatches[twelveHourMatches.length - 1] : twelveHourMatches[0];
+    let hour = Number(match[1]);
+    const minute = Number(match[2]);
+    const meridiem = match[3].toUpperCase();
+    if (meridiem === "PM" && hour !== 12) hour += 12;
+    if (meridiem === "AM" && hour === 12) hour = 0;
+    return { hour, minute };
+  }
+
+  const twentyFourHourMatches = [...rawTime.matchAll(/(\d{1,2}):(\d{2})/g)];
+  if (twentyFourHourMatches.length > 0) {
+    const match = useLastMatch ? twentyFourHourMatches[twentyFourHourMatches.length - 1] : twentyFourHourMatches[0];
+    const hour = Number(match[1]);
+    const minute = Number(match[2]);
+    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+      return { hour, minute };
+    }
+  }
+
+  return null;
+}
+
 function getEventStartDateTime(event: Event): Date {
   const eventStart = new Date(event.startDate);
   const rawTime = event.time ?? "";
 
-  const twelveHourMatch = rawTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-  if (twelveHourMatch) {
-    let hour = Number(twelveHourMatch[1]);
-    const minute = Number(twelveHourMatch[2]);
-    const meridiem = twelveHourMatch[3].toUpperCase();
-    if (meridiem === "PM" && hour !== 12) hour += 12;
-    if (meridiem === "AM" && hour === 12) hour = 0;
-    eventStart.setHours(hour, minute, 0, 0);
-    return eventStart;
-  }
-
-  const twentyFourHourMatch = rawTime.match(/(\d{1,2}):(\d{2})/);
-  if (twentyFourHourMatch) {
-    const hour = Number(twentyFourHourMatch[1]);
-    const minute = Number(twentyFourHourMatch[2]);
-    if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
-      eventStart.setHours(hour, minute, 0, 0);
-    }
+  const parsed = parseTimeFromRange(rawTime, false);
+  if (parsed) {
+    eventStart.setHours(parsed.hour, parsed.minute, 0, 0);
   }
 
   return eventStart;
 }
 
+function getEventEndDateTime(event: Event): Date {
+  const eventEnd = new Date(event.endDate || event.startDate);
+  const rawTime = event.time ?? "";
+
+  const parsed = parseTimeFromRange(rawTime, true);
+  if (parsed) {
+    eventEnd.setHours(parsed.hour, parsed.minute, 0, 0);
+    return eventEnd;
+  }
+
+  // If time is missing/invalid, treat event as finished at end of the endDate.
+  eventEnd.setHours(23, 59, 59, 999);
+  return eventEnd;
+}
+
 function canDeleteEvent(event: Event): boolean {
   const now = new Date();
   const eventStart = getEventStartDateTime(event);
+  const eventEnd = getEventEndDateTime(event);
   const msUntilStart = eventStart.getTime() - now.getTime();
-  return msUntilStart >= 24 * 60 * 60 * 1000;
+  const msSinceEnd = now.getTime() - eventEnd.getTime();
+
+  // Allowed windows:
+  // 1) At least 24 hours before event starts.
+  // 2) Re-enabled 7 days after event has ended.
+  return msUntilStart >= 24 * 60 * 60 * 1000 || msSinceEnd >= 7 * 24 * 60 * 60 * 1000;
 }
 
 
@@ -206,6 +237,10 @@ export default function EventDetailPage() {
   // Delete event handler
   const handleDelete = async () => {
     if (!event) return;
+    if (!isEventCreator || !canDelete) {
+      setDeleteError("You can delete this event only if you are the creator and it is in an allowed delete window.");
+      return;
+    }
     setDeleteError(null);
     setDeleteLoading(true);
 
@@ -275,6 +310,7 @@ export default function EventDetailPage() {
   const spotsLeft  = event.maxParticipants ? event.maxParticipants - event.participantCount : null;
   const noSpotsLeft = spotsLeft != null && spotsLeft <= 0;
   const almostFull = spotsLeft != null && spotsLeft > 0 && spotsLeft <= 5;
+  const eventFinished = new Date() > getEventEndDateTime(event);
 
   const learnItems = (event.whatYouWillLearn && event.whatYouWillLearn.length > 0)
     ? event.whatYouWillLearn : FALLBACK_LEARN;
@@ -325,7 +361,7 @@ export default function EventDetailPage() {
           <div className="flex items-center gap-2">
             {isEventCreator && !canDelete && (
               <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 h-8 flex items-center">
-                Delete disabled (less than 24h left)
+                Delete locked (re-opens 7 days after event end)
               </div>
             )}
             {isEventCreator && canDelete && (
@@ -386,7 +422,7 @@ export default function EventDetailPage() {
 
               {/* 4-tile meta */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-                <MetaTile icon={<Calendar className="w-5 h-5 text-lochinvar" />} label="Date">{formatFullDate(event.startDate)}</MetaTile>
+                <MetaTile icon={<Calendar className="w-5 h-5 text-lochinvar" />} label="Date">{formatDateRange(event.startDate, event.endDate)}</MetaTile>
                 <MetaTile icon={<Clock className="w-5 h-5 text-lochinvar" />}    label="Time">{event.time ?? "TBA"}</MetaTile>
                 <MetaTile icon={<MapPin className="w-5 h-5 text-lochinvar" />}   label="Location">{event.location}</MetaTile>
                 <MetaTile icon={<Users className="w-5 h-5 text-lochinvar" />}    label="Participants">{event.participantCount}/{event.maxParticipants ?? "∞"}</MetaTile>
@@ -498,7 +534,7 @@ export default function EventDetailPage() {
                     </p>
                   )}
                   <div className="space-y-3 mb-5">
-                    <BookingMeta icon={<Calendar className="w-4 h-4 text-lochinvar" />} label="Date">{formatFullDate(event.startDate)}</BookingMeta>
+                    <BookingMeta icon={<Calendar className="w-4 h-4 text-lochinvar" />} label="Date">{formatDateRange(event.startDate, event.endDate)}</BookingMeta>
                     {event.time && <BookingMeta icon={<Clock className="w-4 h-4 text-lochinvar" />} label="Time">{event.time}</BookingMeta>}
                     {event.maxParticipants && <BookingMeta icon={<Users className="w-4 h-4 text-lochinvar" />} label="Group Size">Max {event.maxParticipants} participants</BookingMeta>}
                   </div>
@@ -513,6 +549,10 @@ export default function EventDetailPage() {
                           <CheckCircle2 className="w-4 h-4" />
                           You have already registered in this event
                         </p>
+                      </div>
+                    ) : eventFinished ? (
+                      <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-500 font-medium text-sm flex items-center justify-center">
+                        Event has ended
                       </div>
                     ) : noSpotsLeft ? (
                       <div className="w-full h-11 rounded-xl bg-gray-100 text-gray-500 font-medium text-sm flex items-center justify-center">

@@ -13,34 +13,109 @@ import { Prisma } from '@prisma/client';
 export class EventsService {
   constructor(private prisma: PrismaService) {}
 
+  private getTodayDateString(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private parseTimeFromRange(
+    rawTime: string,
+    useLastMatch: boolean,
+  ): { hour: number; minute: number } | null {
+    const twelveHourMatches = [
+      ...rawTime.matchAll(/(\d{1,2}):(\d{2})\s*(AM|PM)/gi),
+    ];
+    if (twelveHourMatches.length > 0) {
+      const match = useLastMatch
+        ? twelveHourMatches[twelveHourMatches.length - 1]
+        : twelveHourMatches[0];
+
+      let hour = Number(match[1]);
+      const minute = Number(match[2]);
+      const meridiem = match[3].toUpperCase();
+
+      if (meridiem === 'PM' && hour !== 12) hour += 12;
+      if (meridiem === 'AM' && hour === 12) hour = 0;
+
+      return { hour, minute };
+    }
+
+    const twentyFourHourMatches = [...rawTime.matchAll(/(\d{1,2}):(\d{2})/g)];
+    if (twentyFourHourMatches.length > 0) {
+      const match = useLastMatch
+        ? twentyFourHourMatches[twentyFourHourMatches.length - 1]
+        : twentyFourHourMatches[0];
+
+      const hour = Number(match[1]);
+      const minute = Number(match[2]);
+
+      if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
+        return { hour, minute };
+      }
+    }
+
+    return null;
+  }
+
   private getEventStartDateTime(startDate: Date, time?: string | null): Date {
     const eventStart = new Date(startDate);
 
     if (!time) return eventStart;
 
-    const twelveHourMatch = time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-    if (twelveHourMatch) {
-      let hour = Number(twelveHourMatch[1]);
-      const minute = Number(twelveHourMatch[2]);
-      const meridiem = twelveHourMatch[3].toUpperCase();
-
-      if (meridiem === 'PM' && hour !== 12) hour += 12;
-      if (meridiem === 'AM' && hour === 12) hour = 0;
-
-      eventStart.setHours(hour, minute, 0, 0);
-      return eventStart;
-    }
-
-    const twentyFourHourMatch = time.match(/(\d{1,2}):(\d{2})/);
-    if (twentyFourHourMatch) {
-      const hour = Number(twentyFourHourMatch[1]);
-      const minute = Number(twentyFourHourMatch[2]);
-      if (hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59) {
-        eventStart.setHours(hour, minute, 0, 0);
-      }
+    const parsed = this.parseTimeFromRange(time, false);
+    if (parsed) {
+      eventStart.setHours(parsed.hour, parsed.minute, 0, 0);
     }
 
     return eventStart;
+  }
+
+  private getEventEndDateTime(
+    startDate: Date,
+    endDate?: Date | null,
+    time?: string | null,
+  ): Date {
+    const eventEnd = new Date(endDate ?? startDate);
+
+    if (!time) {
+      // If time is missing, treat event as ending at end of the day.
+      eventEnd.setHours(23, 59, 59, 999);
+      return eventEnd;
+    }
+
+    const parsed = this.parseTimeFromRange(time, true);
+    if (parsed) {
+      eventEnd.setHours(parsed.hour, parsed.minute, 0, 0);
+      return eventEnd;
+    }
+
+    // Invalid time format fallback: keep event live until end of day.
+    eventEnd.setHours(23, 59, 59, 999);
+    return eventEnd;
+  }
+
+  private isEventLive(
+    now: Date,
+    startDate: Date,
+    endDate?: Date | null,
+    time?: string | null,
+  ): boolean {
+    const eventStart = this.getEventStartDateTime(startDate, time);
+    const eventEnd = this.getEventEndDateTime(startDate, endDate, time);
+    return now >= eventStart && now <= eventEnd;
+  }
+
+  private isEventPast(
+    now: Date,
+    startDate: Date,
+    endDate?: Date | null,
+    time?: string | null,
+  ): boolean {
+    const eventEnd = this.getEventEndDateTime(startDate, endDate, time);
+    return now > eventEnd;
   }
 
   private async resolveVendorId(rawUserId: string): Promise<number> {
@@ -149,8 +224,7 @@ export class EventsService {
     return events.map((event) => ({
       ...event,
       participantCount: event.registrations.length,
-      isLive:
-        event.startDate <= now && (!event.endDate || event.endDate >= now),
+      isLive: this.isEventLive(now, event.startDate, event.endDate, event.time),
     }));
   }
 
@@ -192,8 +266,7 @@ export class EventsService {
       ...event,
       participantCount: registrations.length,
       galleryImages,
-      isLive:
-        event.startDate <= now && (!event.endDate || event.endDate >= now),
+      isLive: this.isEventLive(now, event.startDate, event.endDate, event.time),
     };
   }
 
@@ -209,11 +282,18 @@ export class EventsService {
     });
 
     return events.map((event) => {
-      const isLive =
-        event.startDate <= now && (!event.endDate || event.endDate >= now);
-      const isPast = event.endDate
-        ? event.endDate < now
-        : event.startDate < now;
+      const isLive = this.isEventLive(
+        now,
+        event.startDate,
+        event.endDate,
+        event.time,
+      );
+      const isPast = this.isEventPast(
+        now,
+        event.startDate,
+        event.endDate,
+        event.time,
+      );
 
       return {
         ...event,
@@ -225,8 +305,9 @@ export class EventsService {
   }
 
   // Get events a user has registered for
-  async getUserRegisteredEvents(rawUserId: string, email?: string) {
-    const userId = await this.resolveUserId(rawUserId, email);
+  async getUserRegisteredEvents(rawUserId: string) {
+    const userId = await this.resolveUserId(rawUserId);
+    const now = new Date();
 
     const registrations = await this.prisma.eventRegistration.findMany({
       where: { userId },
@@ -242,8 +323,14 @@ export class EventsService {
 
     return registrations.map((r) => ({
       ...r.event,
-      registrationDate: r.createdAt,  // ✅ ADD THIS
+      registrationDate: r.createdAt,
       participantCount: r.event.registrations.length,
+      isLive: this.isEventLive(
+        now,
+        r.event.startDate,
+        r.event.endDate,
+        r.event.time,
+      ),
     }));
   }
 
@@ -251,6 +338,23 @@ export class EventsService {
   async createEvent(rawUserId: string, dto: CreateEventDto) {
     const vendorId = await this.resolveVendorId(rawUserId);
     const { startDate, endDate, ...rest } = dto;
+    const today = this.getTodayDateString();
+    const normalizedStartDate = startDate.slice(0, 10);
+    const normalizedEndDate = endDate ? endDate.slice(0, 10) : null;
+
+    if (normalizedStartDate < today) {
+      throw new BadRequestException('Start date cannot be before today');
+    }
+
+    if (normalizedEndDate && normalizedEndDate < today) {
+      throw new BadRequestException('End date cannot be before today');
+    }
+
+    if (normalizedEndDate && normalizedEndDate < normalizedStartDate) {
+      throw new BadRequestException(
+        'End date cannot be earlier than start date',
+      );
+    }
 
     return this.prisma.event.create({
       data: {

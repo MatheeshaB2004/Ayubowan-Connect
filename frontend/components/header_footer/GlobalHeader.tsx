@@ -67,7 +67,7 @@ const GlobalHeader: React.FC = () => {
   }, [lastScrollY]);
 
   const isTransparent = isHome && !isScrolled && !isMobileMenuOpen;
-  const textColorClass = isTransparent ? "text-white" : "text-gray-700";
+  const textColorClass = isTransparent ? "text-black" : "text-gray-700";
   const headerClass = `global-header ${isTransparent ? "header-transparent" : "header-solid"}`;
 
   return (

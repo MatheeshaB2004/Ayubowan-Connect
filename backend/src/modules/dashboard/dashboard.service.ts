@@ -383,15 +383,24 @@ export class DashboardService {
 
     const respondedBookings = await this.prisma.booking.findMany({
       where: {
-        status: { in: ["CONFIRMED", "REJECTED"] },
-        approvedAt: {
-          gte: start,
-          lt: end,
-        },
         listing: {
           vendorId: vendor.id,
         },
+
+        status: {
+          in: ["CONFIRMED", "REJECTED"],
+        },
+
+        createdAt: {
+          gte: start,
+          lt: end,
+        },
+
+        approvedAt: {
+          not: null,
+        },
       },
+
       select: {
         createdAt: true,
         approvedAt: true,
@@ -402,6 +411,22 @@ export class DashboardService {
     let avgResponseDisplay = "0m";
 
     if (respondedBookings.length) {
+      respondedBookings.forEach(b => {
+        const diffMs =
+          new Date(b.approvedAt!).getTime() -
+          new Date(b.createdAt).getTime();
+
+        const minutes = Math.round(diffMs / 60000);
+
+        console.log(
+          "Created:",
+          b.createdAt,
+          "Approved:",
+          b.approvedAt,
+          "Minutes:",
+          minutes
+        );
+      });
       // 1. Calculate the total difference in milliseconds
       const totalMs = respondedBookings.reduce((sum, b) => {
         const requestTime = new Date(b.createdAt).getTime();
@@ -1433,11 +1458,11 @@ export class DashboardService {
 
 
         if (duplicate) {
-          incomingIds.push(duplicate.id); 
+          incomingIds.push(duplicate.id);
           continue;
         }
 
-        
+
         await this.prisma.availabilitySlot.create({
           data: {
             availabilityId: availability.id,
