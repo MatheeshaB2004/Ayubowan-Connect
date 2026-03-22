@@ -22,7 +22,7 @@ interface Itinerary {
 }
 
 export default function ItineraryPlanner() {
-    const { isSignedIn } = useUser();
+    const { isSignedIn, user: clerkUser } = useUser();
     const router = useRouter();
     const { user, role, authReady } = useAuth();
     
@@ -31,7 +31,9 @@ export default function ItineraryPlanner() {
 
     useEffect(() => {
         if (!authReady) return;
-        if (!user?.id || role !== "traveller") {
+        const email = clerkUser?.primaryEmailAddress?.emailAddress;
+        
+        if (!user?.id || !email || role !== "traveller") {
             setCheckingPro(false);
             setIsPro(false);
             return;
@@ -39,8 +41,10 @@ export default function ItineraryPlanner() {
 
         const fetchStatus = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/payments/status`, {
-                    headers: { 'x-user-id': user.id },
+                // Add a cache-buster query param and cache: 'no-store' to ensure we get the latest status
+                const response = await fetch(`${API_BASE_URL}/payments/status?t=${Date.now()}`, {
+                    headers: { 'x-user-id': user.id, 'x-user-email': email },
+                    cache: 'no-store'
                 });
                 if (!response.ok) {
                     setIsPro(false);
@@ -63,7 +67,19 @@ export default function ItineraryPlanner() {
         };
 
         fetchStatus();
-    }, [user?.id, role, authReady]);
+
+        // Refresh status when page becomes visible 
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStatus();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [user?.id, role, authReady, clerkUser?.primaryEmailAddress?.emailAddress]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

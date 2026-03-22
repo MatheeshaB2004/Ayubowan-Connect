@@ -134,19 +134,27 @@ export class PaymentsService {
     return 'monthly';
   }
 
-  async upgradeToPro(userEmail: string, planType: 'USER' | 'VENDOR', cycle: 'monthly' | 'yearly') {
+  async upgradeToPro(userEmail: string, planType: 'USER' | 'VENDOR', cycle: 'monthly' | 'yearly', clerkUserId?: string) {
     try {
       if (!userEmail) {
         throw new BadRequestException('Email is required');
       }
 
-      // FIX: USE USER EMAIL TO FIND EXISTING USER
-      const user = await this.prisma.user.findUnique({
+      // FIX: USE USER EMAIL TO FIND EXISTING USER, OR CREATE IF MISSING (CLERK SYNC)
+      let user = await this.prisma.user.findUnique({
         where: { email: userEmail },
       });
 
       if (!user) {
-        throw new Error('User not found');
+        // If not found, create a placeholder user for this clerk email
+        user = await this.prisma.user.create({
+          data: {
+            email: userEmail,
+            fullName: userEmail.split('@')[0],
+            passwordHash: 'clerk_placeholder',
+            role: 'USER',
+          },
+        });
       }
 
       const userId = user.id;
@@ -201,7 +209,14 @@ export class PaymentsService {
               profileComplete: false,
               isActive: true,
               quantity: 0,
+              clerkUserId: clerkUserId || null,
             },
+          });
+        } else if (clerkUserId && !vendor.clerkUserId) {
+          // Update missing clerkUserId
+          await this.prisma.vendor.update({
+            where: { id: vendor.id },
+            data: { clerkUserId },
           });
         }
 

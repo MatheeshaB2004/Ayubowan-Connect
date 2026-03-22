@@ -23,6 +23,6 @@ export class PaymentsController {
     if (!email) {
       throw new BadRequestException('Email is required');
     }
-    return this.paymentsService.upgradeToPro(email, planType, cycle);
+    return this.paymentsService.upgradeToPro(email, planType, cycle, userId);
   }
 }

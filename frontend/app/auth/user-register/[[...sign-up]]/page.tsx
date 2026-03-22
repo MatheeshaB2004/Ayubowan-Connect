@@ -203,6 +203,7 @@ export default function UserRegisterPage() {
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
                         required
+                        suppressHydrationWarning
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="John"
                       />
@@ -217,6 +218,7 @@ export default function UserRegisterPage() {
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
                         required
+                        suppressHydrationWarning
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                         placeholder="Doe"
                       />
@@ -233,6 +235,7 @@ export default function UserRegisterPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      suppressHydrationWarning
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       placeholder="your@email.com"
                     />
@@ -248,6 +251,7 @@ export default function UserRegisterPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      suppressHydrationWarning
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       placeholder="At least 8 characters"
                     />
@@ -263,6 +267,7 @@ export default function UserRegisterPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
+                      suppressHydrationWarning
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       placeholder="Re-enter password"
                     />
@@ -270,6 +275,7 @@ export default function UserRegisterPage() {
 
                   <button
                     type="submit"
+                    suppressHydrationWarning
                     className="w-full bg-teal-600 text-white py-2.5 px-4 rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors"
                   >
                     Next: Profile Details

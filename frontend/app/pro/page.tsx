@@ -51,12 +51,6 @@ export default function ProPage() {
       ? 'Renew Subscription'
       : 'Upgrade to Pro';
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchStatus();
-    }
-  }, [user?.id]);
-
   // FIX 1: FORCE FRESH FETCH ON PRO PAGE
   const fetchStatus = async () => {
     const email = clerkUser?.primaryEmailAddress?.emailAddress;
@@ -67,7 +61,7 @@ export default function ProPage() {
     }
     
     try {
-      const res = await fetch(`${API_BASE}/payments/status`, {
+      const res = await fetch(`${API_BASE}/payments/status?t=${Date.now()}`, {
         headers: {
           'x-user-id': user.id,
           'x-user-email': email,
@@ -90,15 +84,30 @@ export default function ProPage() {
           : null
       );
 
-      const isActive =
-        data.isProUser &&
-        expiryDate &&
-        expiryDate > new Date();
       setExpiry(expiryDate ? expiryDate.toISOString() : null);
     } catch (err) {
       console.error('Status fetch failed', err);
     }
   };
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchStatus();
+    }
+
+    // Refresh status when page becomes visible (e.g., after returning from payment)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStatus();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, clerkUser?.primaryEmailAddress?.emailAddress]);
 
   const formattedExpiry = useMemo(() => {
     if (!expiry) return null;
