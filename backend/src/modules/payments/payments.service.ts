@@ -6,49 +6,52 @@ export class PaymentsService {
   constructor(private prisma: PrismaService) { }
 
   private async resolveUserId(rawUserId: string): Promise<number> {
-    const parsed = Number(rawUserId);
-
-    // Case 1: already numeric userId
-    if (!isNaN(parsed) && Number.isInteger(parsed)) {
-      return parsed;
+    if (!rawUserId) {
+      throw new BadRequestException('User ID is required');
     }
 
-    // Case 2: Clerk userId → find vendor
+    // Try 1: Check if it's an email
+    if (rawUserId.includes('@')) {
+      const user = await this.prisma.user.findUnique({
+        where: { email: rawUserId },
+      });
+      if (user) return user.id;
+    }
+
+    // Try 2: Check by clerkUserId (vendor table)
     const vendor = await this.prisma.vendor.findUnique({
       where: { clerkUserId: rawUserId },
       select: { userId: true },
     });
-
     if (vendor) return vendor.userId;
 
-    // Case 3: fallback → find user by placeholder email
+    // Try 3: Check placeholder emails
     const placeholderEmail = `clerk_${rawUserId}@placeholder.local`;
-
     const user = await this.prisma.user.findFirst({
       where: { email: placeholderEmail },
       select: { id: true },
     });
-
     if (user) return user.id;
 
-    // Auto-create user if not found
-    const newUser = await this.prisma.user.create({
-      data: {
-        email: placeholderEmail,
-        fullName: 'Clerk User',
-        passwordHash: 'clerk_auth',
-      },
-    });
-
-    return newUser.id;
-  }
-
-  async getSubscriptionStatus(rawUserId: string) {
-    if (!rawUserId) {
-      throw new BadRequestException('Invalid user');
+    // Try 4: Check if it's a numeric ID
+    const parsed = Number(rawUserId);
+    if (!isNaN(parsed) && Number.isInteger(parsed)) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: parsed },
+        select: { id: true },
+      });
+      if (user) return user.id;
     }
 
-    const userId = await this.resolveUserId(rawUserId);
+    throw new BadRequestException('User not found');
+  }
+
+  async getSubscriptionStatus(email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    const userId = await this.resolveUserId(email);
 
     try {
       // First check if user is a vendor
@@ -131,13 +134,22 @@ export class PaymentsService {
     return 'monthly';
   }
 
-  async upgradeToPro(rawUserId: string, planType: 'USER' | 'VENDOR', cycle: 'monthly' | 'yearly') {
+  async upgradeToPro(userEmail: string, planType: 'USER' | 'VENDOR', cycle: 'monthly' | 'yearly') {
     try {
-      if (!rawUserId) {
-        throw new BadRequestException('Invalid user');
+      if (!userEmail) {
+        throw new BadRequestException('Email is required');
       }
 
-      const userId = await this.resolveUserId(rawUserId);
+      // FIX: USE USER EMAIL TO FIND EXISTING USER
+      const user = await this.prisma.user.findUnique({
+        where: { email: userEmail },
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const userId = user.id;
 
       const expiryDate = new Date();
       if (cycle === 'yearly') {
@@ -156,11 +168,9 @@ export class PaymentsService {
           // Create minimal valid record FIRST
           tourist = await this.prisma.localTourist.create({
             data: {
-              user: {
-                connect: { id: userId },
-              },
-              fullName: 'Clerk User',
-              userType: 'TOURIST',
+              user: { connect: { id: userId } },
+              fullName: user.fullName,
+              userType: 'LOCAL',
               preferredLanguage: 'en',
             },
           });

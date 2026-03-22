@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useUser } from "@clerk/nextjs";
 import { EventFilters } from "./EventFilters";
 import { AllEventsSection } from "./AllEventsSection";
 import { VendorEventsSection } from "./VendorEventsSection";
@@ -16,6 +17,7 @@ import { useSearchParams } from "next/navigation";
 
 export function EventsPageContent() {
   const searchParams = useSearchParams();
+  const { user, isLoaded } = useUser();
   const [search, setSearch]     = useState(searchParams.get("search") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "all");
   const [location, setLocation] = useState(searchParams.get("location") || "all");
@@ -27,7 +29,7 @@ export function EventsPageContent() {
 
   // AuthContext: { user, role, isAuthenticated, loginAsTraveller, loginAsVendor, logout }
   // role: 'traveller' | 'vendor' | 'guest'
-  const { role, authReady, user } = useAuth();
+  const { role, authReady, user: authUser } = useAuth();
 
   const isGuest  = authReady && (role === "guest" || !role);
   const isVendor = role === "vendor";
@@ -44,12 +46,16 @@ export function EventsPageContent() {
         category: category !== "all" ? category : undefined,
         location: location !== "all" ? location : undefined,
       });
+      console.log("LOADED ALL EVENTS:", data.length, "events");
       setAllEvents(data);
     } catch (err) {
       console.warn("Failed to load events:", err);
       setAllEvents([]);
     }
   }, [search, category, location]);
+
+  console.log("ALL EVENTS:", allEvents.length, "loaded");
+  console.log("USER EVENTS:", userEvents.length, "loaded");
 
   const loadVendorEvents = useCallback(async () => {
     if (!isVendor) return;
@@ -63,24 +69,39 @@ export function EventsPageContent() {
   }, [isVendor, user?.id]);
 
   const loadUserEvents = useCallback(async () => {
-    if (!isUser) return;
+    if (!isLoaded || !user) return;
+
+    const email =
+      user.primaryEmailAddress?.emailAddress ||
+      user.emailAddresses?.[0]?.emailAddress;
+
+    if (!email) return;
+
     try {
-      const data = await fetchUserRegisteredEvents(getToken(), user?.id);
-      setUserEvents(data);
+      const events = await fetchUserRegisteredEvents(user);
+      console.log("FETCHED USER EVENTS:", events);
+      setUserEvents(events);
     } catch (err) {
-      console.warn("Failed to load user events:", err);
-      setUserEvents([]);
+      console.error("Failed to load user events", err);
     }
-  }, [isUser, user?.id]);
+  }, [user, isLoaded]);
 
   // Initial load for vendor and user events
   useEffect(() => {
-    (async () => {
-      await Promise.all([loadVendorEvents(), loadUserEvents()]);
-      // Note: loadAllEvents is handled by the filter useEffect
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    loadUserEvents();
+  }, [loadUserEvents]);
+
+  // Refresh user events when page becomes visible (after registration)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isLoaded && user) {
+        loadUserEvents();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [loadUserEvents, isLoaded, user]);
 
   // Debounced filter re-fetch handles both initial loadAllEvents and subsequent filter changes
   useEffect(() => {
@@ -133,12 +154,17 @@ export function EventsPageContent() {
           />
         )}
 
-        {/* Traveller section */}
+        {/* Traveller section - Registered Events */}
         {isUser && (
-          <UserRegisteredEvents
-            events={userEvents}
-            onRegistrationChange={loadUserEvents}
-          />
+          <div className="mt-10">
+            <h2 className="text-xl font-semibold mb-4">
+              Your Registered Events
+            </h2>
+            <UserRegisteredEvents
+              events={userEvents}
+              onRegistrationChange={loadUserEvents}
+            />
+          </div>
         )}
 
       </div>

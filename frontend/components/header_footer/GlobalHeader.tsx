@@ -148,7 +148,7 @@ const GlobalHeader: React.FC = () => {
               <Link href="/" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Home</Link>
               <Link href="/marketplace" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Marketplace</Link>
               <Link href="/events" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Events</Link>
-              <Link href="/dashboard/upcoming" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
+              <Link href="/dashboard/orders" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link>
               <Link href="/pro" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>Pro</Link>
               <Link href="/faq" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>FAQs</Link>
               <Link href="/User_profile_manager" className="mobile-link" onClick={() => setIsMobileMenuOpen(false)}>My Profile</Link>
