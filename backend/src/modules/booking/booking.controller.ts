@@ -1,13 +1,13 @@
-import { Controller, Post, Body, Headers, Get, Patch, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Headers, BadRequestException, Patch, Param, ParseIntPipe } from '@nestjs/common';
 import { BookingService } from './booking.service';
 
-@Controller('bookings')
+@Controller('booking')
 export class BookingController {
   constructor(private bookingService: BookingService) {}
 
   @Post()
   async createBooking(
-    @Headers('x-user-id') userId: string,
+    @Headers('x-user-email') email: string,
     @Body() body: {
       listingId: number | string;
       date: string;
@@ -16,14 +16,20 @@ export class BookingController {
       notes?: string;
     }
   ) {
-    return this.bookingService.createBooking(userId, body);
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.bookingService.createBooking(email, body);
   }
 
   @Get()
   async getUserBookings(
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-email') email: string
   ) {
-    return this.bookingService.getUserBookings(userId);
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.bookingService.getUserBookings(email);
   }
 
   @Get('availability/:vendorId')
@@ -47,12 +53,27 @@ export class BookingController {
     return this.bookingService.getVendorBookings(vendorId);
   }
 
+  @Get(':id')
+  async getBookingById(
+    @Param('id', ParseIntPipe) id: number,
+    @Headers('x-user-email') email: string
+  ) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+
+    return this.bookingService.getBookingById(id, email);
+  }
+
   @Patch(':id/status')
   async updateBookingStatus(
     @Param('id') id: string,
     @Body() body: { status: string },
-    @Headers('x-user-id') userId: string
+    @Headers('x-user-email') email: string
   ) {
-    return this.bookingService.updateBookingStatus(Number(id), body.status, userId);
+    if (!email) {
+      throw new BadRequestException('Email is required');
+    }
+    return this.bookingService.updateBookingStatus(Number(id), body.status, email);
   }
 }

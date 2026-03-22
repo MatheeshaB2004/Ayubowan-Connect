@@ -7,6 +7,7 @@ import { useEffect, useState, Suspense } from 'react';
 import toast from 'react-hot-toast';
 import { useUser } from '@clerk/nextjs';
 import { API_BASE_URL } from '@/lib/api';
+import { fetchUserRegisteredEvents } from '@/app/events/lib/api/events';
 
 const API_BASE = API_BASE_URL;
 
@@ -40,6 +41,8 @@ function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress;
+  const userIdentifier = user?.id || '';
   const bookingIdParam = searchParams.get('bookingId');
   const directBookingId = bookingIdParam ? Number(bookingIdParam) : null;
   const eventIdParam = searchParams.get('eventId');
@@ -72,21 +75,25 @@ function CheckoutPageContent() {
     if (!user || !directBookingId || Number.isNaN(directBookingId)) return;
 
     const fetchDirectBooking = async () => {
+      if (!directBookingId || !email) return;
+      
       try {
-        const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': user.id },
+        const response = await fetch(`${API_BASE}/booking/${directBookingId}`, {
+          headers: { 
+            'x-user-id': userIdentifier,
+            'x-user-email': email,
+          },
         });
         if (!response.ok) return;
-        const data = await response.json();
-        const booking = (data ?? []).find((b: { id: number }) => b.id === directBookingId);
-        setDirectBooking(booking ?? null);
+        const booking = await response.json();
+        setDirectBooking(booking);
       } catch (error) {
         console.error('Failed loading booking for checkout:', error);
       }
     };
 
     fetchDirectBooking();
-  }, [user, directBookingId]);
+  }, [user, directBookingId, email]);
 
   useEffect(() => {
     if (!user || !eventId || Number.isNaN(eventId)) return;
@@ -100,13 +107,13 @@ function CheckoutPageContent() {
         setEvent(eventData);
 
         // Then check if user is already registered
-        const registeredResponse = await fetch(`${API_BASE}/events/user/registered`, {
-          headers: { 'x-user-id': user.id },
-        });
-        if (registeredResponse.ok) {
-          const registeredEvents = await registeredResponse.json();
+        if (!user) return;
+        try {
+          const registeredEvents = await fetchUserRegisteredEvents(user);
           const alreadyRegistered = registeredEvents.some((e: { id: number }) => e.id === eventId);
           setIsAlreadyRegistered(alreadyRegistered);
+        } catch (error) {
+          console.error('Failed to fetch registered events:', error);
         }
       } catch (error) {
         console.error('Failed loading event for checkout:', error);
@@ -200,12 +207,18 @@ function CheckoutPageContent() {
     }
 
     if (user && directBooking) {
+      if (!user?.id || !email) {
+        console.warn("Missing user or email for direct booking completion");
+        return;
+      }
+
       try {
-        const response = await fetch(`${API_BASE}/bookings/${directBooking.id}/status`, {
+        const response = await fetch(`${API_BASE}/booking/${directBooking.id}/status`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': user.id,
+            'x-user-id': userIdentifier,
+            'x-user-email': email,
           },
           body: JSON.stringify({ status: 'COMPLETED' }),
         });
@@ -227,20 +240,32 @@ function CheckoutPageContent() {
       for (const item of items) {
         try {
           if (item.bookingId) {
-            await fetch(`${API_BASE}/bookings/${item.bookingId}/status`, {
+            if (!user?.id || !email) {
+              console.warn("Missing user or email for booking status update");
+              continue;
+            }
+
+            await fetch(`${API_BASE}/booking/${item.bookingId}/status`, {
               method: 'PATCH',
               headers: {
                 'Content-Type': 'application/json',
-                'x-user-id': user.id,
+                'x-user-id': userIdentifier,
+                'x-user-email': email,
               },
               body: JSON.stringify({ status: 'COMPLETED' }),
             });
           } else {
-            const res = await fetch(`${API_BASE}/bookings`, {
+            if (!user?.id || !email) {
+              console.warn("User or email missing for booking creation");
+              continue;
+            }
+
+            const res = await fetch(`${API_BASE}/booking`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'x-user-id': user.id,
+                'x-user-id': userIdentifier,
+                'x-user-email': email,
               },
               body: JSON.stringify({
                 listingId: item.listingId,
@@ -252,11 +277,17 @@ function CheckoutPageContent() {
 
             if (res.ok) {
               const booking = await res.json();
-              await fetch(`${API_BASE}/bookings/${booking.id}/status`, {
+              if (!user?.id || !email) {
+                console.warn("Missing user or email for booking confirmation");
+                continue;
+              }
+
+              await fetch(`${API_BASE}/booking/${booking.id}/status`, {
                 method: 'PATCH',
                 headers: {
                   'Content-Type': 'application/json',
-                  'x-user-id': user.id,
+                  'x-user-id': userIdentifier,
+                  'x-user-email': email,
                 },
                 body: JSON.stringify({ status: 'CONFIRMED' }),
               });
@@ -509,4 +540,3 @@ export default function Page() {
     </Suspense>
   );
 }
-

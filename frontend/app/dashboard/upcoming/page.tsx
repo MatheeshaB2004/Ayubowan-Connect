@@ -14,6 +14,7 @@ type Booking = {
   bookingDate: string;
   guests: number;
   status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
+  paymentStatus?: 'PAID' | 'COMPLETED' | 'PENDING' | 'FAILED';
   listing?: {
     title?: string;
     listingType?: string;
@@ -41,12 +42,15 @@ export default function UpcomingExperiencesPage() {
     }
 
     const fetchBookings = async () => {
-      if (!userId) return;
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id) return;
       
       try {
-        const response = await fetch(`${API_BASE}/bookings`, {
+        const response = await fetch(`${API_BASE}/booking`, {
           headers: {
-            'x-user-id': userId || '',
+            'x-user-id': user.id,
+            ...(email ? { 'x-user-email': email } : {}),
           },
         });
 
@@ -74,19 +78,36 @@ export default function UpcomingExperiencesPage() {
 
   const upcomingBookings = useMemo(
     () =>
-      bookings.filter((b) => {
-        const slotStart = b.slot?.startTime ? new Date(b.slot.startTime) : null;
-        const isExperience = b.listing?.listingType === 'EXPERIENCE';
-        const isFutureOrToday = !!slotStart && !Number.isNaN(slotStart.getTime()) && slotStart.getTime() >= Date.now();
-        const isRelevantStatus =
-          b.status === 'CONFIRMED' || b.status === 'PENDING';
+      bookings
+        .filter((b) => {
+          const isConfirmed =
+            b.status === 'CONFIRMED' ||
+            b.status === 'COMPLETED';
 
-        return isExperience && isFutureOrToday && isRelevantStatus;
-      }).sort((a, b) => {
-        const startA = a.slot?.startTime ? new Date(a.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;
-        const startB = b.slot?.startTime ? new Date(b.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;
-        return startA - startB;
-      }),
+          const isPaid =
+            !b.paymentStatus ||
+            b.paymentStatus === 'PAID' ||
+            b.paymentStatus === 'COMPLETED';
+
+          const endTime = b.slot?.endTime || b.bookingDate;
+
+          if (!endTime) return false;
+
+          const end = new Date(endTime).getTime();
+
+          if (isNaN(end)) return false;
+
+          const now = Date.now();
+
+          const isUpcoming = end > now;
+
+          return isConfirmed && isPaid && isUpcoming;
+        })
+        .sort((a, b) => {
+          const timeA = new Date(a.slot?.startTime || a.bookingDate).getTime();
+          const timeB = new Date(b.slot?.startTime || b.bookingDate).getTime();
+          return timeA - timeB;
+        }),
     [bookings]
   );
 
