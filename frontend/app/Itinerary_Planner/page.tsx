@@ -39,8 +39,10 @@ export default function ItineraryPlanner() {
 
         const fetchStatus = async () => {
             try {
-                const response = await fetch(`${API_BASE_URL}/payments/status`, {
+                // Add a cache-buster query param and cache: 'no-store' to ensure we get the latest status
+                const response = await fetch(`${API_BASE_URL}/payments/status?t=${Date.now()}`, {
                     headers: { 'x-user-id': user.id },
+                    cache: 'no-store'
                 });
                 if (!response.ok) {
                     setIsPro(false);
@@ -63,6 +65,18 @@ export default function ItineraryPlanner() {
         };
 
         fetchStatus();
+
+        // Refresh status when page becomes visible 
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchStatus();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, [user?.id, role, authReady]);
 
     const [loading, setLoading] = useState(false);
