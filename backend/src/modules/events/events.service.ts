@@ -305,8 +305,8 @@ export class EventsService {
   }
 
   // Get events a user has registered for
-  async getUserRegisteredEvents(rawUserId: string) {
-    const userId = await this.resolveUserId(rawUserId);
+  async getUserRegisteredEvents(rawUserId: string, email?: string) {
+    const userId = await this.resolveUserId(rawUserId, email);
     const now = new Date();
 
     const registrations = await this.prisma.eventRegistration.findMany({
