@@ -22,7 +22,7 @@ interface Itinerary {
 }
 
 export default function ItineraryPlanner() {
-    const { isSignedIn } = useUser();
+    const { isSignedIn, user: clerkUser } = useUser();
     const router = useRouter();
     const { user, role, authReady } = useAuth();
     
@@ -31,7 +31,9 @@ export default function ItineraryPlanner() {
 
     useEffect(() => {
         if (!authReady) return;
-        if (!user?.id || role !== "traveller") {
+        const email = clerkUser?.primaryEmailAddress?.emailAddress;
+        
+        if (!user?.id || !email || role !== "traveller") {
             setCheckingPro(false);
             setIsPro(false);
             return;
@@ -41,7 +43,7 @@ export default function ItineraryPlanner() {
             try {
                 // Add a cache-buster query param and cache: 'no-store' to ensure we get the latest status
                 const response = await fetch(`${API_BASE_URL}/payments/status?t=${Date.now()}`, {
-                    headers: { 'x-user-id': user.id },
+                    headers: { 'x-user-id': user.id, 'x-user-email': email },
                     cache: 'no-store'
                 });
                 if (!response.ok) {
@@ -77,7 +79,7 @@ export default function ItineraryPlanner() {
         return () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [user?.id, role, authReady]);
+    }, [user?.id, role, authReady, clerkUser?.primaryEmailAddress?.emailAddress]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
