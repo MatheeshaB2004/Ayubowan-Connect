@@ -1,0 +1,1351 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Toaster, toast } from "react-hot-toast";
+import Link from "next/link";
+import "./page.css";
+import { useUser } from "@clerk/nextjs";
+
+type Ratings = {
+    avgRating: number
+    totalReviews: number
+    percentages: Record<number, number>
+}
+
+export default function Dashboard() {
+    const { user, isLoaded } = useUser();
+
+    const userId = user?.id;
+
+    const times: string[] = [];
+
+    for (let h = 0; h < 24; h++) {
+        for (let m = 0; m < 60; m += 15) {
+            const hour = String(h).padStart(2, "0");
+            const minute = String(m).padStart(2, "0");
+            times.push(`${hour}:${minute}`);
+        }
+    }
+    const [startTime, setStartTime] = useState("09:00");
+    const [endTime, setEndTime] = useState("10:00");
+    const [selectedListing, setSelectedListing] = useState<number | null>(null);
+    const [maxGuests, setMaxGuests] = useState(5);
+    const [activeTab, setActiveTab] = useState("All");
+    const [isEditingCal, setIsEditingCal] = useState(false);
+    const today = new Date();
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [showAllReviews, setShowAllReviews] = useState(false);
+    const [isProVendor, setIsProVendor] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+    const [ratings, setRatings] = useState<Ratings>({
+        avgRating: 0,
+        totalReviews: 0,
+        percentages: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    });
+
+    const checkProVendor = async () => {
+
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/profile?userId=${userId}`
+        );
+
+        const data = await res.json();
+        console.log("API RESPONSE:", data);
+
+        setIsProVendor(data?.isProUser ?? false);
+    };
+
+    const deleteReply = async (reviewId: number) => {
+
+        await fetch("http://localhost:3001/dashboard/vendor/delete-reply", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ reviewId })
+        })
+
+        setReviews(prev =>
+            prev.map(r =>
+                r.id === reviewId ? { ...r, reply: null } : r
+            )
+        )
+
+    }
+
+    const sendReply = async (reviewId: number) => {
+
+        await fetch("http://localhost:3001/dashboard/vendor/reply", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reviewId,
+                reply: replyText
+            })
+        })
+
+        setReplyText("")
+        setSelectedReview(null)
+
+        // reload reviews
+        const res = await fetch(`http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`)
+        const data = await res.json()
+        setReviews(data)
+
+    }
+
+    const [listings, setListings] = useState<any[]>([]);
+
+    const [stats, setStats] = useState({
+        activeListings: 0,
+        pendingBookings: 0,
+        completedBookings: 0,
+        events: 0,
+    });
+    const fetchStats = async () => {
+        if (!userId) return;
+
+        try {
+            const res = await fetch(
+                `http://localhost:3001/dashboard/vendor/stats?userId=${userId}`
+            );
+
+            const text = await res.text();
+            const data = JSON.parse(text);
+
+            setStats(data);
+
+        } catch (error) {
+            console.error("Failed to fetch stats:", error);
+        }
+    };
+
+    const fetchRatings = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/rating-summary?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        setRatings({
+            avgRating: data?.avgRating ?? 0,
+            totalReviews: data?.totalReviews ?? 0,
+            percentages: data?.percentages ?? { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        });
+    };
+
+    const fetchReviews = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        setReviews(data);
+    };
+
+    const fetchListings = async () => {
+        try {
+            const res = await fetch(
+                `http://localhost:3001/dashboard/vendor/listings?userId=${userId}`
+            );
+
+            const data = await res.json();
+            setListings(data);
+
+        } catch (error) {
+            console.error("Failed to fetch listings:", error);
+        }
+    };
+
+    const refreshDashboard = async () => {
+        await Promise.all([
+            fetchBookings(),
+            fetchStats(),
+            fetchRatings(),
+            fetchReviews(),
+            fetchListings()
+        ]);
+    };
+
+
+    const [currentDate, setCurrentDate] = useState(today)
+
+    type Slot = {
+        id?: number
+        start: string
+        end: string
+        listingId: number
+        maxGuests: number
+    }
+
+    type AvailabilityState = {
+        [day: number]: Slot[]
+    }
+
+    const [availability, setAvailability] = useState<AvailabilityState>({})
+    const [activeDay, setActiveDay] = useState<number | null>(null);
+
+    const [replyText, setReplyText] = useState("");
+    const [selectedReview, setSelectedReview] = useState(null);
+    const [bookings, setBookings] = useState<any[]>([])
+
+    const year = currentDate.getFullYear()
+    const month = currentDate.getMonth()
+
+    const firstDay = new Date(year, month, 1).getDay()
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+
+    const fetchBookings = async () => {
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/bookings?userId=${userId}`
+        );
+
+        const data = await res.json();
+
+        if (!Array.isArray(data)) {
+            console.error("Invalid API response:", data);
+            return;
+        }
+
+
+        const mapped = data.map((b: any) => {
+
+            const start = b.slot?.startTime || null;
+            const end = b.slot?.endTime || null;
+            const date = b.slot?.date || null;
+
+            return {
+                id: b.id,
+                name: b.localTourist?.user?.fullName || "Guest",
+                property: b.listing?.title || "Listing",
+                nights: 1,
+                price: b.totalPrice || 0,
+                guests: b.guests,
+                avatar: b.localTourist?.profilePhotoUrl || "/vendor_management/default.png",
+
+                slot: b.slot
+                    ? {
+                        date: date,
+                        start: start,
+                        end: end,
+                        maxGuests: b.slot.maxGuests,
+                        bookedGuests: b.slot.bookedGuests
+                    }
+                    : null,
+
+
+                status:
+                    b.status === "PENDING"
+                        ? "incoming"
+                        : b.status === "CONFIRMED"
+                            ? "accepted"
+                            : b.status === "COMPLETED"
+                                ? "completed"
+                                : "rejected"
+            };
+
+        });
+        setBookings(mapped)
+    };
+
+    useEffect(() => {
+        if (!isLoaded || !userId) return;
+
+        checkProVendor();
+    }, [isLoaded, userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+        fetchBookings();
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const interval = setInterval(async () => {
+            const now = new Date()
+
+            if (
+                now.getMonth() !== currentDate.getMonth() ||
+                now.getFullYear() !== currentDate.getFullYear()
+
+
+            ) {
+
+                const res = await fetch(
+                    `http://localhost:3001/dashboard/vendor/availability/previous?userId=${userId}`,
+                    { method: "DELETE" }
+                );
+
+                setCurrentDate(now);
+                setAvailability({});
+                setIsEditingCal(false);
+            }
+        }, 60000);
+
+        return () => clearInterval(interval)
+    }, [currentDate])
+
+    useEffect(() => {
+        fetchStats();
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+        fetchRatings();
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+        fetchReviews();
+    }, [userId]);
+
+    useEffect(() => {
+
+        if (!userId) return;
+
+        const fetchAvailability = async () => {
+
+            const monthString = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+
+            const res = await fetch(
+                `http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`
+            );
+
+            const data = await res.json();
+
+            const mapped: AvailabilityState = {};
+
+            if (Array.isArray(data)) {
+                data.forEach((d: any) => {
+                    const day = new Date(d.date).getDate();
+
+                    mapped[day] = (d.slots || []).map((s: any) => ({
+                        id: s.id,
+                        start: s.start,
+                        end: s.end,
+                        listingId: s.listingId,
+                        maxGuests: s.maxGuests
+                    }));
+                });
+            }
+
+            setAvailability(mapped);
+        };
+
+        fetchAvailability();
+
+    }, [currentDate, userId]);
+
+
+    useEffect(() => {
+        if (!userId) return;
+        fetchListings();
+    }, [userId]);
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const interval = setInterval(() => {
+            fetchBookings();
+        }, 15000); // every 15 seconds
+
+        return () => clearInterval(interval);
+    }, [userId]);
+
+    const handleAccept = async (id: number) => {
+
+        const res = await fetch(
+            `http://localhost:3001/dashboard/vendor/booking/accept/${id}`,
+            { method: "PATCH" }
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            toast.error(data.message || "Slot is already full", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b"
+                }
+            });
+            return;
+        }
+
+        toast.success("Booking accepted!", {
+            style: {
+                background: "#dcfce7",
+                color: "#166534"
+            }
+        });
+
+        refreshDashboard();
+    };
+
+    const handleDecline = async (id: number) => {
+
+        await fetch(`http://localhost:3001/dashboard/vendor/booking/reject/${id}`, {
+            method: "PATCH"
+        });
+
+        refreshDashboard();
+    };
+
+    const handleMarkDone = async (id: number) => {
+        await fetch(`http://localhost:3001/dashboard/vendor/booking/complete/${id}`, {
+            method: "PATCH"
+        });
+
+        refreshDashboard();
+    };
+
+    const toggleDate = (day: number) => {
+
+        setActiveDay(prev => prev === day ? null : day);
+
+        if (isEditingCal) {
+            setAvailability(prev => {
+                const copy = { ...prev };
+
+                if (!copy[day]) {
+                    copy[day] = [];
+                }
+
+                return copy;
+            });
+        }
+    };
+    const addSlot = (day: number) => {
+
+        if (!startTime || !endTime) return
+
+        if (startTime >= endTime) {
+            toast.error("End time must be later than start time.", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                }
+            })
+            return
+        }
+
+        const existingSlots = availability[day] || []
+
+        // prevent exact duplicate
+        const duplicate = existingSlots.some(
+            slot => slot.start === startTime && slot.end === endTime
+        )
+
+        if (duplicate) {
+            toast.error("This exact slot already exists.", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                }
+            })
+            return
+        }
+
+        // prevent overlap
+        const overlapping = existingSlots.some(
+            slot => startTime < slot.end && endTime > slot.start
+        )
+
+        if (overlapping) {
+            toast.error("This slot overlaps with an existing slot", {
+                style: {
+                    background: "#fee2e2",
+                    color: "#991b1b",
+                },
+            });
+            return
+        }
+
+        setAvailability(prev => {
+
+            const copy = { ...prev }
+
+            const slots = copy[day] ? [...copy[day]] : []
+
+            if (!selectedListing) {
+                toast.error("Please select a listing first")
+                return prev
+            }
+
+            slots.push({
+                start: startTime,
+                end: endTime,
+                listingId: selectedListing,
+                maxGuests: maxGuests
+            })
+
+            copy[day] = slots
+
+            return copy
+        })
+
+    }
+    const removeSlot = (day: number, index: number) => {
+        setAvailability(prev => {
+            const copy = { ...prev };
+            copy[day] = copy[day].filter((_, i) => i !== index);
+            if (copy[day].length === 0) {
+                if (activeDay === day) setActiveDay(null);
+            }
+            return copy;
+        });
+    };
+
+    const editSlot = (day: number, index: number, field: keyof Slot, value: string) => {
+        setAvailability(prev => {
+            const copy = { ...prev };
+            copy[day] = copy[day].map((slot, i) => i === index ? { ...slot, [field]: value } : slot);
+            return copy;
+        });
+    };
+
+    const filteredBookings = bookings.filter(b => {
+
+        if (b.status === "rejected") return false;
+
+        if (activeTab === "All") return true;
+        if (activeTab === "Incoming") return b.status === "incoming";
+        if (activeTab === "Accepted") return b.status === "accepted";
+        if (activeTab === "Completed") return b.status === "completed";
+
+        return true;
+    });
+    if (!isLoaded || !userId) {
+        return <div>Loading dashboard...</div>;
+    }
+
+
+    return (
+        <div className="proplux-app">
+            <Toaster position="top-right" reverseOrder={false} />
+            <aside className="proplux-sidebar">
+                <div className="proplux-logo">
+                    <div className="proplux-logo-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </div>
+                    <span className="proplux-logo-text">Dashboard</span>
+                </div>
+                <nav className="proplux-nav">
+                    <a href="#" className="proplux-nav-item active">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                        Dashboard
+                    </a>
+                    <a href="#listings" className="proplux-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                        Properties
+                    </a>
+                    <a href="#availability" className="proplux-nav-item">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        Availability
+                    </a>
+                </nav>
+            </aside>
+
+            <main className="proplux-main">
+                <header className="proplux-header">
+                    <div className="proplux-header-text">
+                        <h1>Welcome {user?.firstName || "Vendor"}!</h1>
+                        <p>Here's what's happening with your properties today</p>
+                    </div>
+                    <div className="proplux-header-actions">
+                        <div className="proplux-live-badge">
+                            <span className="live-dot"></span>Live
+                        </div>
+
+                        {user?.imageUrl ? (
+                            <img src={user.imageUrl} alt={user?.fullName || "Vendor"} className="proplux-avatar" />
+                        ) : (
+                            <div className="avatar-fallback">
+                                {user?.firstName?.[0]}
+                                {user?.lastName?.[0]}
+                            </div>
+                        )}
+                    </div>
+                </header>
+
+                <div className="proplux-hero">
+                    <div className="proplux-hero-content">
+                        <h2>Grow Your Portfolio</h2>
+                        <p>Add new properties and maximize your earnings</p>
+                    </div>
+                    <div className="proplux-hero-buttons">
+                        <Link href="/vendor/listings" scroll={true}>
+                            <button className="btn-light-green active">Create Listing</button>
+                        </Link>
+                        <Link href="/events" scroll={true}>
+                            <button className="proplux-btn-light">Create Events</button>
+                        </Link>
+
+                        <button
+                            className="proplux-btn-light"
+                            onClick={() => {
+                                if (isProVendor) {
+                                    window.location.href = "/vendor/analytics_dashboard";
+                                } else {
+                                    setShowUpgradeModal(true);
+                                }
+                            }}
+                        >
+                            Analytics Dashboard
+                        </button>
+                    </div>
+                </div>
+
+                <div className="proplux-stats-row">
+                    <div className="proplux-stat-card">
+                        <div className="stat-content">
+                            <span className="stat-label">Active Listings</span>
+                            <div className="stat-value">{stats.activeListings}</div>
+                        </div>
+                        <div className="stat-icon-wrap">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="proplux-stat-card">
+                        <div className="stat-content">
+                            <span className="stat-label">Pending Bookings</span>
+                            <div className="stat-value">{stats.pendingBookings}</div>
+                        </div>
+                        <div className="stat-icon-wrap">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="proplux-stat-card">
+                        <div className="stat-content">
+                            <span className="stat-label">Completed Bookings</span>
+                            <div className="stat-value">{stats.completedBookings}</div>
+                        </div>
+                        <div className="stat-icon-wrap">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="proplux-stat-card">
+                        <div className="stat-content">
+                            <span className="stat-label">Events</span>
+                            <div className="stat-value">{stats.events}</div>
+                        </div>
+                        <div className="stat-icon-wrap">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" />
+                                <line x1="16" y1="2" x2="16" y2="6" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="proplux-bottom-grid">
+                    <div className="proplux-card col-span-8">
+                        <div className="proplux-card-header">
+                            <h3>Booking Requests</h3>
+                            <div className="proplux-tabs">
+                                {["All", "Incoming", "Accepted", "Completed"].map(tab => (
+                                    <button key={tab} className={`proplux-tab ${activeTab === tab ? "active" : ""}`} onClick={() => setActiveTab(tab)}>{tab}</button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="proplux-list">
+                            {filteredBookings.length === 0 ? (
+                                <p style={{ color: "var(--text-muted)", padding: "16px" }}>No bookings found.</p>
+                            ) : (
+                                filteredBookings.map((b) => (
+                                    <div key={b.id} className="proplux-request-item">
+                                        <div className="request-user">
+                                            <img src={b.avatar} alt={b.name} className="request-avatar" />
+                                            <div className="request-info">
+                                                <h4>{b.name}</h4>
+                                                <div className="booking-meta">
+                                                    <p>
+                                                        {b.property} • {b.slot ? `${b.slot.date} ${b.slot.start} - ${b.slot.end}` : "No slot"}
+                                                    </p>
+
+                                                    <p className="booking-guests">
+                                                        Guests: {b.guests} ({b.slot?.bookedGuests}/{b.slot?.maxGuests})
+                                                    </p>
+                                                </div>
+                                                {b.slot?.isFull && (
+                                                    <span style={{ color: "red", fontWeight: "bold", fontSize: "12px" }}>
+                                                        SLOT FULL
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="request-actions">
+                                            <div className="request-price">LKR {b.price}</div>
+                                            <div className="action-buttons">
+                                                {b.status === "incoming" && (
+                                                    <>
+                                                        <button
+                                                            className="btn-accept"
+                                                            disabled={b.slot?.isFull}
+                                                            onClick={() => handleAccept(b.id)}
+                                                        >
+                                                            Accept
+                                                        </button>
+                                                        <button className="btn-decline" onClick={() => handleDecline(b.id)}>Decline</button>
+                                                    </>
+                                                )}
+                                                {b.status === "accepted" && (
+                                                    <button className="btn-done" onClick={() => handleMarkDone(b.id)}>Mark Done</button>
+                                                )}
+                                                {b.status === "completed" && (
+                                                    <span style={{ color: "var(--success)", fontWeight: "600" }}>✓ Completed</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="proplux-card partner-score-card col-span-4">
+                        <h3>Overall Rating</h3>
+                        <div className="score-display">
+                            <div className="score-number">
+                                {ratings.avgRating}
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="#eab308" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" /></svg>
+                            </div>
+                            <div className="score-text">Based on {ratings.totalReviews} Reviews</div>
+                        </div>
+                        <div className="score-metrics rating-metrics">
+                            <div className="metric">
+                                <div className="metric-header"><span>5 Stars</span><span>{ratings?.percentages[5] ?? 0}%</span></div>
+                                <div className="metric-bar-bg"><div className="metric-bar-fill" style={{ width: `${ratings?.percentages?.[5] ?? 0}%` }}></div></div>
+                            </div>
+                            <div className="metric">
+                                <div className="metric-header"><span>4 Stars</span><span>{ratings?.percentages[4] ?? 0}%</span></div>
+                                <div className="metric-bar-bg"><div className="metric-bar-fill" style={{ width: `${ratings?.percentages?.[4] ?? 0}%` }}></div></div>
+                            </div>
+                            <div className="metric">
+                                <div className="metric-header"><span>3 Stars</span><span>{ratings?.percentages[3] ?? 0}%</span></div>
+                                <div className="metric-bar-bg"><div className="metric-bar-fill warning-fill" style={{ width: `${ratings?.percentages?.[3] ?? 0}%` }}></div></div>
+                            </div>
+                            <div className="metric">
+                                <div className="metric-header"><span>2 Stars</span><span>{ratings?.percentages[2] ?? 0}%</span></div>
+                                <div className="metric-bar-bg"><div className="metric-bar-fill danger-fill" style={{ width: `${ratings?.percentages?.[2] ?? 0}%` }}></div></div>
+                            </div>
+                            <div className="metric">
+                                <div className="metric-header"><span>1 Star</span><span>{ratings?.percentages[1] ?? 0}%</span></div>
+                                <div className="metric-bar-bg"><div className="metric-bar-fill danger-fill" style={{ width: `${ratings?.percentages?.[1] ?? 0}%` }}></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="listings" className="proplux-card col-span-6">
+                        <h3>Your Listings</h3>
+
+                        {listings.length === 0 ? (
+                            <p style={{ color: "var(--text-muted)" }}>No listings found.</p>
+                        ) : (
+                            <div className="listings-scroll-container">
+
+                                {Array.isArray(listings) && listings.map((l) => (
+                                    <div className="dashboard-listing-card" key={l.id}>
+
+                                        <img
+                                            className="listing-thumb"
+                                            src={l.image || "/vendor_management/Create-listing.png"}
+                                            alt={l.title}
+                                        />
+
+                                        <div className="listing-info">
+
+                                            <div className="listing-header">
+
+                                                <div className="listing-title">
+                                                    <h4>{l.title}</h4>
+                                                    <div className="listing-location">
+                                                        {l.city} • {l.categoryName}
+                                                    </div>
+                                                </div>
+
+                                                <div className="listing-meta">
+                                                    <div className="listing-price">LKR {l.priceMin}</div>
+
+                                                    <div className="listing-rating">
+
+                                                        <span>
+                                                            ⭐ ({l.reviewCount} {l.reviewCount === 1 ? "review" : "reviews"})
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+
+                                            {l.tags?.length > 0 && (
+                                                <div className="listing-tags">
+                                                    {l.tags.map((tag: string, i: number) => (
+                                                        <span key={i} className="listing-tag">{tag}</span>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            {l.capacity && (
+                                                <div className="listing-capacity">
+                                                    👥 Up to {l.capacity} people
+                                                </div>
+                                            )}
+
+
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                    </div>
+
+                    <div className="proplux-card col-span-6 reviews-card">
+                        <h3>Recent Reviews</h3>
+
+                        <div className="reviews-preview">
+                            {Array.isArray(reviews) && reviews.slice(0, 2).map((r) => (
+                                <div className="review-item mt-lite" key={r.id}>
+                                    <div className="review-header">
+
+                                        <img
+                                            src={r.user?.profilePhotoUrl || "/vendor_management/default.png"}
+                                            className="review-avatar"
+                                        />
+
+                                        <div className="review-meta">
+                                            <span className="reviewer-name">{r.user.fullName}</span>
+                                            <span className="review-date">
+                                                {new Date(r.createdAt).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric"
+                                                })}
+                                            </span>
+                                            <div className="review-listing-name">
+                                                Reviewed: {r.listingTitle}
+                                            </div>
+
+                                            <div className="stars">
+                                                {"⭐".repeat(r.rating)}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <p className="review-text">{r.comment}</p>
+                                    <button
+                                        className="reply-btn"
+                                        onClick={() => setSelectedReview(r.id)}
+                                    >
+                                        Reply
+                                    </button>
+                                    {r.reply && (
+                                        <div className="vendor-reply">
+                                            <strong>Vendor Reply:</strong>
+                                            <p>{r.reply}</p>
+                                        </div>
+                                    )}
+                                    {r.reply && (
+                                        <button
+                                            className="delete-reply-btn"
+                                            onClick={() => deleteReply(r.id)}
+                                        >
+                                            Delete Reply
+                                        </button>
+                                    )}
+                                    {selectedReview === r.id && (
+                                        <div className="reply-box">
+
+                                            <div className="reply-actions">
+
+                                                <textarea
+                                                    placeholder="Write your reply..."
+                                                    value={replyText}
+                                                    onChange={(e) => setReplyText(e.target.value)}
+                                                />
+
+                                                <div className="reply-buttons">
+
+                                                    <button
+                                                        className="send-reply-btn"
+                                                        onClick={() => sendReply(r.id)}
+                                                    >
+                                                        Send
+                                                    </button>
+
+                                                    <button
+                                                        className="cancel-reply-btn"
+                                                        onClick={() => {
+                                                            setReplyText("")
+                                                            setSelectedReview(null)
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        {/* VIEW ALL REVIEWS BUTTON */}
+
+                        <button
+                            className="view-all-reviews-btn"
+                            onClick={() => setShowAllReviews(true)}
+                        >
+                            View All Reviews
+                        </button>
+
+                    </div>
+
+                    {/* Availability Calendar (New Section) */}
+                    <div id="availability" className="proplux-card proplux-calendar-section col-span-12">
+                        <div className="proplux-card-header">
+                            <h3>
+                                Availability Calendar (
+                                {currentDate.toLocaleString("default", { month: "long" })} {year}
+                                )
+                            </h3>
+                            <div className="calendar-actions">
+                                <button className={`btn-light-green ${isEditingCal ? 'active' : ''}`} onClick={() => setIsEditingCal(!isEditingCal)}>
+                                    {isEditingCal ? "Editing..." : "Edit"}
+                                </button>
+                                {isEditingCal && (
+                                    <>
+                                        <button
+                                            className="btn-decline"
+                                            onClick={async () => {
+
+                                                const monthString =
+                                                    `${year}-${String(month + 1).padStart(2, "0")}-01`;
+
+                                                const res = await fetch(
+                                                    `http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`,
+                                                    { method: "DELETE" }
+                                                );
+
+
+                                                setAvailability({});
+                                                setActiveDay(null);
+
+                                            }}
+                                        >
+                                            Reset
+                                        </button>
+                                        <button
+                                            className="btn-accept"
+                                            onClick={async () => {
+                                                const monthNumber = month + 1;
+
+                                                const dates = Object.entries(availability).map(([day, slots]) => ({
+                                                    date: `${year}-${String(monthNumber).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+                                                    slots: slots.map(s => ({
+                                                        id: s.id,
+                                                        start: s.start,
+                                                        end: s.end,
+                                                        listingId: s.listingId,
+                                                        maxGuests: s.maxGuests
+                                                    }))
+                                                }));
+
+                                                await fetch(
+                                                    "http://localhost:3001/dashboard/vendor/availability",
+                                                    {
+                                                        method: "POST",
+                                                        headers: {
+                                                            "Content-Type": "application/json"
+                                                        },
+                                                        body: JSON.stringify({
+                                                            userId,
+                                                            dates
+                                                        })
+                                                    }
+                                                );
+
+                                                setIsEditingCal(false);
+                                                setActiveDay(null);
+
+
+                                                const monthString = `${year}-${String(monthNumber).padStart(2, '0')}-01`;
+                                                const res = await fetch(`http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`);
+                                                const data = await res.json();
+
+                                                const mapped: AvailabilityState = {};
+                                                if (Array.isArray(data)) {
+                                                    data.forEach((d: any) => {
+                                                        const day = new Date(d.date).getDate();
+                                                        mapped[day] = (d.slots || []).map((s: any) => ({
+                                                            id: s.id,
+                                                            start: s.start,
+                                                            end: s.end,
+                                                            listingId: s.listingId,
+                                                            maxGuests: s.maxGuests
+                                                        }));
+                                                    });
+                                                }
+                                                setAvailability(mapped);
+
+                                            }}
+                                        >
+                                            Save
+                                        </button>
+
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="calendar-grid">
+                            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                <div key={day} className="calendar-day-header">{day}</div>
+                            ))}
+                            {Array.from({ length: firstDay }).map((_, i) => (
+                                <div key={"empty" + i} className="calendar-empty"></div>
+                            ))}
+                            {Array.from({ length: daysInMonth }, (_, i) => {
+                                const day = i + 1
+                                const hasSlots = availability[day] && availability[day].length > 0;
+                                return (
+                                    <div
+                                        key={day}
+                                        className={`calendar-day ${hasSlots ? "selected" : ""} ${isEditingCal ? "editable" : ""}`}
+                                        style={{ border: activeDay === day ? '2px solid var(--primary)' : '' }}
+                                        onClick={() => toggleDate(day)}
+                                    >
+                                        <span className="day-number">{day}</span>
+
+                                        {hasSlots && (
+                                            <span className="slot-count">
+                                                {availability[day].length}
+                                            </span>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        {/* Slot Editor Panel */}
+                        {activeDay !== null && (
+                            <div className="slot-editor-panel mt-lite" style={{ background: "var(--bg-light)", padding: "20px", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
+                                <h4>
+                                    {isEditingCal ? "Edit Slots for" : "Slots for"}{" "}
+                                    {currentDate.toLocaleString("default", { month: "long" })} {activeDay}
+                                </h4>
+                                {isEditingCal && (
+                                    <div className="add-slot-row">
+                                        <div>
+                                            <label>Listing</label>
+                                            <select
+                                                value={selectedListing || ""}
+                                                onChange={(e) => setSelectedListing(Number(e.target.value))}
+                                            >
+                                                <option value="">Select Listing</option>
+                                                {listings.map(l => (
+                                                    <option key={l.id} value={l.id}>
+                                                        {l.title}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>Start Time</label>
+                                            <select value={startTime} onChange={e => setStartTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
+                                                {times.map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style={{ display: "block", fontSize: "12px", marginBottom: "5px", color: "var(--text-muted)", fontWeight: 500 }}>End Time</label>
+                                            <select value={endTime} onChange={e => setEndTime(e.target.value)} style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--border-color)", background: "#fff", outline: "none" }}>
+                                                {times.map(t => <option key={t} value={t}>{t}</option>)}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label>Max Guests</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={maxGuests}
+                                                onChange={(e) => setMaxGuests(Number(e.target.value))}
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="btn-light-green"
+                                            onClick={() => addSlot(activeDay)}
+                                        >
+                                            Add Slot
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="slots-list" style={{ marginTop: "20px" }}>
+                                    {(availability[activeDay] || []).length === 0 ? (
+                                        <p style={{ color: "var(--text-muted)", fontSize: "14px" }}>No slots added for this date yet. Select times above to add a slot.</p>
+                                    ) : (
+                                        (availability[activeDay] || [])
+                                            .slice()
+                                            .sort((a, b) => a.start.localeCompare(b.start))
+                                            .map((slot, idx) => (
+
+                                                <div
+                                                    key={slot.id || idx}
+                                                    className="slot-card"
+                                                    style={{
+                                                        display: "flex",
+                                                        justifyContent: "space-between",
+                                                        alignItems: "center",
+                                                        padding: "10px 14px",
+                                                        borderRadius: "8px",
+                                                        border: "1px solid var(--border-color)",
+                                                        background: "#fff",
+                                                        marginBottom: "8px"
+                                                    }}
+                                                >
+                                                    <div>
+                                                        <div className="slot-info">
+                                                            <div className="slot-time">{slot.start} – {slot.end}</div>
+
+                                                            <div className="slot-listing">
+                                                                {listings.find(l => l.id === slot.listingId)?.title}
+                                                            </div>
+
+                                                            <div className="slot-guests">
+                                                                Max Guests: {slot.maxGuests}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {isEditingCal && (
+                                                        <button
+                                                            className="slot-delete"
+                                                            onClick={() => removeSlot(activeDay, idx)}
+                                                        >
+                                                            🗑
+                                                        </button>
+                                                    )}
+
+                                                </div>
+
+                                            ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        <p className="calendar-legend mt-lite">
+                            <span className="legend-item">
+                                <span className="legend-dot"></span>
+                                Click Edit to select dates.
+                            </span>
+                            <span className="legend-item">
+                                <span className="legend-dot"></span>
+                                Selected dates are marked as available.
+                            </span>
+                        </p>
+                    </div>
+
+                </div>
+            </main>
+            {showAllReviews && (
+                <div className="reviews-modal-overlay">
+
+                    <div className="reviews-modal">
+
+                        <div className="reviews-modal-header">
+                            <h3>All Reviews</h3>
+
+                            <button
+                                className="close-modal"
+                                onClick={() => setShowAllReviews(false)}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="reviews-modal-content">
+
+                            {reviews.map((r) => (
+                                <div key={r.id} className="review-item-modal">
+
+                                    <div className="review-header">
+
+                                        <img
+                                            src={r.user?.profilePhotoUrl || "/vendor_management/default.png"}
+                                            className="review-avatar"
+                                        />
+
+                                        <div className="review-meta">
+
+                                            <span className="reviewer-name">
+                                                {r.user.fullName}
+                                            </span>
+
+                                            <span className="review-date">
+                                                {new Date(r.createdAt).toLocaleDateString("en-US", {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                    year: "numeric"
+                                                })}
+                                            </span>
+
+                                            <div className="review-listing-name">
+                                                Reviewed: {r.listingTitle}
+                                            </div>
+
+                                            <div className="stars">
+                                                {"⭐".repeat(r.rating)}
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <p className="review-text-full">{r.comment}</p>
+                                    <button
+                                        className="reply-btn"
+                                        onClick={() => setSelectedReview(r.id)}
+                                    >
+                                        Reply
+                                    </button>
+                                    {r.reply && (
+                                        <div className="vendor-reply">
+                                            <strong>Vendor Reply:</strong>
+                                            <p>{r.reply}</p>
+                                        </div>
+                                    )}
+                                    {r.reply && (
+                                        <button
+                                            className="delete-reply-btn"
+                                            onClick={() => deleteReply(r.id)}
+                                        >
+                                            Delete Reply
+                                        </button>
+                                    )}
+                                    {selectedReview === r.id && (
+                                        <div className="reply-box">
+
+                                            <div className="reply-actions">
+
+                                                <textarea
+                                                    placeholder="Write your reply..."
+                                                    value={replyText}
+                                                    onChange={(e) => setReplyText(e.target.value)}
+                                                />
+
+                                                <div className="reply-buttons">
+
+                                                    <button
+                                                        className="send-reply-btn"
+                                                        onClick={() => sendReply(r.id)}
+                                                    >
+                                                        Send
+                                                    </button>
+
+                                                    <button
+                                                        className="cancel-reply-btn"
+                                                        onClick={() => {
+                                                            setReplyText("")
+                                                            setSelectedReview(null)
+                                                        }}
+                                                    >
+                                                        Cancel
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* MEDIA */}
+                                    {r.media?.length > 0 && (
+                                        <div className="review-media">
+
+                                            {r.media.map((m: any) => (
+                                                m.mediaType === "IMAGE" ? (
+                                                    <img
+                                                        key={m.id}
+                                                        src={m.mediaUrl}
+                                                        className="review-media-img"
+                                                    />
+                                                ) : (
+                                                    <video
+                                                        key={m.id}
+                                                        src={m.mediaUrl}
+                                                        controls
+                                                        className="review-media-video"
+                                                    />
+                                                )
+                                            ))}
+
+                                        </div>
+                                    )}
+
+                                </div>
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+            {showUpgradeModal && (
+                <div className="upgrade-modal-overlay">
+
+                    <div className="upgrade-modal">
+
+                        <h2>Unlock Analytics 🚀</h2>
+
+                        <p>
+                            Upgrade to <strong>Pro</strong> to access powerful analytics,
+                            booking trends, performance insights and more.
+                        </p>
+
+                        <div className="upgrade-buttons">
+
+                            <Link href="/pro">
+                                <button className="btn-light-green">
+                                    Upgrade to Pro
+                                </button>
+                            </Link>
+
+                            <button
+                                className="btn-decline"
+                                onClick={() => setShowUpgradeModal(false)}
+                            >
+                                Maybe Later
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            )}
+        </div>
+    );
+}

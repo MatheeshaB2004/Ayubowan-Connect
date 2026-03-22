@@ -9,13 +9,17 @@ import {
   Min,
   MaxLength,
 } from 'class-validator';
+import { VisibilityStatus } from "@prisma/client";
+import { Type, Transform } from 'class-transformer';
 import { ListingType } from '@prisma/client';
 
 export class CreateListingDto {
+  @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
   categoryId: number;
 
+  @Type(() => Number)
   @IsNumber()
   @IsNotEmpty()
   addressId: number;
@@ -23,6 +27,10 @@ export class CreateListingDto {
   @IsEnum(ListingType)
   @IsNotEmpty()
   listingType: ListingType;
+
+  @IsOptional()
+  @IsEnum(VisibilityStatus)
+  visibilityStatus?: VisibilityStatus;
 
   @IsString()
   @IsNotEmpty()
@@ -38,10 +46,12 @@ export class CreateListingDto {
   @IsOptional()
   longDescription?: string;
 
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   priceMin: number;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   @Min(0)
@@ -55,14 +65,30 @@ export class CreateListingDto {
   @IsOptional()
   duration?: string;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   capacity?: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  stock?: number;
 
   @IsString()
   @IsOptional()
   availability?: string;
 
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   @IsArray()
   @IsOptional()
   tags?: string[];
@@ -77,7 +103,9 @@ export class CreateListingDto {
   @IsOptional()
   isFeatured?: boolean;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   displayPriority?: number;
+
 }

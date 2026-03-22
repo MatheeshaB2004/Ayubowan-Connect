@@ -1,30 +1,57 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import { useUser } from '@clerk/nextjs';
+import toast from 'react-hot-toast';
+import { API_BASE_URL } from '@/lib/api';
 
-type CartItem = {
+/* =======================
+   Types
+======================= */
+
+export type CartItem = {
     id: number;
-    listingId: number;
+    listingId: number | null;
     quantity: number;
-    listing: {
+    bookingId?: number;
+    listing?: {
         title: string;
         priceMin: number;
-        listingType: string;
+        listingType: 'PRODUCT' | 'EXPERIENCE';
         media: Array<{ mediaUrl: string }>;
         vendor: { businessName: string };
-    };
+    } | null;
+    booking?: {
+        guests?: number;
+        slot?: {
+            startTime?: string;
+            endTime?: string;
+        };
+        listing: {
+            title: string;
+            priceMin: number;
+            listingType?: 'PRODUCT' | 'EXPERIENCE';
+            media?: Array<{ mediaUrl: string }>;
+            vendor?: { businessName: string };
+        };
+    } | null;
 };
 
 type CartContextType = {
     items: CartItem[];
     cartCount: number;
-    addToCart: (listingId: number, quantity: number) => Promise<void>;
+    totalAmount: number;
+    addToCart: (listingId: number | null, quantity?: number, bookingId?: number) => Promise<void>;
     removeFromCart: (itemId: number) => Promise<void>;
+    clearCart: () => Promise<void>;
     refreshCart: () => Promise<void>;
     isOpen: boolean;
     toggleCart: () => void;
 };
+
+/* =======================
+   Context
+======================= */
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
@@ -36,15 +63,26 @@ export const useCart = () => {
     return context;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+const API_BASE =
+    API_BASE_URL;
+
+/* =======================
+   Provider
+======================= */
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const { user } = useAuth();
+    const { isSignedIn, user } = useUser();
+    const userId = user?.id ?? null;
+
     const [items, setItems] = useState<CartItem[]>([]);
     const [isOpen, setIsOpen] = useState(false);
 
+    /* =======================
+       Fetch Cart
+    ======================= */
+
     const fetchCart = async () => {
-        if (!user) {
+        if (!isSignedIn || !userId) {
             setItems([]);
             return;
         }
@@ -52,76 +90,132 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const response = await fetch(`${API_BASE}/cart`, {
                 headers: {
-                    'x-user-id': user.id,
+                    'x-user-id': userId,
                 },
             });
-            if (response.ok) {
-                const data = await response.json();
-                setItems(data.items || []);
+
+            if (!response.ok) {
+                console.error('Cart fetch failed', response.status);
+                return;
             }
+
+            const data = await response.json();
+            setItems(data.items || []);
         } catch (error) {
-            console.error('Failed to fetch cart', error);
+            console.error('Fetch cart error:', error);
+            setItems([]);
         }
     };
 
     useEffect(() => {
         fetchCart();
-    }, [user]);
+    }, [isSignedIn, userId]);
 
-    const addToCart = async (listingId: number, quantity: number) => {
-        if (!user) {
-            alert('Please log in to add items to cart');
+    /* =======================
+       Add to Cart
+    ======================= */
+
+    const addToCart = async (listingId: number | null, quantity = 1, bookingId?: number) => {
+        if (!isSignedIn || !userId) {
+            toast.error('Please log in to add items to cart');
             return;
         }
 
         try {
+            const bodyPayload: any = { quantity };
+            if (listingId !== null) bodyPayload.listingId = listingId;
+            if (bookingId !== undefined) bodyPayload.bookingId = bookingId;
+
             const response = await fetch(`${API_BASE}/cart`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-user-id': user.id,
+                    'x-user-id': userId,
                 },
-                body: JSON.stringify({ listingId, quantity }),
+                body: JSON.stringify(bodyPayload),
             });
 
-            if (response.ok) {
-                await fetchCart();
-                alert('Item added to cart!');
-            } else {
-                alert('Failed to add item');
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('Add to cart failed:', response.status, text);
+                return;
             }
+
+            await fetchCart();
         } catch (error) {
-            console.error('Error adding to cart', error);
+            console.error('Cart error:', error);
         }
     };
 
+    /* =======================
+       Remove
+    ======================= */
+
     const removeFromCart = async (itemId: number) => {
-        if (!user) return;
+        if (!isSignedIn || !userId) return;
 
         try {
             await fetch(`${API_BASE}/cart/${itemId}`, {
                 method: 'DELETE',
                 headers: {
-                    'x-user-id': user.id,
+                    'x-user-id': userId,
                 },
             });
+
             await fetchCart();
         } catch (error) {
             console.error('Error removing from cart', error);
         }
     };
 
-    const toggleCart = () => setIsOpen(!isOpen);
+    /* =======================
+       Clear
+    ======================= */
 
-    const cartCount = items.reduce((acc, item) => acc + item.quantity, 0);
+    const clearCart = async () => {
+        if (!isSignedIn || !userId) return;
+
+        try {
+            await fetch(`${API_BASE}/cart`, {
+                method: 'DELETE',
+                headers: {
+                    'x-user-id': userId,
+                },
+            });
+
+            setItems([]);
+        } catch (error) {
+            console.error('Error clearing cart', error);
+        }
+    };
+
+    /* =======================
+       Derived values
+    ======================= */
+
+    const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+    const totalAmount = items.reduce(
+        (sum, item) => {
+            const listing = item.listing ?? item.booking?.listing;
+            const price = listing?.priceMin ?? 0;
+            const guests = item.booking?.guests ?? item.quantity ?? 1;
+            return sum + (guests * price);
+        },
+        0
+    );
+
+    const toggleCart = () => setIsOpen((prev) => !prev);
 
     return (
         <CartContext.Provider
             value={{
                 items,
                 cartCount,
+                totalAmount,
                 addToCart,
                 removeFromCart,
+                clearCart,
                 refreshCart: fetchCart,
                 isOpen,
                 toggleCart,

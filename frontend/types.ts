@@ -11,6 +11,7 @@ export interface AuthContextType {
   user: User | null;
   role: UserRole;
   isAuthenticated: boolean;
+  authReady: boolean;
   loginAsTraveller: () => void;
   loginAsVendor: () => void;
   logout: () => void;

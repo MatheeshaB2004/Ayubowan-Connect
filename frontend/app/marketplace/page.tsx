@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ExperienceCard from './ExperienceCard';
 import FilterSidebar from './FilterSidebar';
+import { API_BASE_URL } from '@/lib/api';
 import './Experiences.css';
 
 type ListingSummary = {
@@ -28,7 +29,7 @@ type FiltersResponse = {
   locations: string[];
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+const API_BASE = API_BASE_URL;
 
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');

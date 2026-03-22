@@ -2,18 +2,227 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { UpdateListingDto } from './dto/update-listing.dto';
+import { RegisterVendorDto } from './dto/register-vendor.dto';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class VendorManagementService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService,
+    private cloudinaryService: CloudinaryService
+  ) { }
 
   /**
-   * Get all active categories that vendors can choose from
+   * Get vendor profile by Clerk userId
    */
+  async getVendorProfileByUserId(clerkUserId: string) {
+    const vendor = await this.prisma.vendor.findFirst({
+      where: { clerkUserId },
+      include: {
+        locations: {
+          where: { isMainLocation: true },
+          take: 1,
+        },
+      },
+    });
+
+    if (!vendor) throw new NotFoundException('Vendor not found');
+
+    const location = vendor.locations[0] || null;
+
+    return {
+      vendorId: vendor.id,
+      businessName: vendor.businessName,
+      shortTagline: vendor.shortTagline,
+      contactPhone: vendor.contactPhone,
+      establishedYear: vendor.establishedYear,
+      location: location ? {
+        addressLine1: location.addressLine1,
+        addressLine2: location.addressLine2,
+        city: location.city,
+        district: location.district,
+        province: location.province,
+        postalCode: location.postalCode,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      } : null,
+    };
+  }
+
+  /**
+   * Update vendor profile by Clerk userId.
+   * Creates the vendor record on first save if it does not exist yet.
+   */
+  async updateVendorProfileByUserId(body: any) {
+    const { clerkUserId, businessName, shortTagline, contactPhone, establishedYear, location } = body;
+
+    if (!clerkUserId || !businessName) {
+      throw new BadRequestException('clerkUserId and businessName are required');
+    }
+
+    let vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId },
+      include: { locations: { where: { isMainLocation: true }, take: 1 } },
+    });
+
+    const parsedEstablishedYear =
+      establishedYear !== undefined && establishedYear !== null && establishedYear !== ''
+        ? parseInt(String(establishedYear), 10)
+        : null;
+
+    const hasLocation =
+      !!location?.addressLine1 &&
+      !!location?.city &&
+      !!location?.district &&
+      !!location?.province;
+
+    let created = false;
+
+    if (!vendor) {
+      let backendUser = await this.prisma.user.findFirst({
+        where: { email: `clerk_${clerkUserId}@placeholder.local` },
+      });
+
+      if (!backendUser) {
+        backendUser = await this.prisma.user.create({
+          data: {
+            fullName: businessName,
+            email: `clerk_${clerkUserId}@placeholder.local`,
+            passwordHash: 'clerk-managed',
+            role: 'USER',
+          },
+        });
+      }
+
+      vendor = await this.prisma.vendor.create({
+        data: {
+          userId: backendUser.id,
+          clerkUserId,
+          businessName,
+          shortTagline: shortTagline || null,
+          contactPhone: contactPhone || null,
+          establishedYear: parsedEstablishedYear,
+          profileComplete: hasLocation,
+        },
+        include: { locations: { where: { isMainLocation: true }, take: 1 } },
+      });
+
+      created = true;
+    }
+
+    await this.prisma.vendor.update({
+      where: { clerkUserId },
+      data: {
+        ...(businessName && { businessName }),
+        ...(shortTagline !== undefined && { shortTagline }),
+        ...(contactPhone && { contactPhone }),
+        ...(parsedEstablishedYear !== null && { establishedYear: parsedEstablishedYear }),
+        profileComplete: hasLocation,
+      },
+    });
+
+    if (hasLocation) {
+      const existingLocation = vendor.locations[0];
+      if (existingLocation) {
+        await this.prisma.vendorLocation.update({
+          where: { id: existingLocation.id },
+          data: {
+            addressLine1: location.addressLine1,
+            addressLine2: location.addressLine2 || null,
+            city: location.city,
+            district: location.district,
+            province: location.province,
+            postalCode: location.postalCode || null,
+            latitude: location.latitude || null,
+            longitude: location.longitude || null,
+          },
+        });
+      } else {
+        await this.prisma.vendorLocation.create({
+          data: {
+            vendorId: vendor.id,
+            addressLine1: location.addressLine1,
+            addressLine2: location.addressLine2 || null,
+            city: location.city,
+            district: location.district,
+            province: location.province,
+            postalCode: location.postalCode || null,
+            latitude: location.latitude || null,
+            longitude: location.longitude || null,
+            isMainLocation: true,
+          },
+        });
+      }
+    }
+
+    return { message: created ? 'Profile created successfully' : 'Profile updated successfully' };
+  }
+
+  /* Register a vendor via Clerk (creates a Vendor record linked by clerkUserId) */
+  async registerVendorFromClerk(body: any) {
+    const { userId: clerkUserId, businessName, shortTagline, contactPhone, establishedYear, location } = body;
+
+    if (!clerkUserId || !businessName) {
+      throw new BadRequestException('userId and businessName are required');
+    }
+
+    // Check if vendor already registered
+    const existing = await this.prisma.vendor.findUnique({ where: { clerkUserId } });
+    if (existing) {
+      
+      return { message: 'Already registered', vendorId: existing.id };
+    }
+
+    let backendUser = await this.prisma.user.findFirst({ where: { email: `clerk_${clerkUserId}@placeholder.local` } });
+    if (!backendUser) {
+      backendUser = await this.prisma.user.create({
+        data: {
+          fullName: businessName,
+          email: `clerk_${clerkUserId}@placeholder.local`,
+          passwordHash: 'clerk-managed',
+          role: 'USER',
+        },
+      });
+    }
+
+    const vendor = await this.prisma.vendor.create({
+      data: {
+        userId: backendUser.id,
+        clerkUserId,
+        businessName,
+        shortTagline: shortTagline || null,
+        contactPhone: contactPhone || null,
+        establishedYear: establishedYear ? parseInt(establishedYear) : null,
+      },
+    });
+
+    if (location) {
+      await this.prisma.vendorLocation.create({
+        data: {
+          vendorId: vendor.id,
+          addressLine1: location.addressLine1,
+          addressLine2: location.addressLine2 || null,
+          city: location.city,
+          district: location.district,
+          province: location.province,
+          postalCode: location.postalCode || null,
+          latitude: location.latitude || null,
+          longitude: location.longitude || null,
+          isMainLocation: true,
+        },
+      });
+    }
+
+    return { message: 'Vendor registered successfully', vendorId: vendor.id };
+  }
+
+
   async getAvailableCategories() {
     const categories = await this.prisma.listingCategory.findMany({
       where: { isActive: true },
@@ -44,9 +253,7 @@ export class VendorManagementService {
     return locations;
   }
 
-  /**
-   * Get available listing types (fixed enum)
-   */
+  /* Get available listing types */
   getAvailableListingTypes() {
     return [
       { value: 'EXPERIENCE', label: 'Experience' },
@@ -54,11 +261,10 @@ export class VendorManagementService {
     ];
   }
 
-  /**
-   * Create a new listing with validation
-   */
-  async createListing(vendorId: number, dto: CreateListingDto) {
-    // Validate category exists and is active
+  /* Create a new listing with validation*/
+  async createListing(vendorId: number, dto: CreateListingDto, file?: Express.Multer.File,) {
+    console.time("CREATE_LISTING_TOTAL");
+  
     const category = await this.prisma.listingCategory.findUnique({
       where: { id: dto.categoryId },
     });
@@ -90,7 +296,7 @@ export class VendorManagementService {
       );
     }
 
-    // Create the listing
+    // Create the listing 
     const listing = await this.prisma.listing.create({
       data: {
         vendorId,
@@ -104,10 +310,22 @@ export class VendorManagementService {
         priceMax: dto.priceMax,
         priceNote: dto.priceNote,
         duration: dto.duration,
-        capacity: dto.capacity,
+        capacity: null,
+        stock:
+          dto.listingType === "PRODUCT" && dto.stock
+            ? Number(dto.stock)
+            : null,
+        visibilityStatus: dto.visibilityStatus || "DRAFT",
         availability: dto.availability,
-        tags: dto.tags || [],
-        inclusions: dto.inclusions,
+        tags:
+          typeof dto.tags === 'string'
+            ? JSON.parse(dto.tags)
+            : dto.tags || [],
+
+        inclusions:
+          typeof dto.inclusions === "string"
+            ? JSON.parse(dto.inclusions)
+            : dto.inclusions,
         specs: dto.specs,
         isFeatured: dto.isFeatured || false,
         displayPriority: dto.displayPriority || 0,
@@ -118,30 +336,61 @@ export class VendorManagementService {
       },
     });
 
-    // Create search index
-    await this.prisma.listingSearchIndex.create({
-      data: {
-        listingId: listing.id,
-        categoryId: listing.categoryId,
-        priceMin: listing.priceMin,
-        priceMax: listing.priceMax,
-        city: location.city,
-        district: location.district,
-        province: location.province,
-      },
+    
+    setImmediate(() => {
+      this.prisma.listingSearchIndex.create({
+        data: {
+          listingId: listing.id,
+          categoryId: listing.categoryId,
+          priceMin: listing.priceMin,
+          priceMax: listing.priceMax,
+          city: location.city,
+          district: location.district,
+          province: location.province,
+        },
+      }).catch(err => console.error("Background Indexing Error:", err));
     });
+
+    if (file) {
+      const media = await this.prisma.listingMedia.create({
+        data: {
+          listingId: listing.id,
+          mediaUrl: "__UPLOADING__",
+          mediaType: "IMAGE",
+          isPrimary: true,
+        },
+      });
+
+      setImmediate(async () => {
+        try {
+          const upload = await this.cloudinaryService.uploadFile(file);
+
+          await this.prisma.listingMedia.update({
+            where: { id: media.id },
+            data: {
+              mediaUrl: upload.secure_url,
+            },
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      });
+
+    }
+    console.timeEnd("CREATE_LISTING_TOTAL");
 
     return listing;
   }
 
-  /**
-   * Update an existing listing with validation
-   */
+  /* Update an existing listing with validation*/
   async updateListing(
     vendorId: number,
     listingId: number,
     dto: UpdateListingDto,
+    file?: Express.Multer.File,
   ) {
+
+
     // Check if listing exists and belongs to vendor
     const existingListing = await this.prisma.listing.findUnique({
       where: { id: listingId },
@@ -197,6 +446,7 @@ export class VendorManagementService {
         ...(dto.categoryId && { categoryId: dto.categoryId }),
         ...(dto.addressId && { addressId: dto.addressId }),
         ...(dto.listingType && { listingType: dto.listingType }),
+        ...(dto.visibilityStatus && { visibilityStatus: dto.visibilityStatus }),
         ...(dto.title && { title: dto.title }),
         ...(dto.shortDescription && { shortDescription: dto.shortDescription }),
         ...(dto.longDescription !== undefined && {
@@ -206,12 +456,29 @@ export class VendorManagementService {
         ...(dto.priceMax !== undefined && { priceMax: dto.priceMax }),
         ...(dto.priceNote !== undefined && { priceNote: dto.priceNote }),
         ...(dto.duration !== undefined && { duration: dto.duration }),
-        ...(dto.capacity !== undefined && { capacity: dto.capacity }),
+        ...(dto.listingType === "PRODUCT"
+          ? { stock: dto.stock ? Number(dto.stock) : null }
+          : { stock: null }),
         ...(dto.availability !== undefined && {
           availability: dto.availability,
         }),
-        ...(dto.tags && { tags: dto.tags }),
-        ...(dto.inclusions !== undefined && { inclusions: dto.inclusions }),
+        ...(dto.tags !== undefined
+          ? {
+            tags:
+              typeof dto.tags === 'string'
+                ? JSON.parse(dto.tags)
+                : dto.tags,
+          }
+          : {}),
+
+        ...(dto.inclusions !== undefined
+          ? {
+            inclusions:
+              typeof dto.inclusions === "string"
+                ? JSON.parse(dto.inclusions)
+                : dto.inclusions,
+          }
+          : {}),
         ...(dto.specs !== undefined && { specs: dto.specs }),
         ...(dto.isFeatured !== undefined && { isFeatured: dto.isFeatured }),
         ...(dto.displayPriority !== undefined && {
@@ -223,6 +490,43 @@ export class VendorManagementService {
         location: true,
       },
     });
+
+    if (file) {
+
+      const media = await this.prisma.listingMedia.create({
+        data: {
+          listingId,
+          mediaUrl: "__UPLOADING__",
+          mediaType: "IMAGE",
+          isPrimary: true,
+        },
+      });
+
+      await this.prisma.listingMedia.updateMany({
+        where: {
+          listingId,
+          id: { not: media.id },
+        },
+        data: {
+          isPrimary: false,
+        },
+      });
+
+      setImmediate(async () => {
+        try {
+          const upload = await this.cloudinaryService.uploadFile(file);
+
+          await this.prisma.listingMedia.update({
+            where: { id: media.id },
+            data: {
+              mediaUrl: upload.secure_url,
+            },
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
 
     // Update search index if category or location changed
     if (
@@ -273,7 +577,10 @@ export class VendorManagementService {
       include: {
         category: true,
         location: true,
-        media: true,
+        media: {
+          orderBy: { isPrimary: "desc" },
+        },
+
       },
       orderBy: [{ displayPriority: 'desc' }, { createdAt: 'desc' }],
     });
@@ -302,4 +609,20 @@ export class VendorManagementService {
 
     return { message: 'Listing deleted successfully' };
   }
+
+  async recordProfileView(vendorId: number, userId: number) {
+    try {
+      return await this.prisma.profileView.create({
+        data: {
+          vendorId,
+          userId,
+        },
+      });
+    } catch (error) {
+    
+      return null;
+    }
+  }
+
+
 }

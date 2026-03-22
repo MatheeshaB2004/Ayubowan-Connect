@@ -3,11 +3,21 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { AuthenticationModule } from './modules/authentication/authentication.module';
 import { MarketplaceModule } from './modules/marketplace/marketplace.module';
-import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
 import { CartModule } from './modules/cart/cart.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { FilesController } from './files.controller';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { EventsModule } from './modules/events/events.module';
+import { UserModule } from './modules/user/user.module';
+import { BookingModule } from './modules/booking/booking.module';
+import { OrdersModule } from './modules/orders/orders.module';
+import { VendorManagementModule } from './modules/vendor-management/vendor-management.module';
+import { AiServicesModule } from './modules/ai-services/ai-services.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { NewsletterModule } from './modules/newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -15,12 +25,20 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
       isGlobal: true,
     }),
     PrismaModule,
+    AuthenticationModule,
     CloudinaryModule,
     MarketplaceModule,
-    VendorManagementModule,
     CartModule,
+    DashboardModule,
+    EventsModule,
+    ChatbotModule,
+    UserModule,
+    BookingModule,
+    OrdersModule,
+    VendorManagementModule,
+    AiServicesModule,
+    PaymentsModule,
+    NewsletterModule,
   ],
-  controllers: [AppController, FilesController],
-  providers: [AppService],
 })
 export class AppModule {}

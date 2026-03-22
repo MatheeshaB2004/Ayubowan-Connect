@@ -1,0 +1,60 @@
+/* ============================================
+   AYUBOWAN CONNECT — DESIGN TOKENS (Landing)
+   Mirror of frontend/styles/design-tokens.css
+   Keep in sync when updating brand values.
+   ============================================ */
+
+:root {
+  /* ── Brand Colors ─────────────────────────── */
+  --ay-brand:        #379683;
+  --ay-brand-dark:   #2d7a6a;
+  --ay-brand-darker: #1a3a35;
+  --ay-brand-light:  #ccfbf1;
+  --ay-brand-soft:   #e8f5f2;
+  --ay-brand-hover:  #0f766e;
+
+  /* ── Accent Palette ───────────────────────── */
+  --ay-waikawa:      #577399;
+  --ay-trendy:       #8D5A97;
+  --ay-gold:         #d97706;
+
+  /* ── Semantic / UI Colors ─────────────────── */
+  --ay-success:      #10b981;
+  --ay-warning:      #f59e0b;
+  --ay-danger:       #ef4444;
+
+  /* ── Neutral Text ─────────────────────────── */
+  --ay-text-dark:    #111827;
+  --ay-text-main:    #1f2937;
+  --ay-text-body:    #333333;
+  --ay-text-muted:   #6b7280;
+  --ay-text-subtle:  #9ca3af;
+
+  /* ── Backgrounds ──────────────────────────── */
+  --ay-bg:           #ffffff;
+  --ay-bg-soft:      #f9fafb;
+  --ay-bg-muted:     #f3f4f6;
+
+  /* ── Borders ──────────────────────────────── */
+  --ay-border:       #e5e7eb;
+  --ay-border-soft:  #e2e8f0;
+
+  /* ── Shadows ──────────────────────────────── */
+  --ay-shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.05);
+  --ay-shadow:       0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --ay-shadow-lg:    0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+  --ay-shadow-xl:    0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+
+  /* ── Radii ────────────────────────────────── */
+  --ay-radius-sm:    4px;
+  --ay-radius:       8px;
+  --ay-radius-lg:    12px;
+  --ay-radius-xl:    16px;
+  --ay-radius-2xl:   24px;
+  --ay-radius-full:  9999px;
+
+  /* ── Font Stacks ──────────────────────────── */
+  --ay-font-body:    var(--font-nunito), "Nunito", sans-serif;
+  --ay-font-heading: var(--font-arima), "Arima", serif;
+  --ay-font-mono:    monospace;
+}
