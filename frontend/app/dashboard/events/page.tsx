@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
+import { fetchUserRegisteredEvents } from '@/app/events/lib/api/events';
 
 const API_BASE = API_BASE_URL;
 
@@ -35,20 +36,32 @@ export default function MyEventsPage() {
     }
 
     const fetchEvents = async () => {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) return;
+      
       try {
-        const response = await fetch(`${API_BASE}/events/user/registered`, {
-          headers: { 'x-user-id': user.id },
-        });
+        const eventsData = await fetchUserRegisteredEvents(user);
+        const futureEvents = (eventsData || []).filter((event: Event) => {
+          if (!event.startDate) return false;
 
-        if (response.ok) {
-          const eventsData: Event[] = await response.json();
-          setEvents(eventsData ?? []);
-        } else {
-          console.error('Failed to fetch events');
-          setEvents([]);
-        }
+          const eventTime = new Date(event.startDate).getTime();
+
+          if (isNaN(eventTime)) return false;
+
+          const now = Date.now();
+
+          // OPTIONAL DEBUG (TEMP)
+          console.log("EVENT DEBUG:", {
+            startDate: event.startDate,
+            parsed: new Date(event.startDate).getTime(),
+          });
+
+          return eventTime > now;
+        });
+        setEvents(futureEvents);
       } catch (error) {
-        console.error('Error fetching events:', error);
+        console.error('Failed to fetch events:', error);
         setEvents([]);
       } finally {
         setIsLoading(false);
@@ -100,6 +113,12 @@ export default function MyEventsPage() {
     <div className="min-h-screen bg-[#f9fafb]">
       <DashboardTabs />
       <div className="max-w-6xl mx-auto py-12 px-4">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Upcoming Events</h2>
+          <p className="text-gray-600 mt-2">
+            View your registered upcoming events.
+          </p>
+        </div>
         {events.length === 0 ? (
           <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
             <h2 className="text-xl font-semibold text-gray-900 mb-2">You have not registered for any events yet.</h2>

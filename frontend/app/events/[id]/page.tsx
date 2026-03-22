@@ -154,13 +154,26 @@ export default function EventDetailPage() {
   // Fetch event data
   const loadEvent = useCallback(async () => {
     if (!id) return;
+    
+    if (!authLoaded || !user) {
+      return;
+    }
+
+    const email =
+      user.primaryEmailAddress?.emailAddress ||
+      user.emailAddresses?.[0]?.emailAddress;
+
+    if (!email) {
+      return;
+    }
+    
     try {
       const data = await fetchEventById(Number(id));
       setEvent(data);
 
-      if (authLoaded && !isGuest && !isVendor) {
+      if (!isGuest && !isVendor) {
         try {
-          const registeredEvents = await fetchUserRegisteredEvents(getToken(), user?.id);
+          const registeredEvents = await fetchUserRegisteredEvents(user);
           const alreadyReg = registeredEvents.some((e: Event) => e.id === Number(id));
           setIsRegistered(alreadyReg);
         } catch (err) {
@@ -172,17 +185,25 @@ export default function EventDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id, authLoaded, isGuest, isVendor, user?.id]);
+  }, [id, authLoaded, isGuest, isVendor, user]);
 
   useEffect(() => { loadEvent(); }, [loadEvent]);
 
   // Register handler
   const handleRegister = async () => {
+    if (!authLoaded || !user) return;
+    
+    const email =
+      user.primaryEmailAddress?.emailAddress ||
+      user.emailAddresses?.[0]?.emailAddress;
+
+    if (!email) return;
+    
     if (!event) return;
     setRegError(null);
     setRegLoading(true);
     try {
-      const result = await registerForEvent(getToken(), event.id, user?.id);
+      const result = await registerForEvent(user, event.id);
 
       if (result?.message === "Already registered") {
         setIsRegistered(true);
@@ -543,22 +564,11 @@ export default function EventDetailPage() {
                           if (event.isFree || event.price === 0) {
                             // Free event - register directly
                             try {
-                              const response = await fetch(`${API_BASE_URL}/events/${event.id}/register`, {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                  'x-user-id': user.id
-                                }
-                              });
-
-                              if (response.ok) {
-                                setIsRegistered(true);
-                                router.push('/dashboard/events');
-                              } else {
-                                console.error('Registration failed');
-                              }
+                              await registerForEvent(user, event.id);
+                              setIsRegistered(true);
+                              router.push('/dashboard/events');
                             } catch (error) {
-                              console.error('Registration error:', error);
+                              console.error("Registration failed", error);
                             }
                           } else {
                             // Paid event - redirect to checkout

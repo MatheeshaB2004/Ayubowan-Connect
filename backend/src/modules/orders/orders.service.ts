@@ -9,72 +9,45 @@ export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Resolve a Clerk user ID to a numeric database userId.
-   * Auto-creates User + LocalTourist records if they don't exist yet.
+   * Resolve user ID with safe matching (email + ID fallbacks).
+   * Uses email first, then clerkUserId, then placeholder, then numeric ID.
    */
-  private async resolveUserId(rawId: string): Promise<number> {
-    // If already numeric, return directly
-    const parsed = Number(rawId);
-    if (!isNaN(parsed) && Number.isInteger(parsed)) {
-      return parsed;
+  private async resolveUserId(rawUserId: string): Promise<number> {
+    if (!rawUserId) {
+      throw new Error('User ID is required');
     }
 
-    // Step 1 — Check Vendor table by clerkUserId
+    // Try 1: Check if it's an email
+    if (rawUserId.includes('@')) {
+      const user = await this.prisma.user.findUnique({
+        where: { email: rawUserId },
+      });
+      if (user) return user.id;
+    }
+
+    // Try 2: Check by clerkUserId (vendor table)
     const vendor = await this.prisma.vendor.findUnique({
-      where: { clerkUserId: rawId },
+      where: { clerkUserId: rawUserId },
     });
-    if (vendor) {
-      this.logger.log(
-        `Resolved Clerk ID "${rawId}" via vendor → userId=${vendor.userId}`,
-      );
-      return vendor.userId;
-    }
+    if (vendor) return vendor.userId;
 
-    // Step 2 — Look for existing User created by registration
-    const placeholderEmail = `clerk_${rawId}@placeholder.local`;
-    let userId: number;
-
-    const existingUser = await this.prisma.user.findFirst({
+    // Try 3: Check placeholder emails
+    const placeholderEmail = `clerk_${rawUserId}@placeholder.local`;
+    let user = await this.prisma.user.findFirst({
       where: { email: placeholderEmail },
     });
+    if (user) return user.id;
 
-    if (existingUser) {
-      userId = existingUser.id;
-      this.logger.log(
-        `Resolved Clerk ID "${rawId}" via placeholder email → userId=${userId}`,
-      );
-    } else {
-      // Step 3 — Create a new User record
-      const newUser = await this.prisma.user.create({
-        data: {
-          fullName: 'Clerk User',
-          email: placeholderEmail,
-          passwordHash: 'clerk-auth',
-        },
+    // Try 4: Check if it's a numeric ID
+    const parsed = Number(rawUserId);
+    if (!isNaN(parsed) && Number.isInteger(parsed)) {
+      user = await this.prisma.user.findUnique({
+        where: { id: parsed },
       });
-      userId = newUser.id;
-      this.logger.log(
-        `Auto-created User for Clerk ID "${rawId}" → userId=${userId}`,
-      );
+      if (user) return user.id;
     }
 
-    // Step 4 — Ensure LocalTourist record exists
-    let tourist = await this.prisma.localTourist.findUnique({
-      where: { userId },
-    });
-    if (!tourist) {
-      tourist = await this.prisma.localTourist.create({
-        data: {
-          userId,
-          fullName: 'Clerk User',
-          userType: 'LOCAL',
-        },
-      });
-      this.logger.log(`Auto-created LocalTourist for userId=${userId}`);
-    }
-
-    // Step 5
-    return userId;
+    throw new Error(`User not found for: ${rawUserId}`);
   }
 
   /**
@@ -84,12 +57,12 @@ export class OrdersService {
    * for bookings with status COMPLETED or CONFIRMED and map them into
    * the shape the frontend expects.
    */
-  async getUserOrders(rawUserId: string) {
+  async getUserOrders(email: string) {
     // Initialize bookingOrders for fallback
     let bookingOrders: any[] = [];
 
     try {
-      const userId = await this.resolveUserId(rawUserId);
+      const userId = await this.resolveUserId(email);
 
       // Fetch bookings
       const bookings = await this.prisma.booking.findMany({
@@ -214,13 +187,13 @@ export class OrdersService {
   }
 
   async completeOrder(
-    rawUserId: string,
+    email: string,
     cartItems: Array<{
       listingId?: number | null;
       quantity?: number;
     }>,
   ) {
-    const userId = await this.resolveUserId(rawUserId);
+    const userId = await this.resolveUserId(email);
     console.log('Received cartItems:', cartItems);
     let updatedListings = 0;
 

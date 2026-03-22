@@ -1,4 +1,4 @@
-import { requireApiUrl } from "@/lib/api";
+import { requireApiUrl, API_BASE_URL } from "@/lib/api";
 
 function authHeaders(token?: string, rawUserId?: string): HeadersInit {
   const headers: HeadersInit = {
@@ -118,21 +118,62 @@ export async function uploadEventImage(
 
 // User
 
-export async function fetchUserRegisteredEvents(token: string, rawUserId?: string) {
-  const res = await fetch(requireApiUrl("/events/user/registered"), {
-    headers: authHeaders(token, rawUserId),
+export async function fetchUserRegisteredEvents(user: any) {
+  const email =
+    user?.primaryEmailAddress?.emailAddress ||
+    user?.emailAddresses?.[0]?.emailAddress;
+
+  console.log("USER OBJECT:", user);
+
+  if (!user?.id || !email) {
+    console.warn("User/email missing for events API");
+    return [];
+  }
+
+  const res = await fetch(`${API_BASE_URL}/events/user/registered`, {
+    headers: {
+      'x-user-id': user.id,
+      'x-user-email': email,
+    },
     cache: "no-store",
   });
-  if (!res.ok) throw new Error("Failed to fetch registered events");
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("EVENT ERROR:", err);
+    throw new Error("Failed to fetch registered events");
+  }
+
   return res.json();
 }
 
-export async function registerForEvent(token: string, eventId: number, rawUserId?: string) {
-  const res = await fetch(requireApiUrl(`/events/${eventId}/register`), {
+export async function registerForEvent(user: any, eventId: number) {
+  const email =
+    user?.primaryEmailAddress?.emailAddress ||
+    user?.emailAddresses?.[0]?.emailAddress;
+
+  console.log("REGISTER USER:", user);
+  console.log("REGISTER EMAIL:", email);
+
+  if (!user?.id || !email) {
+    throw new Error("User/email missing");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/events/${eventId}/register`, {
     method: "POST",
-    headers: authHeaders(token, rawUserId),
+    headers: {
+      'x-user-id': user.id,
+      'x-user-email': email,
+      'Content-Type': 'application/json',
+    },
   });
-  if (!res.ok) throw new Error("Failed to register for event");
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("REGISTER ERROR:", err);
+    throw new Error("Failed to register");
+  }
+
   return res.json();
 }
 

@@ -16,7 +16,7 @@ const DashboardTabs = () => {
       href: '/dashboard/upcoming',
     },
     {
-      title: 'My Events',
+      title: 'Upcoming Events',
       href: '/dashboard/events',
     },
     {
