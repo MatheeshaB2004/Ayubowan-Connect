@@ -42,9 +42,20 @@ export default function MyEventsPage() {
       
       try {
         const eventsData = await fetchUserRegisteredEvents(user);
-        const futureEvents = (eventsData || []).filter((event) => {
-          const now = Date.now();
+        const futureEvents = (eventsData || []).filter((event: Event) => {
+          if (!event.startDate) return false;
+
           const eventTime = new Date(event.startDate).getTime();
+
+          if (isNaN(eventTime)) return false;
+
+          const now = Date.now();
+
+          // OPTIONAL DEBUG (TEMP)
+          console.log("EVENT DEBUG:", {
+            startDate: event.startDate,
+            parsed: new Date(event.startDate).getTime(),
+          });
 
           return eventTime > now;
         });

@@ -78,26 +78,36 @@ export default function UpcomingExperiencesPage() {
 
   const upcomingBookings = useMemo(
     () =>
-      bookings.filter((b) => {
-        const isConfirmed = b.status === 'CONFIRMED';
+      bookings
+        .filter((b) => {
+          const isConfirmed =
+            b.status === 'CONFIRMED' ||
+            b.status === 'COMPLETED';
 
-        const isPaid =
-          b.paymentStatus === 'PAID' ||
-          b.paymentStatus === 'COMPLETED';
+          const isPaid =
+            !b.paymentStatus ||
+            b.paymentStatus === 'PAID' ||
+            b.paymentStatus === 'COMPLETED';
 
-        const startTime = b.slot?.startTime || b.bookingDate;
+          const rawTime = b.slot?.startTime || b.bookingDate;
 
-        const now = Date.now();
-        const start = new Date(startTime).getTime();
+          if (!rawTime) return false;
 
-        const isFuture = start > now;
+          const start = new Date(rawTime).getTime();
 
-        return isConfirmed && isPaid && isFuture;
-      }).sort((a, b) => {
-        const startA = a.slot?.startTime ? new Date(a.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;
-        const startB = b.slot?.startTime ? new Date(b.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;
-        return startA - startB;
-      }),
+          if (isNaN(start)) return false;
+
+          const now = Date.now();
+
+          const isFuture = start > now;
+
+          return isConfirmed && isPaid && isFuture;
+        })
+        .sort((a, b) => {
+          const timeA = new Date(a.slot?.startTime || a.bookingDate).getTime();
+          const timeB = new Date(b.slot?.startTime || b.bookingDate).getTime();
+          return timeA - timeB;
+        }),
     [bookings]
   );
 
