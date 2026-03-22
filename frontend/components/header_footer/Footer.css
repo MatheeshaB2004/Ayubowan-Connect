@@ -5,8 +5,8 @@
 
 .site-footer {
   background-color: var(--lochinvar);
-  padding-top: 4rem;
-  padding-bottom: 2rem;
+  padding-top: 2.4rem;
+  padding-bottom: 1rem;
   border-top: none;
   color: white;
 }
@@ -18,12 +18,18 @@
 .footer-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 3rem;
+  gap: 1.65rem;
 }
 
 @media (min-width: 1024px) {
+  .site-footer {
+    padding-top: 2.65rem;
+    padding-bottom: 1.1rem;
+  }
+
   .footer-grid {
     grid-template-columns: 1.5fr 1fr 1fr 1fr 1.5fr;
+    gap: 2rem;
   }
 }
 
@@ -48,12 +54,12 @@
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
   width: fit-content;
 }
 
 .footer-logo-image {
-  height: 7rem;
+  height: 5rem;
   width: auto;
   filter: brightness(0) invert(1);
 }
@@ -84,14 +90,14 @@
 .footer-copyright {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.7);
-  margin-top: 1rem;
+  margin-top: 0.6rem;
   max-width: 250px;
 }
 
 .footer-socials {
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.875rem;
+  margin-top: 0.6rem;
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -108,7 +114,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 1rem;
+  margin-bottom: 0.625rem;
   color: white;
 }
 
@@ -118,7 +124,7 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .footer-links li a {
@@ -139,15 +145,15 @@
 .newsletter-text {
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 1rem;
-  line-height: 1.5;
+  margin-bottom: 0.5rem;
+  line-height: 1.45;
 }
 
 .newsletter-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.625rem;
+  margin-bottom: 0.625rem;
 }
 
 .newsletter-input {
@@ -194,12 +200,12 @@
 }
 
 .footer-bottom {
-  margin-top: 3rem;
-  padding-top: 2rem;
+  margin-top: 1.45rem;
+  padding-top: 0.75rem;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5rem;
+  gap: 0.7rem;
   justify-content: center;
   font-size: 0.75rem;
 }

@@ -212,6 +212,11 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <a href="#" onClick={(e) => { e.preventDefault(); setIsLightboxOpen(true); }} className="cursor-pointer hover:text-[var(--lochinvar)] transition-colors">
+                  Cookie Settings
+                </a>
+              </li>
+              <li>
                 <a href="/complaints">
                   Complaints
                 </a>
