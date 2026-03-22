@@ -160,16 +160,19 @@ function PaymentSuccessPageContent() {
           }),
         });
 
-        // FIX 4: SUCCESS PAGE TIMING FIX
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        router.push('/pro');
-
+                
         if (!response.ok) {
           setActivationMessage('Payment completed, but subscription activation is pending.');
           return;
         }
 
+        const data = await response.json();
+        if (data.activationStatus === 'pending') {
+          setActivationMessage('Payment completed, but subscription activation is pending.');
+        } else {
+          setActivationMessage('Your Pro subscription is now active.');
+          setSubscriptionActivated(true);
+        }
         setActivationMessage('Your Pro subscription is now active.');
         setSubscriptionActivated(true);
       } catch (error) {
@@ -548,30 +551,18 @@ function PaymentSuccessPageContent() {
                 </Link>
               </>
             ) : isSubscriptionSuccess ? (
-              <div className="flex gap-3 justify-center mt-6">
-                {role === 'vendor' ? (
-                  <button
-                    onClick={() => router.push('/pro')}
-                    className="px-6 py-2 bg-[#0d9488] text-white rounded-lg"
-                  >
-                    Go to Pro
+              <div className="flex gap-4 justify-center mt-6">
+                <Link href="/pro">
+                  <button className="btn-primary">
+                    Back to Pro
                   </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => router.push('/dashboard/orders')}
-                      className="px-6 py-2 bg-[#0d9488] text-white rounded-lg"
-                    >
-                      View Orders
+                </Link>
+                {role !== 'vendor' && (
+                  <Link href="/dashboard/orders">
+                    <button className="btn-secondary">
+                      Go to Orders
                     </button>
-
-                    <button
-                      onClick={() => router.push('/pro')}
-                      className="px-6 py-2 border border-gray-300 rounded-lg"
-                    >
-                      Go to Pro
-                    </button>
-                  </>
+                  </Link>
                 )}
               </div>
             ) : (

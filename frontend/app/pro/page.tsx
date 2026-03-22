@@ -27,6 +27,7 @@ export default function ProPage() {
   const { user, role } = useAuth();
   const { user: clerkUser } = useUser();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [activeCycle, setActiveCycle] = useState<'monthly' | 'yearly' | null>(null);
   const [isProUser, setIsProUser] = useState(false);
   const [expiry, setExpiry] = useState<string | null>(null);
 
@@ -83,6 +84,11 @@ export default function ProPage() {
         : null;
 
       setIsProUser(data.isProUser);
+      setActiveCycle(
+        data.billingCycle
+          ? data.billingCycle.toLowerCase()
+          : null
+      );
 
       const isActive =
         data.isProUser &&
@@ -188,9 +194,11 @@ export default function ProPage() {
                   {isActive ? (
                     <>
                       <Check size={16} className="text-[#0d9488]" />
-                      {billingCycle === 'monthly'
+                      {activeCycle === 'monthly'
                         ? 'Monthly plan active'
-                        : 'Yearly plan active'}
+                        : activeCycle === 'yearly'
+                        ? 'Yearly plan active'
+                        : 'Pro plan active'}
                     </>
                   ) : isExpired ? (
                     <>
@@ -243,9 +251,11 @@ export default function ProPage() {
                   {isActive ? (
                     <>
                       <Check size={16} className="text-[#0d9488]" />
-                      {billingCycle === 'monthly'
+                      {activeCycle === 'monthly'
                         ? 'Monthly plan active'
-                        : 'Yearly plan active'}
+                        : activeCycle === 'yearly'
+                        ? 'Yearly plan active'
+                        : 'Pro plan active'}
                     </>
                   ) : isExpired ? (
                     <>
@@ -303,11 +313,11 @@ export default function ProPage() {
           <div className="space-y-4">
             {/* Monthly Plan */}
             <div className={`border rounded-xl p-6 shadow-md text-center relative ${
-              isActive && billingCycle === 'monthly'
+              isActive && activeCycle === 'monthly'
                 ? 'border-[#0d9488] ring-2 ring-[#0d9488]/20'
                 : ''
             }`}>
-              {isActive && billingCycle === 'monthly' && (
+              {isActive && activeCycle === 'monthly' && (
                 <div className="absolute top-2 right-2 bg-[#0d9488] text-white text-xs px-3 py-1 rounded-full font-medium">
                   Current Plan
                 </div>
@@ -334,7 +344,7 @@ export default function ProPage() {
               >
                 {isActive ? "Active Plan" : "Choose Monthly Plan"}
               </button>
-              {isActive && billingCycle === 'monthly' && expiry && (
+              {isActive && activeCycle === 'monthly' && expiry && (
                 <p className="text-xs text-gray-500 mt-2">
                   Expires on {new Date(expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
@@ -343,11 +353,11 @@ export default function ProPage() {
 
             {/* Yearly Plan */}
             <div className={`border rounded-xl p-6 shadow-md relative ${
-              isActive && billingCycle === 'yearly'
+              isActive && activeCycle === 'yearly'
                 ? 'border-[#0d9488] ring-2 ring-[#0d9488]/20'
                 : ''
             }`}>
-              {isActive && billingCycle === 'yearly' ? (
+              {isActive && activeCycle === 'yearly' ? (
                 <div className="absolute top-2 right-2 bg-[#0d9488] text-white text-xs px-3 py-1 rounded-full font-medium">
                   Current Plan
                 </div>
@@ -381,7 +391,7 @@ export default function ProPage() {
               >
                 {isActive ? "Active Plan" : "Choose Yearly Plan"}
               </button>
-              {isActive && billingCycle === 'yearly' && expiry && (
+              {isActive && activeCycle === 'yearly' && expiry && (
                 <p className="text-xs text-gray-500 mt-2">
                   Expires on {new Date(expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
