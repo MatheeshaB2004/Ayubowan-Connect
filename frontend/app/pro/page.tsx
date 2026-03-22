@@ -27,73 +27,83 @@ export default function ProPage() {
   const { user, role } = useAuth();
   const { user: clerkUser } = useUser();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const [subscriptionStatus, setSubscriptionStatus] = useState<{
-    isProUser: boolean;
-    proSubscriptionExpiry: string | null;
-    billingCycle: 'monthly' | 'yearly' | null;
-  } | null>(null);
+  const [isProUser, setIsProUser] = useState(false);
+  const [expiry, setExpiry] = useState<string | null>(null);
 
   const isVendor = role === 'vendor';
   const selectedPlan: 'user' | 'vendor' = isVendor ? 'vendor' : 'user';
 
   const isExpired =
-    subscriptionStatus?.proSubscriptionExpiry &&
-    new Date(subscriptionStatus.proSubscriptionExpiry) < new Date();
+    expiry &&
+    new Date(expiry) < new Date();
 
   const isActive =
-    subscriptionStatus?.isProUser && !isExpired;
+    isProUser && !isExpired;
 
   const checkoutHref = isActive
-    ? '#'
+    ? '/account'
     : `/payments/checkout?type=subscription&plan=${selectedPlan}&cycle=${billingCycle}`;
 
-
   const ctaLabel = isActive
-    ? 'Active Plan'
+    ? 'Manage Plan'
     : isExpired
       ? 'Renew Subscription'
       : 'Upgrade to Pro';
 
-    useEffect(() => {
-    if (!user?.id) {
-      setSubscriptionStatus(null);
+  useEffect(() => {
+    if (user?.id) {
+      fetchStatus();
+    }
+  }, [user?.id]);
+
+  // FIX 1: FORCE FRESH FETCH ON PRO PAGE
+  const fetchStatus = async () => {
+    const email = clerkUser?.primaryEmailAddress?.emailAddress;
+    
+    if (!user?.id || !email) {
+      console.warn("Skipping API call - missing user ID or email");
       return;
     }
+    
+    try {
+      const res = await fetch(`${API_BASE}/payments/status`, {
+        headers: {
+          'x-user-id': user.id,
+          'x-user-email': email,
+        },
+        cache: 'no-store',  // IMPORTANT
+      });
 
-    const userIdentifier = clerkUser?.primaryEmailAddress?.emailAddress || user.id;
+      const data = await res.json();
 
-    const fetchStatus = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/subscriptions/status`, {
-          headers: { 'x-user-id': userIdentifier },
-        });
-        if (!response.ok) return;
-        const data = await response.json();
-        setSubscriptionStatus({
-          isProUser: Boolean(data?.isProUser),
-          proSubscriptionExpiry: data?.proSubscriptionExpiry ?? null,
-          billingCycle: data?.billingCycle ?? null,
-        });
-      } catch (error) {
-        console.error('Failed to load subscription status:', error);
-      }
-    };
+      console.log('PRO STATUS:', data);
 
-    fetchStatus();
-  }, [user?.id, clerkUser]);
+      const expiryDate = data.proSubscriptionExpiry
+        ? new Date(data.proSubscriptionExpiry)
+        : null;
 
+      setIsProUser(data.isProUser);
+
+      const isActive =
+        data.isProUser &&
+        expiryDate &&
+        expiryDate > new Date();
+      setExpiry(expiryDate ? expiryDate.toISOString() : null);
+    } catch (err) {
+      console.error('Status fetch failed', err);
+    }
+  };
 
   const formattedExpiry = useMemo(() => {
-    const expiry = subscriptionStatus?.proSubscriptionExpiry;
     if (!expiry) return null;
     const parsed = new Date(expiry);
     if (Number.isNaN(parsed.getTime())) return null;
-    return parsed.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
+    return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
-    });
-  }, [subscriptionStatus?.proSubscriptionExpiry]);
+      month: 'short',
+      day: 'numeric',
+    }).format(parsed);
+  }, [expiry]);
 
   const scrollToPricing = () => {
     const pricingSection = document.getElementById('pricing');
@@ -178,7 +188,7 @@ export default function ProPage() {
                   {isActive ? (
                     <>
                       <Check size={16} className="text-[#0d9488]" />
-                      {subscriptionStatus?.billingCycle === 'monthly'
+                      {billingCycle === 'monthly'
                         ? 'Monthly plan active'
                         : 'Yearly plan active'}
                     </>
@@ -233,7 +243,7 @@ export default function ProPage() {
                   {isActive ? (
                     <>
                       <Check size={16} className="text-[#0d9488]" />
-                      {subscriptionStatus?.billingCycle === 'monthly'
+                      {billingCycle === 'monthly'
                         ? 'Monthly plan active'
                         : 'Yearly plan active'}
                     </>
@@ -276,7 +286,12 @@ export default function ProPage() {
           </section>
         )}
 
-        {/* Pricing Section */}
+        {isActive && formattedExpiry && (
+          <div className="text-center mb-6">
+            <h3>Your Pro plan is active</h3>
+            <p>Valid until {formattedExpiry}</p>
+          </div>
+        )}
         <section className="pro-pricing-section" id="pricing">
           <div className="pro-pricing-header">
             <span className="pro-section-tag">Pricing</span>
@@ -288,11 +303,11 @@ export default function ProPage() {
           <div className="space-y-4">
             {/* Monthly Plan */}
             <div className={`border rounded-xl p-6 shadow-md text-center relative ${
-              isActive && subscriptionStatus?.billingCycle === 'monthly'
+              isActive && billingCycle === 'monthly'
                 ? 'border-[#0d9488] ring-2 ring-[#0d9488]/20'
                 : ''
             }`}>
-              {isActive && subscriptionStatus?.billingCycle === 'monthly' && (
+              {isActive && billingCycle === 'monthly' && (
                 <div className="absolute top-2 right-2 bg-[#0d9488] text-white text-xs px-3 py-1 rounded-full font-medium">
                   Current Plan
                 </div>
@@ -309,31 +324,30 @@ export default function ProPage() {
                     : 'bg-[#0d9488] text-white hover:bg-[#0b7f78]'
                   }`}
                 onClick={() => {
-                  if (isActive) return;
+                  if (isActive) {
+                    alert("Your plan is active until " + formattedExpiry);
+                    return;
+                  }
                   window.location.href = `/payments/checkout?type=subscription&plan=${isVendor ? 'VENDOR' : 'USER'}&cycle=monthly`;
                 }}
                 disabled={isActive}
               >
-                {isActive && subscriptionStatus?.billingCycle === 'monthly'
-                  ? 'You are currently subscribed'
-                  : isActive
-                  ? 'Available after current plan ends'
-                  : 'Choose Monthly Plan'}
+                {isActive ? "Active Plan" : "Choose Monthly Plan"}
               </button>
-              {isActive && subscriptionStatus?.billingCycle === 'monthly' && subscriptionStatus?.proSubscriptionExpiry && (
+              {isActive && billingCycle === 'monthly' && expiry && (
                 <p className="text-xs text-gray-500 mt-2">
-                  Expires on {new Date(subscriptionStatus.proSubscriptionExpiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  Expires on {new Date(expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
               )}
             </div>
 
             {/* Yearly Plan */}
             <div className={`border rounded-xl p-6 shadow-md relative ${
-              isActive && subscriptionStatus?.billingCycle === 'yearly'
+              isActive && billingCycle === 'yearly'
                 ? 'border-[#0d9488] ring-2 ring-[#0d9488]/20'
                 : ''
             }`}>
-              {isActive && subscriptionStatus?.billingCycle === 'yearly' ? (
+              {isActive && billingCycle === 'yearly' ? (
                 <div className="absolute top-2 right-2 bg-[#0d9488] text-white text-xs px-3 py-1 rounded-full font-medium">
                   Current Plan
                 </div>
@@ -357,20 +371,19 @@ export default function ProPage() {
                     : 'bg-[#0d9488] text-white hover:bg-[#0b7f78]'
                   }`}
                 onClick={() => {
-                  if (isActive) return;
+                  if (isActive) {
+                    alert("Your plan is active until " + formattedExpiry);
+                    return;
+                  }
                   window.location.href = `/payments/checkout?type=subscription&plan=${isVendor ? 'VENDOR' : 'USER'}&cycle=yearly`;
                 }}
                 disabled={isActive}
               >
-                {isActive && subscriptionStatus?.billingCycle === 'yearly'
-                  ? 'You are currently subscribed'
-                  : isActive
-                  ? 'Available after current plan ends'
-                  : 'Choose Yearly Plan'}
+                {isActive ? "Active Plan" : "Choose Yearly Plan"}
               </button>
-              {isActive && subscriptionStatus?.billingCycle === 'yearly' && subscriptionStatus?.proSubscriptionExpiry && (
+              {isActive && billingCycle === 'yearly' && expiry && (
                 <p className="text-xs text-gray-500 mt-2">
-                  Expires on {new Date(subscriptionStatus.proSubscriptionExpiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  Expires on {new Date(expiry).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </p>
               )}
             </div>

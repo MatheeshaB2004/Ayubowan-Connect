@@ -162,7 +162,7 @@ export default function ExperienceDetailPage() {
     if (!listing.id) return;
 
     const controller = new AbortController();
-    fetch(`${API_BASE}/bookings/availability/listing/${listing.id}`, { signal: controller.signal })
+    fetch(`${API_BASE}/booking/availability/listing/${listing.id}`, { signal: controller.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: AvailabilityDate[]) => {
         if (!controller.signal.aborted) setListingAvailability(data ?? []);
@@ -239,16 +239,21 @@ export default function ExperienceDetailPage() {
       return;
     }
 
-    // --- Add the userIdentifier exactly like we did in the dashboard ---
-    const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
+    // --- Fix email extraction and add proper headers ---
+    const email = user?.primaryEmailAddress?.emailAddress;
+
+    if (!user?.id || !email) {
+      console.warn("User or email missing");
+      return;
+    }
 
     try {
-      const response = await fetch(`${API_BASE}/bookings`, {
+      const response = await fetch(`${API_BASE}/booking`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // --- Send the new userIdentifier ---
-          'x-user-id': userIdentifier,
+          'x-user-id': user.id,
+          'x-user-email': email,
         },
         body: JSON.stringify({
           listingId: listing?.id,

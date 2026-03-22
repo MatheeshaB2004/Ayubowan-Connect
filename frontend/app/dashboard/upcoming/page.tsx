@@ -14,6 +14,7 @@ type Booking = {
   bookingDate: string;
   guests: number;
   status: 'PENDING' | 'CONFIRMED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
+  paymentStatus?: 'PAID' | 'COMPLETED' | 'PENDING' | 'FAILED';
   listing?: {
     title?: string;
     listingType?: string;
@@ -41,10 +42,16 @@ export default function UpcomingExperiencesPage() {
     }
 
     const fetchBookings = async () => {
-      const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) return;
+      
       try {
-        const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': userIdentifier },
+        const response = await fetch(`${API_BASE}/booking`, {
+          headers: {
+            'x-user-id': user.id,
+            'x-user-email': email,
+          },
         });
 
         if (response.ok) {
@@ -72,13 +79,20 @@ export default function UpcomingExperiencesPage() {
   const upcomingBookings = useMemo(
     () =>
       bookings.filter((b) => {
-        const slotStart = b.slot?.startTime ? new Date(b.slot.startTime) : null;
-        const isExperience = b.listing?.listingType === 'EXPERIENCE';
-        const isFutureOrToday = !!slotStart && !Number.isNaN(slotStart.getTime()) && slotStart.getTime() >= Date.now();
-        const isRelevantStatus =
-          b.status === 'CONFIRMED' || b.status === 'PENDING';
+        const isConfirmed = b.status === 'CONFIRMED';
 
-        return isExperience && isFutureOrToday && isRelevantStatus;
+        const isPaid =
+          b.paymentStatus === 'PAID' ||
+          b.paymentStatus === 'COMPLETED';
+
+        const startTime = b.slot?.startTime || b.bookingDate;
+
+        const now = Date.now();
+        const start = new Date(startTime).getTime();
+
+        const isFuture = start > now;
+
+        return isConfirmed && isPaid && isFuture;
       }).sort((a, b) => {
         const startA = a.slot?.startTime ? new Date(a.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;
         const startB = b.slot?.startTime ? new Date(b.slot.startTime).getTime() : Number.MAX_SAFE_INTEGER;

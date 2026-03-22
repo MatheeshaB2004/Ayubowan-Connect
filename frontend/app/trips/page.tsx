@@ -32,7 +32,7 @@ export default function TripsPage() {
             if (!user) return;
 
             try {
-                const response = await fetch(`${API_BASE}/bookings`, {
+                const response = await fetch(`${API_BASE}/booking`, {
                     headers: {
                         'x-user-id': user.primaryEmailAddress?.emailAddress || user.id,
                     },

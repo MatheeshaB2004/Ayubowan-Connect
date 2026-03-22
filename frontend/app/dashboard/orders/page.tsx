@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/api';
 import DashboardTabs from '@/components/dashboard/DashboardTabs';
+import { fetchUserRegisteredEvents } from '@/app/events/lib/api/events';
 
 const API_BASE = API_BASE_URL;
 
@@ -66,15 +67,24 @@ export default function OrdersPage() {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const hasFetched = useRef(false);
-  
 
   const fetchOrders = useCallback(async (userId: string) => {
-     if (!isSignedIn || !user) return;
-    const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
+    if (!isSignedIn || !user) return;
+
+    const email = user?.primaryEmailAddress?.emailAddress;
+    
+    if (!user?.id || !email) {
+      console.warn("Skipping API call - missing user ID or email");
+      return;
+    }
+
     try {
       // Fetch bookings
-      const response = await fetch(`${API_BASE}/bookings`, {
-        headers: { 'x-user-id': userIdentifier },
+      const response = await fetch(`${API_BASE}/booking`, {
+        headers: { 
+          'x-user-id': user.id,
+          'x-user-email': email,
+        },
       });
 
       if (response.ok) {
@@ -93,18 +103,21 @@ export default function OrdersPage() {
       }
 
       // Fetch events
-      const eventsResponse = await fetch(`${API_BASE}/events/user/registered`, {
-        headers: { 'x-user-id': userId },
-      });
-
-      if (eventsResponse.ok) {
-        const eventsData = await eventsResponse.json();
+      if (!user) return;
+      try {
+        const eventsData = await fetchUserRegisteredEvents(user);
         setEvents(eventsData ?? []);
+      } catch (error) {
+        console.error('Failed to fetch events:', error);
+        setEvents([]);
       }
 
       // Fetch subscription status
       const subscriptionResponse = await fetch(`${API_BASE}/payments/status`, {
-        headers: { 'x-user-id': userId },
+        headers: { 
+          'x-user-id': user.id,
+          'x-user-email': email,
+        },
       });
 
       if (subscriptionResponse.ok) {

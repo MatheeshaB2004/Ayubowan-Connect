@@ -83,11 +83,20 @@ function PaymentSuccessPageContent() {
     if (isSubscriptionSuccess || !user || !bookingId || Number.isNaN(bookingId)) return;
 
     const fetchBooking = async () => {
-      const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) {
+        console.warn("Skipping API call - missing user ID or email");
+        return;
+      }
+      
       setIsLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': userIdentifier},
+        const response = await fetch(`${API_BASE}/booking`, {
+          headers: { 
+            'x-user-id': user.id,
+            'x-user-email': email,
+          },
         });
         if (!response.ok) {
           setBooking(null);
@@ -111,20 +120,50 @@ function PaymentSuccessPageContent() {
     if (!isSubscriptionSuccess || !user || subscriptionActivated) return;
 
     const activateSubscription = async () => {
-      const userIdentifier = user.primaryEmailAddress?.emailAddress || user.id;
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) {
+        console.error("Email not available");
+        return;
+      }
+      
       setIsLoading(true);
+      
+      // Add validation BEFORE API call
+      if (!plan || !cycle) {
+        console.error('Missing subscription params:', { plan, cycle });
+        return;
+      }
+
+      // Ensure safe planType mapping
+      const mappedPlanType = plan?.toUpperCase() === 'VENDOR' ? 'VENDOR' : 'USER';
+
+      // Add debug logging BEFORE fetch call
+      console.log('UPGRADE CALL:', {
+        plan,
+        cycle,
+        planType: mappedPlanType,
+      });
+
       try {
         const response = await fetch(`${API_BASE}/payments/upgrade`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': userIdentifier,
+            'x-user-id': user.id,
+            'x-user-email': email,
           },
           body: JSON.stringify({
-            planType: plan?.toUpperCase(),
+            planType: mappedPlanType,
             cycle: cycle,
+            email: email,
           }),
         });
+
+        // FIX 4: SUCCESS PAGE TIMING FIX
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        router.push('/pro');
 
         if (!response.ok) {
           setActivationMessage('Payment completed, but subscription activation is pending.');
@@ -149,6 +188,13 @@ function PaymentSuccessPageContent() {
     setHasRegistered(true);
 
     const fetchEventAndRegister = async () => {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) {
+        console.warn("Skipping API call - missing user ID or email");
+        return;
+      }
+      
       setIsLoading(true);
       setEventRegistrationError(null);
 
@@ -168,6 +214,7 @@ function PaymentSuccessPageContent() {
           headers: {
             'Content-Type': 'application/json',
             'x-user-id': user.id,
+            'x-user-email': email,
           },
         });
 
@@ -215,6 +262,13 @@ function PaymentSuccessPageContent() {
     console.log('Success page loaded');
 
     const completeProductOrder = async () => {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) {
+        console.warn("Skipping API call - missing user ID or email");
+        return;
+      }
+      
       const stored = localStorage.getItem('checkout_items');
       if (!stored) {
         setOrderCompletionDone(true);
@@ -270,7 +324,8 @@ function PaymentSuccessPageContent() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-             'x-user-id': user.primaryEmailAddress?.emailAddress || user.id,
+            'x-user-id': user.id,
+            'x-user-email': email,
           },
           body: JSON.stringify({
             cartItems: payload,
