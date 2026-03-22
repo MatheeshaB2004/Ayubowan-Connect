@@ -83,10 +83,20 @@ function PaymentSuccessPageContent() {
     if (isSubscriptionSuccess || !user || !bookingId || Number.isNaN(bookingId)) return;
 
     const fetchBooking = async () => {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) {
+        console.warn("Skipping API call - missing user ID or email");
+        return;
+      }
+      
       setIsLoading(true);
       try {
-        const response = await fetch(`${API_BASE}/bookings`, {
-          headers: { 'x-user-id': user.id },
+        const response = await fetch(`${API_BASE}/booking`, {
+          headers: { 
+            'x-user-id': user.id,
+            'x-user-email': email,
+          },
         });
         if (!response.ok) {
           setBooking(null);
@@ -110,25 +120,59 @@ function PaymentSuccessPageContent() {
     if (!isSubscriptionSuccess || !user || subscriptionActivated) return;
 
     const activateSubscription = async () => {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) {
+        console.error("Email not available");
+        return;
+      }
+      
       setIsLoading(true);
+      
+      // Add validation BEFORE API call
+      if (!plan || !cycle) {
+        console.error('Missing subscription params:', { plan, cycle });
+        return;
+      }
+
+      // Ensure safe planType mapping
+      const mappedPlanType = plan?.toUpperCase() === 'VENDOR' ? 'VENDOR' : 'USER';
+
+      // Add debug logging BEFORE fetch call
+      console.log('UPGRADE CALL:', {
+        plan,
+        cycle,
+        planType: mappedPlanType,
+      });
+
       try {
         const response = await fetch(`${API_BASE}/payments/upgrade`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'x-user-id': user.id,
+            'x-user-email': email,
           },
           body: JSON.stringify({
-            planType: plan?.toUpperCase(),
+            planType: mappedPlanType,
             cycle: cycle,
+            email: email,
           }),
         });
 
+                
         if (!response.ok) {
           setActivationMessage('Payment completed, but subscription activation is pending.');
           return;
         }
 
+        const data = await response.json();
+        if (data.activationStatus === 'pending') {
+          setActivationMessage('Payment completed, but subscription activation is pending.');
+        } else {
+          setActivationMessage('Your Pro subscription is now active.');
+          setSubscriptionActivated(true);
+        }
         setActivationMessage('Your Pro subscription is now active.');
         setSubscriptionActivated(true);
       } catch (error) {
@@ -147,6 +191,13 @@ function PaymentSuccessPageContent() {
     setHasRegistered(true);
 
     const fetchEventAndRegister = async () => {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) {
+        console.warn("Skipping API call - missing user ID or email");
+        return;
+      }
+      
       setIsLoading(true);
       setEventRegistrationError(null);
 
@@ -166,6 +217,7 @@ function PaymentSuccessPageContent() {
           headers: {
             'Content-Type': 'application/json',
             'x-user-id': user.id,
+            'x-user-email': email,
           },
         });
 
@@ -213,6 +265,13 @@ function PaymentSuccessPageContent() {
     console.log('Success page loaded');
 
     const completeProductOrder = async () => {
+      const email = user?.primaryEmailAddress?.emailAddress;
+      
+      if (!user?.id || !email) {
+        console.warn("Skipping API call - missing user ID or email");
+        return;
+      }
+      
       const stored = localStorage.getItem('checkout_items');
       if (!stored) {
         setOrderCompletionDone(true);
@@ -269,6 +328,7 @@ function PaymentSuccessPageContent() {
           headers: {
             'Content-Type': 'application/json',
             'x-user-id': user.id,
+            'x-user-email': email,
           },
           body: JSON.stringify({
             cartItems: payload,
@@ -491,30 +551,18 @@ function PaymentSuccessPageContent() {
                 </Link>
               </>
             ) : isSubscriptionSuccess ? (
-              <div className="flex gap-3 justify-center mt-6">
-                {role === 'vendor' ? (
-                  <button
-                    onClick={() => router.push('/pro')}
-                    className="px-6 py-2 bg-[#0d9488] text-white rounded-lg"
-                  >
-                    Go to Pro
+              <div className="flex gap-4 justify-center mt-6">
+                <Link href="/pro">
+                  <button className="btn-primary">
+                    Back to Pro
                   </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => router.push('/dashboard/orders')}
-                      className="px-6 py-2 bg-[#0d9488] text-white rounded-lg"
-                    >
-                      View Orders
+                </Link>
+                {role !== 'vendor' && (
+                  <Link href="/dashboard/orders">
+                    <button className="btn-secondary">
+                      Go to Orders
                     </button>
-
-                    <button
-                      onClick={() => router.push('/pro')}
-                      className="px-6 py-2 border border-gray-300 rounded-lg"
-                    >
-                      Go to Pro
-                    </button>
-                  </>
+                  </Link>
                 )}
               </div>
             ) : (
@@ -545,4 +593,3 @@ export default function Page() {
     </Suspense>
   );
 }
-

@@ -26,7 +26,7 @@ export function RegisterEventDialog({ event, token, userId, onClose, onRegistere
   const handleRegister = async () => {
     setError(null); setLoading(true);
     try {
-      await registerForEvent(token, event.id, userId);
+      await registerForEvent(token, event.id);
       setSuccess(true);
       setTimeout(() => { onRegistered(); onClose(); setSuccess(false); }, 1800);
     } catch {

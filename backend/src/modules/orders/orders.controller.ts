@@ -2,9 +2,9 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
   Post,
-  UnauthorizedException,
+  Headers,
+  BadRequestException,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 
@@ -13,16 +13,16 @@ export class OrdersController {
   constructor(private ordersService: OrdersService) {}
 
   @Get()
-  async getUserOrders(@Headers('x-user-id') userId: string) {
-    if (!userId) {
-      throw new UnauthorizedException('Missing x-user-id header');
+  async getUserOrders(@Headers('x-user-email') email: string) {
+    if (!email) {
+      throw new BadRequestException('Email is required');
     }
-    return this.ordersService.getUserOrders(userId);
+    return this.ordersService.getUserOrders(email);
   }
 
   @Post('complete')
   async completeOrder(
-    @Headers('x-user-id') userId: string,
+    @Headers('x-user-email') email: string,
     @Body()
     body: {
       cartItems?: Array<{
@@ -32,9 +32,9 @@ export class OrdersController {
       }>;
     },
   ) {
-    if (!userId) {
-      throw new UnauthorizedException('Missing x-user-id header');
+    if (!email) {
+      throw new BadRequestException('Email is required');
     }
-    return this.ordersService.completeOrder(userId, body?.cartItems ?? []);
+    return this.ordersService.completeOrder(email, body?.cartItems ?? []);
   }
 }

@@ -10,49 +10,69 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class BookingService {
   private readonly logger = new Logger(BookingService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   /**
-   * Resolve a Clerk user ID to a numeric database userId.
-   * Only works with existing User records - does NOT create placeholder users.
+   * Resolve user ID with safe matching (email + ID fallbacks).
+   * Uses email first, then clerkUserId, then placeholder, then numeric ID.
    */
-  private async resolveUserId(clerkUserId: string): Promise<number> {
-    if (!clerkUserId) {
-      throw new Error('Missing Clerk user ID');
+  private async resolveUserId(rawUserId: string): Promise<number> {
+    if (!rawUserId) {
+      throw new Error('Missing user ID');
     }
+    this.logger.log(`RAW USER ID: ${rawUserId}`);
 
-    let user = await this.prisma.user.findFirst({
-      where: {
-        email: {
-          contains: clerkUserId,
-        },
-      },
-      include: {
-        localTourist: true,
-      },
-    });
-
-    if (!user) {
-      user = await this.prisma.user.findFirst({
-        where: {
-          localTourist: {
-            isNot: null,
-          },
-        },
-        include: {
-          localTourist: true,
-        },
+    // Try 1: Check if it's an email
+    if (rawUserId.includes('@')) {
+      const user = await this.prisma.user.findUnique({
+        where: { email: rawUserId },
+        include: { localTourist: true },
       });
+      if (user) {
+        this.logger.log(`FOUND USER BY EMAIL: ${user.id} - ${user.email}`);
+        if (!user.localTourist) return -1;
+        return user.localTourist.userId;
+      }
     }
 
-    if (!user || !user.localTourist) {
-      throw new Error('User profile not found.');
+    // Try 2: Check placeholder emails
+    const placeholderEmail = `clerk_${rawUserId}@placeholder.local`;
+    let user = await this.prisma.user.findFirst({
+      where: { email: placeholderEmail },
+      include: { localTourist: true },
+    });
+    if (user) {
+      this.logger.log(`FOUND USER BY PLACEHOLDER: ${user.id} - ${user.email}`);
+      if (!user.localTourist) return -1;
+      return user.localTourist.userId;
     }
 
-    return user.localTourist.userId;
+    // Try 3: Check by clerkUserId (vendor table)
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { clerkUserId: rawUserId },
+      select: { userId: true },
+    });
+    if (vendor) {
+      this.logger.log(`FOUND VENDOR BY CLERK ID: ${vendor.userId}`);
+      return vendor.userId;
+    }
+
+    // Try 4: Check if it's a numeric ID
+    const parsed = Number(rawUserId);
+    if (!isNaN(parsed) && Number.isInteger(parsed)) {
+      user = await this.prisma.user.findUnique({
+        where: { id: parsed },
+        include: { localTourist: true },
+      });
+      if (user) {
+        this.logger.log(`FOUND USER BY NUMERIC ID: ${user.id} - ${user.email}`);
+        if (!user.localTourist) return -1;
+        return user.localTourist.userId;
+      }
+    }
+
+    throw new Error(`User not found for: ${rawUserId}`);
   }
-
-  // ─── Public Availability (read-only) ─────────────────────────────────────
 
   /**
    * Return availability dates + slots for a given listing.
@@ -136,6 +156,10 @@ export class BookingService {
   ) {
     // --- resolve identifiers ------------------------------------------------
     const userId = await this.resolveUserId(rawUserId);
+
+    if (userId === -1) {
+      throw new BadRequestException('User is not a local tourist');
+    }
     const listingId = Number(data.listingId);
     const guests = Number(data.participants) || 1;
     const slotId = data.slotId ? Number(data.slotId) : null;
@@ -235,6 +259,10 @@ export class BookingService {
     try {
       const userId = await this.resolveUserId(rawUserId);
 
+      if (!userId) {
+        return [];
+      }
+
       const bookings = await this.prisma.booking.findMany({
         where: {
           localTouristId: userId,
@@ -258,8 +286,8 @@ export class BookingService {
       const slots =
         slotIds.length > 0
           ? await this.prisma.availabilitySlot.findMany({
-              where: { id: { in: slotIds } },
-            })
+            where: { id: { in: slotIds } },
+          })
           : [];
 
       const slotMap = new Map(slots.map((s) => [s.id, s]));
@@ -304,8 +332,8 @@ export class BookingService {
     const slots =
       slotIds.length > 0
         ? await this.prisma.availabilitySlot.findMany({
-            where: { id: { in: slotIds } },
-          })
+          where: { id: { in: slotIds } },
+        })
         : [];
 
     const slotMap = new Map(slots.map((s) => [s.id, s]));
@@ -314,5 +342,32 @@ export class BookingService {
       ...b,
       slot: b.slotId ? slotMap.get(b.slotId) : null,
     }));
+  }
+
+  async getBookingById(id: number, email: string) {
+    const userId = await this.resolveUserId(email);
+    
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        id,
+        localTouristId: userId,
+      },
+      include: {
+        listing: true,
+      },
+    });
+
+    if (!booking || !booking.slotId) {
+      return booking;
+    }
+
+    const slot = await this.prisma.availabilitySlot.findUnique({
+      where: { id: booking.slotId },
+    });
+
+    return {
+      ...booking,
+      slot,
+    };
   }
 }

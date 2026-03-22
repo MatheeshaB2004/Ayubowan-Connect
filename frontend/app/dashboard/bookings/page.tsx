@@ -37,9 +37,20 @@ export default function BookingsPage() {
 
   const fetchBookings = useCallback(async () => {
     if (!isSignedIn || !user) return;
+    
+    const email = user?.primaryEmailAddress?.emailAddress;
+    
+    if (!user?.id || !email) {
+      console.warn("Skipping API call - missing user ID or email");
+      return;
+    }
+    
     try {
-      const response = await fetch(`${API_BASE}/bookings`, {
-        headers: { 'x-user-id': user.id },
+      const response = await fetch(`${API_BASE}/booking`, {
+        headers: { 
+          'x-user-id': user.id,
+          'x-user-email': email,
+        },
       });
       if (response.ok) {
         const data: Booking[] = await response.json();
@@ -81,12 +92,21 @@ export default function BookingsPage() {
 
   const handleCancelBooking = async (bookingId: number) => {
     if (!user) return;
+
+    const email = user?.primaryEmailAddress?.emailAddress;
+    
+    if (!user?.id || !email) {
+      console.warn("Skipping API call - missing user ID or email");
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_BASE}/bookings/${bookingId}/status`, {
+      const response = await fetch(`${API_BASE}/booking/${bookingId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': user.id,
+          'x-user-email': email,
         },
         body: JSON.stringify({ status: 'CANCELLED' }),
       });
