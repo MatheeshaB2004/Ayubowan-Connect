@@ -89,19 +89,19 @@ export default function UpcomingExperiencesPage() {
             b.paymentStatus === 'PAID' ||
             b.paymentStatus === 'COMPLETED';
 
-          const rawTime = b.slot?.startTime || b.bookingDate;
+          const endTime = b.slot?.endTime || b.bookingDate;
 
-          if (!rawTime) return false;
+          if (!endTime) return false;
 
-          const start = new Date(rawTime).getTime();
+          const end = new Date(endTime).getTime();
 
-          if (isNaN(start)) return false;
+          if (isNaN(end)) return false;
 
           const now = Date.now();
 
-          const isFuture = start > now;
+          const isUpcoming = end > now;
 
-          return isConfirmed && isPaid && isFuture;
+          return isConfirmed && isPaid && isUpcoming;
         })
         .sort((a, b) => {
           const timeA = new Date(a.slot?.startTime || a.bookingDate).getTime();
