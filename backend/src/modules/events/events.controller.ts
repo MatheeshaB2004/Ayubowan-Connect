@@ -48,11 +48,14 @@ export class EventsController {
   // GET /events/user/registered  — must be ABOVE :id to avoid route conflict
   // @UseGuards(JwtAuthGuard)
   @Get('user/registered')
-  getUserRegisteredEvents(@Headers('x-user-id') rawUserId: string) {
+  getUserRegisteredEvents(
+    @Headers('x-user-id') rawUserId: string,
+    @Headers('x-user-email') emailFromHeader?: string
+  ) {
     if (!rawUserId) {
       throw new UnauthorizedException('Missing x-user-id header');
     }
-    return this.eventsService.getUserRegisteredEvents(rawUserId);
+    return this.eventsService.getUserRegisteredEvents(rawUserId, emailFromHeader);
   }
 
   // POST /events/upload-image  — must be ABOVE :id to avoid route conflict
@@ -177,25 +180,27 @@ export class EventsController {
   // @UseGuards(JwtAuthGuard)
   @Post(':id/register')
   registerForEvent(
-    @Headers('x-user-id') rawUserId: string,
     @Param('id', ParseIntPipe) eventId: number,
+    @Headers('x-user-id') rawUserId: string,
+    @Headers('x-user-email') emailFromHeader?: string,
   ) {
     if (!rawUserId) {
       throw new UnauthorizedException('Missing x-user-id header');
     }
-    return this.eventsService.registerForEvent(rawUserId, eventId);
+    return this.eventsService.registerForEvent(rawUserId, eventId, emailFromHeader);
   }
 
   // DELETE /events/:id/register
   // @UseGuards(JwtAuthGuard)
   @Delete(':id/register')
   unregisterFromEvent(
-    @Headers('x-user-id') rawUserId: string,
     @Param('id', ParseIntPipe) eventId: number,
+    @Headers('x-user-id') rawUserId: string,
+    @Headers('x-user-email') emailFromHeader?: string,
   ) {
     if (!rawUserId) {
       throw new UnauthorizedException('Missing x-user-id header');
     }
-    return this.eventsService.unregisterFromEvent(rawUserId, eventId);
+    return this.eventsService.unregisterFromEvent(rawUserId, eventId, emailFromHeader);
   }
 }

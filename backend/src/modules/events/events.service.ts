@@ -68,36 +68,44 @@ export class EventsService {
     throw new NotFoundException('Vendor profile not found');
   }
 
-  private async resolveUserId(rawUserId: string): Promise<number> {
-    const parsed = Number(rawUserId);
-    if (!isNaN(parsed) && Number.isInteger(parsed)) {
-      return parsed;
+  private async resolveUserId(rawUserId: string, email?: string): Promise<number> {
+    console.log("RAW USER ID:", rawUserId);
+    console.log("EMAIL RECEIVED:", email);
+
+    // 🔥 FORCE EMAIL LOOKUP FIRST
+    if (email && email.includes('@')) {
+      const user = await this.prisma.user.findFirst({
+        where: {
+          email: {
+            equals: email,
+            mode: 'insensitive',
+          },
+        },
+      });
+
+      if (user) {
+        console.log("USER FOUND BY EMAIL:", user.id);
+        return user.id;
+      } else {
+        console.log("NO USER FOUND FOR EMAIL:", email);
+      }
     }
 
-    const vendor = await this.prisma.vendor.findUnique({
-      where: { clerkUserId: rawUserId },
-      select: { userId: true },
-    });
-    if (vendor) return vendor.userId;
+    // 🔥 REMOVE vendor fallback temporarily (to avoid wrong mapping)
 
-    const placeholderEmail = `clerk_${rawUserId}@placeholder.local`;
-    const existingUser = await this.prisma.user.findFirst({
-      where: { email: placeholderEmail },
-      select: { id: true },
-    });
-
-    if (existingUser) return existingUser.id;
-
-    const createdUser = await this.prisma.user.create({
-      data: {
-        fullName: 'Clerk User',
-        email: placeholderEmail,
-        passwordHash: 'clerk-auth',
+    // fallback placeholder
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email: `${rawUserId}@placeholder.local`,
       },
-      select: { id: true },
     });
 
-    return createdUser.id;
+    if (user) {
+      console.log("USER FOUND BY PLACEHOLDER:", user.id);
+      return user.id;
+    }
+
+    throw new Error(`User not found for: ${rawUserId}`);
   }
 
   // Get all published events with optional filters
@@ -190,12 +198,12 @@ export class EventsService {
   }
 
   // Get events created by a specific vendor
-  async getVendorEvents(rawUserId: string) {
-    const vendorId = await this.resolveVendorId(rawUserId);
+  async getVendorEvents(email: string) {
+    const userId = await this.resolveUserId(email);
     const now = new Date();
 
     const events = await this.prisma.event.findMany({
-      where: { vendorId },
+      where: { vendorId: userId },
       include: { registrations: { select: { id: true } } },
       orderBy: { startDate: 'asc' },
     });
@@ -217,8 +225,8 @@ export class EventsService {
   }
 
   // Get events a user has registered for
-  async getUserRegisteredEvents(rawUserId: string) {
-    const userId = await this.resolveUserId(rawUserId);
+  async getUserRegisteredEvents(rawUserId: string, email?: string) {
+    const userId = await this.resolveUserId(rawUserId, email);
 
     const registrations = await this.prisma.eventRegistration.findMany({
       where: { userId },
@@ -291,27 +299,34 @@ export class EventsService {
   }
 
   // Register user for an event
-  async registerForEvent(rawUserId: string, eventId: number) {
-    const userId = await this.resolveUserId(rawUserId);
+  async registerForEvent(rawUserId: string, eventId: number, email?: string) {
+    // 1. Resolve user using email FIRST
+    const userId = await this.resolveUserId(rawUserId, email);
 
-    const event = await this.prisma.event.findUnique({
-      where: { id: eventId },
+    // 2. Check if already registered (PREVENT CRASH)
+    const existing = await this.prisma.eventRegistration.findFirst({
+      where: {
+        userId,
+        eventId,
+      },
     });
-    if (!event) throw new NotFoundException('Event not found');
 
-    const existing = await this.prisma.eventRegistration.findUnique({
-      where: { userId_eventId: { userId, eventId } },
-    });
-    if (existing) return { message: 'Already registered' };
+    if (existing) {
+      return { message: "Already registered" };
+    }
 
+    // 3. Create registration
     return this.prisma.eventRegistration.create({
-      data: { userId, eventId },
+      data: {
+        userId,
+        eventId,
+      },
     });
   }
 
   // Unregister user from an event
-  async unregisterFromEvent(rawUserId: string, eventId: number) {
-    const userId = await this.resolveUserId(rawUserId);
+  async unregisterFromEvent(rawUserId: string, eventId: number, email?: string) {
+    const userId = await this.resolveUserId(rawUserId, email);
 
     const existing = await this.prisma.eventRegistration.findUnique({
       where: { userId_eventId: { userId, eventId } },
