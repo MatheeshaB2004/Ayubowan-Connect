@@ -5,6 +5,7 @@ import { Toaster, toast } from "react-hot-toast";
 import Link from "next/link";
 import "./page.css";
 import { useUser } from "@clerk/nextjs";
+import { API_BASE_URL } from "@/lib/api";
 
 type Ratings = {
     avgRating: number
@@ -47,7 +48,8 @@ export default function Dashboard() {
     const checkProVendor = async () => {
 
         const res = await fetch(
-            `http://localhost:3001/dashboard/vendor/profile?userId=${userId}`
+            `${API_BASE_URL}/dashboard/vendor/profile?userId=${userId}&t=${Date.now()}`,
+            { cache: 'no-store' }
         );
 
         const data = await res.json();
@@ -58,7 +60,7 @@ export default function Dashboard() {
 
     const deleteReply = async (reviewId: number) => {
 
-        await fetch("http://localhost:3001/dashboard/vendor/delete-reply", {
+        await fetch(`${API_BASE_URL}/dashboard/vendor/delete-reply`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -76,7 +78,7 @@ export default function Dashboard() {
 
     const sendReply = async (reviewId: number) => {
 
-        await fetch("http://localhost:3001/dashboard/vendor/reply", {
+        await fetch(`${API_BASE_URL}/dashboard/vendor/reply`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -91,7 +93,7 @@ export default function Dashboard() {
         setSelectedReview(null)
 
         // reload reviews
-        const res = await fetch(`http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`)
+        const res = await fetch(`${API_BASE_URL}/dashboard/vendor/reviews?userId=${userId}`)
         const data = await res.json()
         setReviews(data)
 
@@ -110,7 +112,8 @@ export default function Dashboard() {
 
         try {
             const res = await fetch(
-                `http://localhost:3001/dashboard/vendor/stats?userId=${userId}`
+                `${API_BASE_URL}/dashboard/vendor/stats?userId=${userId}&t=${Date.now()}`,
+                { cache: 'no-store' }
             );
 
             const text = await res.text();
@@ -125,7 +128,8 @@ export default function Dashboard() {
 
     const fetchRatings = async () => {
         const res = await fetch(
-            `http://localhost:3001/dashboard/vendor/rating-summary?userId=${userId}`
+            `${API_BASE_URL}/dashboard/vendor/rating-summary?userId=${userId}&t=${Date.now()}`,
+            { cache: 'no-store' }
         );
 
         const data = await res.json();
@@ -139,7 +143,8 @@ export default function Dashboard() {
 
     const fetchReviews = async () => {
         const res = await fetch(
-            `http://localhost:3001/dashboard/vendor/reviews?userId=${userId}`
+            `${API_BASE_URL}/dashboard/vendor/reviews?userId=${userId}&t=${Date.now()}`,
+            { cache: 'no-store' }
         );
 
         const data = await res.json();
@@ -150,7 +155,8 @@ export default function Dashboard() {
     const fetchListings = async () => {
         try {
             const res = await fetch(
-                `http://localhost:3001/dashboard/vendor/listings?userId=${userId}`
+                `${API_BASE_URL}/dashboard/vendor/listings?userId=${userId}&t=${Date.now()}`,
+                { cache: 'no-store' }
             );
 
             const data = await res.json();
@@ -201,7 +207,8 @@ export default function Dashboard() {
 
     const fetchBookings = async () => {
         const res = await fetch(
-            `http://localhost:3001/dashboard/vendor/bookings?userId=${userId}`
+            `${API_BASE_URL}/dashboard/vendor/bookings?userId=${userId}&t=${Date.now()}`,
+            { cache: 'no-store' }
         );
 
         const data = await res.json();
@@ -277,7 +284,7 @@ export default function Dashboard() {
             ) {
 
                 const res = await fetch(
-                    `http://localhost:3001/dashboard/vendor/availability/previous?userId=${userId}`,
+                    `${API_BASE_URL}/dashboard/vendor/availability/previous?userId=${userId}`,
                     { method: "DELETE" }
                 );
 
@@ -313,7 +320,7 @@ export default function Dashboard() {
             const monthString = `${year}-${String(month + 1).padStart(2, '0')}-01`;
 
             const res = await fetch(
-                `http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`
+                `${API_BASE_URL}/dashboard/vendor/availability?userId=${userId}&month=${monthString}`
             );
 
             const data = await res.json();
@@ -360,7 +367,7 @@ export default function Dashboard() {
     const handleAccept = async (id: number) => {
 
         const res = await fetch(
-            `http://localhost:3001/dashboard/vendor/booking/accept/${id}`,
+            `${API_BASE_URL}/dashboard/vendor/booking/accept/${id}`,
             { method: "PATCH" }
         );
 
@@ -388,7 +395,7 @@ export default function Dashboard() {
 
     const handleDecline = async (id: number) => {
 
-        await fetch(`http://localhost:3001/dashboard/vendor/booking/reject/${id}`, {
+        await fetch(`${API_BASE_URL}/dashboard/vendor/booking/reject/${id}`, {
             method: "PATCH"
         });
 
@@ -396,7 +403,7 @@ export default function Dashboard() {
     };
 
     const handleMarkDone = async (id: number) => {
-        await fetch(`http://localhost:3001/dashboard/vendor/booking/complete/${id}`, {
+        await fetch(`${API_BASE_URL}/dashboard/vendor/booking/complete/${id}`, {
             method: "PATCH"
         });
 
@@ -942,7 +949,7 @@ export default function Dashboard() {
                                                     `${year}-${String(month + 1).padStart(2, "0")}-01`;
 
                                                 const res = await fetch(
-                                                    `http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`,
+                                                    `${API_BASE_URL}/dashboard/vendor/availability?userId=${userId}&month=${monthString}`,
                                                     { method: "DELETE" }
                                                 );
 
@@ -971,7 +978,7 @@ export default function Dashboard() {
                                                 }));
 
                                                 await fetch(
-                                                    "http://localhost:3001/dashboard/vendor/availability",
+                                                    `${API_BASE_URL}/dashboard/vendor/availability`,
                                                     {
                                                         method: "POST",
                                                         headers: {
@@ -989,7 +996,7 @@ export default function Dashboard() {
 
 
                                                 const monthString = `${year}-${String(monthNumber).padStart(2, '0')}-01`;
-                                                const res = await fetch(`http://localhost:3001/dashboard/vendor/availability?userId=${userId}&month=${monthString}`);
+                                                const res = await fetch(`${API_BASE_URL}/dashboard/vendor/availability?userId=${userId}&month=${monthString}`);
                                                 const data = await res.json();
 
                                                 const mapped: AvailabilityState = {};

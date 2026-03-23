@@ -28,6 +28,7 @@ import {
 import './page.css';
 import { Inter } from "next/font/google";
 import { useUser } from "@clerk/nextjs";
+import { API_BASE_URL } from "@/lib/api";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -118,13 +119,14 @@ export default function DashboardClient({
     const checkPro = async () => {
 
       const res = await fetch(
-        `http://localhost:3001/dashboard/vendor/profile?userId=${userId}`
+        `${API_BASE_URL}/dashboard/vendor/profile?userId=${userId}&t=${Date.now()}`,
+        { cache: 'no-store' }
       );
 
       const data = await res.json();
 
       if (!data.isProUser) {
-        router.push("/vendor/freeDashboard");
+        router.push("/vendor/freeDashboad");
       }
 
     };
@@ -198,31 +200,31 @@ export default function DashboardClient({
 
     const refreshDashboard = async () => {
       const summaryRes = await fetch(
-        `http://localhost:3001/dashboard/vendor/summary?userId=${user.id}&period=${selectedPeriod}`
+        `${API_BASE_URL}/dashboard/vendor/summary?userId=${user.id}&period=${selectedPeriod}&t=${Date.now()}`
       );
 
       const trendRes = await fetch(
-        `http://localhost:3001/dashboard/vendor/booking-trend?userId=${user.id}&period=${selectedPeriod}`
+        `${API_BASE_URL}/dashboard/vendor/booking-trend?userId=${user.id}&period=${selectedPeriod}&t=${Date.now()}`
       );
 
       const viewsRes = await fetch(
-        `http://localhost:3001/dashboard/vendor/views-vs-bookings?userId=${user.id}&period=${selectedPeriod}`
+        `${API_BASE_URL}/dashboard/vendor/views-vs-bookings?userId=${user.id}&period=${selectedPeriod}&t=${Date.now()}`
       );
 
       const listingsRes = await fetch(
-        `http://localhost:3001/dashboard/vendor/top-listings?userId=${user.id}&period=${selectedPeriod}`
+        `${API_BASE_URL}/dashboard/vendor/top-listings?userId=${user.id}&period=${selectedPeriod}&t=${Date.now()}`
       );
 
       const ratingsRes = await fetch(
-        `http://localhost:3001/dashboard/vendor/ratings?userId=${user.id}&period=${selectedPeriod}`
+        `${API_BASE_URL}/dashboard/vendor/ratings?userId=${user.id}&period=${selectedPeriod}&t=${Date.now()}`
       );
 
       const insightsRes = await fetch(
-        `http://localhost:3001/dashboard/vendor/insights?userId=${user.id}&period=${selectedPeriod}`
+        `${API_BASE_URL}/dashboard/vendor/insights?userId=${user.id}&period=${selectedPeriod}&t=${Date.now()}`
       );
 
       const goalRes = await fetch(
-        `http://localhost:3001/dashboard/vendor?userId=${user.id}`
+        `${API_BASE_URL}/dashboard/vendor?userId=${user.id}&t=${Date.now()}`
       );
 
       const summaryData = await summaryRes.json();
