@@ -7,10 +7,10 @@ export class PaymentsController {
 
   @Get('status')
   getStatus(@Headers('x-user-id') userId: string, @Headers('x-user-email') email: string) {
-    if (!email) {
-      throw new BadRequestException('Email is required');
+    if (!email && !userId) {
+      throw new BadRequestException('Email or User ID is required');
     }
-    return this.paymentsService.getSubscriptionStatus(email);
+    return this.paymentsService.getSubscriptionStatus(userId, email);
   }
 
   @Post('upgrade')
