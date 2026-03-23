@@ -173,8 +173,6 @@ function PaymentSuccessPageContent() {
           setActivationMessage('Your Pro subscription is now active.');
           setSubscriptionActivated(true);
         }
-        setActivationMessage('Your Pro subscription is now active.');
-        setSubscriptionActivated(true);
       } catch (error) {
         console.error('Failed to activate subscription:', error);
         setActivationMessage('Payment completed, but subscription activation is pending.');

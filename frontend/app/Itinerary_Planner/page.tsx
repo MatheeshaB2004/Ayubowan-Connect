@@ -126,7 +126,7 @@ export default function ItineraryPlanner() {
 
         try {
             const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/ai-services/generate-itinerary`,
+                `${API_BASE_URL}/ai-services/generate-itinerary`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -135,7 +135,15 @@ export default function ItineraryPlanner() {
             );
 
             if (!res.ok) {
-                throw new Error("Failed to generate itinerary");
+                const text = await res.text();
+                let errorMsg = "Failed to generate itinerary";
+                try {
+                    const json = JSON.parse(text);
+                    if (json.message) errorMsg = json.message;
+                } catch (e) {
+                    errorMsg = text || errorMsg;
+                }
+                throw new Error(errorMsg);
             }
 
             const data = await res.json();

@@ -5,53 +5,71 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class PaymentsService {
   constructor(private prisma: PrismaService) { }
 
-  private async resolveUserId(rawUserId: string): Promise<number> {
-    if (!rawUserId) {
-      throw new BadRequestException('User ID is required');
+  private async resolveUserId(clerkUserId?: string, email?: string): Promise<number> {
+    if (!clerkUserId && !email) {
+      throw new BadRequestException('User ID or Email is required');
     }
 
-    // Try 1: Check if it's an email
-    if (rawUserId.includes('@')) {
-      const user = await this.prisma.user.findUnique({
-        where: { email: rawUserId },
+    // Try 1: By clerkUserId in Vendor table
+    if (clerkUserId) {
+      const vendor = await this.prisma.vendor.findUnique({
+        where: { clerkUserId },
+        select: { userId: true },
       });
-      if (user) return user.id;
+      if (vendor) return vendor.userId;
     }
 
-    // Try 2: Check by clerkUserId (vendor table)
-    const vendor = await this.prisma.vendor.findUnique({
-      where: { clerkUserId: rawUserId },
-      select: { userId: true },
-    });
-    if (vendor) return vendor.userId;
-
-    // Try 3: Check placeholder emails
-    const placeholderEmail = `clerk_${rawUserId}@placeholder.local`;
-    const user = await this.prisma.user.findFirst({
-      where: { email: placeholderEmail },
-      select: { id: true },
-    });
-    if (user) return user.id;
-
-    // Try 4: Check if it's a numeric ID
-    const parsed = Number(rawUserId);
-    if (!isNaN(parsed) && Number.isInteger(parsed)) {
-      const user = await this.prisma.user.findUnique({
-        where: { id: parsed },
+    // Try 2: By placeholder email using clerkUserId
+    if (clerkUserId) {
+      const placeholderEmail = `clerk_${clerkUserId}@placeholder.local`;
+      const user = await this.prisma.user.findFirst({
+        where: { email: placeholderEmail },
         select: { id: true },
       });
       if (user) return user.id;
     }
 
+    // Try 3: By actual email
+    if (email) {
+      const user = await this.prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (user) return user.id;
+    }
+
+    // Try 4: Check if clerkUserId is actually a numeric ID
+    if (clerkUserId) {
+      const parsed = Number(clerkUserId);
+      if (!isNaN(parsed) && Number.isInteger(parsed)) {
+        const user = await this.prisma.user.findUnique({
+          where: { id: parsed },
+          select: { id: true },
+        });
+        if (user) return user.id;
+      }
+    }
+
     throw new BadRequestException('User not found');
   }
 
-  async getSubscriptionStatus(email: string) {
-    if (!email) {
-      throw new BadRequestException('Email is required');
+  async getSubscriptionStatus(clerkUserId?: string, email?: string) {
+    if (!clerkUserId && !email) {
+      throw new BadRequestException('User identification is required');
     }
 
-    const userId = await this.resolveUserId(email);
+    // If resolveUserId fails, return default un-subscribed state rather than throwing 500
+    let userId: number;
+    try {
+      userId = await this.resolveUserId(clerkUserId, email);
+    } catch {
+      return {
+        userId: clerkUserId || email,
+        isProUser: false,
+        proSubscriptionExpiry: null,
+        billingCycle: null,
+      };
+    }
 
     try {
       // First check if user is a vendor
@@ -136,28 +154,53 @@ export class PaymentsService {
 
   async upgradeToPro(userEmail: string, planType: 'USER' | 'VENDOR', cycle: 'monthly' | 'yearly', clerkUserId?: string) {
     try {
-      if (!userEmail) {
-        throw new BadRequestException('Email is required');
+      if (!userEmail && !clerkUserId) {
+        throw new BadRequestException('Email or User ID is required');
       }
 
-      // FIX: USE USER EMAIL TO FIND EXISTING USER, OR CREATE IF MISSING (CLERK SYNC)
-      let user = await this.prisma.user.findUnique({
-        where: { email: userEmail },
-      });
+      let userId: number | undefined;
 
-      if (!user) {
-        // If not found, create a placeholder user for this clerk email
-        user = await this.prisma.user.create({
+      // 1. Try to find if this clerkUserId relates to a vendor
+      if (clerkUserId) {
+        const vendor = await this.prisma.vendor.findUnique({
+          where: { clerkUserId },
+          select: { userId: true },
+        });
+        if (vendor) {
+          userId = vendor.userId;
+        } else {
+          // Check placeholder email
+          const placeholderUser = await this.prisma.user.findFirst({
+            where: { email: `clerk_${clerkUserId}@placeholder.local` },
+          });
+          if (placeholderUser) {
+            userId = placeholderUser.id;
+          }
+        }
+      }
+
+      // 2. Try to find by email if we haven't found the user yet
+      if (!userId && userEmail) {
+        const userByEmail = await this.prisma.user.findUnique({
+          where: { email: userEmail },
+        });
+        if (userByEmail) {
+          userId = userByEmail.id;
+        }
+      }
+
+      // 3. Fallback: create new user
+      if (!userId) {
+        const user = await this.prisma.user.create({
           data: {
-            email: userEmail,
-            fullName: userEmail.split('@')[0],
+            email: userEmail || `clerk_${clerkUserId}@placeholder.local`,
+            fullName: (userEmail?.split('@')[0]) || 'Clerk User',
             passwordHash: 'clerk_placeholder',
             role: 'USER',
           },
         });
+        userId = user.id;
       }
-
-      const userId = user.id;
 
       const expiryDate = new Date();
       if (cycle === 'yearly') {
@@ -173,11 +216,14 @@ export class PaymentsService {
         });
 
         if (!tourist) {
+          // We need fullname, fetch it from User
+          const dbUser = await this.prisma.user.findUnique({ where: { id: userId } });
+          
           // Create minimal valid record FIRST
           tourist = await this.prisma.localTourist.create({
             data: {
               user: { connect: { id: userId } },
-              fullName: user.fullName,
+              fullName: dbUser?.fullName || 'Traveler',
               userType: 'LOCAL',
               preferredLanguage: 'en',
             },
