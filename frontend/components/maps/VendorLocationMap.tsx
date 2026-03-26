@@ -5,6 +5,7 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-map
 
 const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 const googleMapsEnabled = process.env.NEXT_PUBLIC_ENABLE_GOOGLE_MAPS === 'true' && Boolean(googleMapsApiKey);
+const libraries: ("places")[] = ["places"];
 
 const mapContainerStyle = {
     width: '100%',
@@ -47,6 +48,7 @@ function GoogleVendorLocationMap({ latitude, longitude, businessName }: VendorLo
     const { isLoaded } = useJsApiLoader({
         id: 'google-map-script',
         googleMapsApiKey,
+        libraries,
     });
 
     const [map, setMap] = useState<google.maps.Map | null>(null);
