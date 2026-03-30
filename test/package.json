@@ -1,0 +1,19 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test-ct": "playwright test -c playwright-ct.config.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/experimental-ct-react": "^1.58.2",
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.5.0",
+    "jest": "^30.3.0"
+  }
+}

@@ -50,12 +50,15 @@ export class EventsController {
   @Get('user/registered')
   getUserRegisteredEvents(
     @Headers('x-user-id') rawUserId: string,
-    @Headers('x-user-email') emailFromHeader?: string
+    @Headers('x-user-email') emailFromHeader?: string,
   ) {
     if (!rawUserId) {
       throw new UnauthorizedException('Missing x-user-id header');
     }
-    return this.eventsService.getUserRegisteredEvents(rawUserId, emailFromHeader);
+    return this.eventsService.getUserRegisteredEvents(
+      rawUserId,
+      emailFromHeader,
+    );
   }
 
   // POST /events/upload-image  — must be ABOVE :id to avoid route conflict
@@ -187,7 +190,11 @@ export class EventsController {
     if (!rawUserId) {
       throw new UnauthorizedException('Missing x-user-id header');
     }
-    return this.eventsService.registerForEvent(rawUserId, eventId, emailFromHeader);
+    return this.eventsService.registerForEvent(
+      rawUserId,
+      eventId,
+      emailFromHeader,
+    );
   }
 
   // DELETE /events/:id/register
@@ -201,6 +208,10 @@ export class EventsController {
     if (!rawUserId) {
       throw new UnauthorizedException('Missing x-user-id header');
     }
-    return this.eventsService.unregisterFromEvent(rawUserId, eventId, emailFromHeader);
+    return this.eventsService.unregisterFromEvent(
+      rawUserId,
+      eventId,
+      emailFromHeader,
+    );
   }
 }
