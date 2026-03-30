@@ -239,40 +239,41 @@ export class MarketplaceService {
 
   private toSummary(listing: {
     id: number;
-    title: string;
-    shortDescription: string;
-    priceMin: number;
-    reviews: { rating: number }[];
-    listingType: ListingType;
-    category: { categoryName: string };
-    location: { city: string; district: string };
-    media: Array<{ mediaUrl: string; isPrimary: boolean }>;
+    title?: string;
+    shortDescription?: string;
+    priceMin?: number;
+    reviews?: { rating: number }[];
+    listingType?: ListingType;
+    category?: { categoryName?: string } | null;
+    location?: { city?: string; district?: string } | null;
+    media?: Array<{ mediaUrl: string; isPrimary: boolean }>;
   }): ListingSummary {
-    const primaryMedia =
-      listing.media.find((media) => media.isPrimary) ?? listing.media[0];
+    const media = listing.media ?? [];
+    const reviews = listing.reviews ?? [];
+    const primaryMedia = media.find((item) => item.isPrimary) ?? media[0];
 
     const rating =
-      listing.reviews.length > 0
+      reviews.length > 0
         ? Number(
           (
-            listing.reviews.reduce((sum, r) => sum + r.rating, 0) /
-            listing.reviews.length
+            reviews.reduce((sum, r) => sum + r.rating, 0) /
+            reviews.length
           ).toFixed(1)
         )
         : 0;
 
     return {
       id: listing.id,
-      title: listing.title,
-      price: listing.priceMin,
-      location: listing.location.city,
-      district: listing.location.district,
+      title: listing.title ?? 'Untitled Listing',
+      price: listing.priceMin ?? 0,
+      location: listing.location?.city ?? 'Unknown City',
+      district: listing.location?.district ?? 'Unknown District',
       rating: rating,
       imageUrl: primaryMedia?.mediaUrl ?? null,
-      category: listing.category.categoryName,
+      category: listing.category?.categoryName ?? 'Uncategorized',
       type:
         listing.listingType === ListingType.PRODUCT ? 'product' : 'experience',
-      shortDescription: listing.shortDescription,
+      shortDescription: listing.shortDescription ?? '',
     };
   }
 

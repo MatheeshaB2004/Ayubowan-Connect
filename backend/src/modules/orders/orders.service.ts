@@ -95,7 +95,7 @@ export class OrdersService {
         proSubscriptionExpiry: Date | null;
         updatedAt: Date;
       } | null = null;
-      
+
       // Check if user is a vendor
       const vendor = await this.prisma.vendor.findFirst({
         where: { userId },
